@@ -1,0 +1,31 @@
+{
+  "name": "screeps_scripts",
+  "version": "1.0.0",
+  "description": "",
+  "main": "main.js",
+  "scripts": {
+    "push": "rollup -cw --environment DEST:main  --bundleConfigAsCjs",
+    "local": "rollup -cw --environment DEST:local --bundleConfigAsCjs",
+    "build": "rollup -cw",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Wangdawei00/screeps_scripts.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Wangdawei00/screeps_scripts/issues"
+  },
+  "homepage": "https://github.com/Wangdawei00/screeps_scripts#readme",
+  "devDependencies": {
+    "@types/lodash": "^3.10.1",
+    "@types/screeps": "^3.3.3",
+    "rollup": "^3.26.3",
+    "rollup-plugin-clear": "^2.0.7",
+    "rollup-plugin-copy": "^3.4.0",
+    "rollup-plugin-screeps": "^1.0.1"
+  }
+}
