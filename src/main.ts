@@ -1,6 +1,8 @@
 import "./modules/prototype.creep"
-module.exports.loop = function () {
+import "./modules/prototype.spawn"
+import {errorMapper} from './modules/errorMapper'
 
+export const loop = errorMapper(function () {
     const standardConfigForSpawn = [WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE]
     const harvesterNum = 3;
     const upgraderNum = 4;
@@ -16,34 +18,7 @@ module.exports.loop = function () {
             console.log('Clearing non-existing creep memory:', name);
         }
     }
-    const harvesters = _.filter(Game.creeps, (creep) => creep.memory.role === 'harvester');
-    const upgraders = _.filter(Game.creeps, (creep) => creep.memory.role === 'upgrader');
-    const builders = _.filter(Game.creeps, (creep) => creep.memory.role === 'builder');
-    const repairers = _.filter(Game.creeps, (creep) => creep.memory.role === 'repairer');
-    if (harvesters.length < harvesterNum) {
-        newName = 'Harvester' + Game.time;
-        Game.spawns['Spawn1'].spawnCreep(standardConfigForSpawn, newName,
-            {memory: {role: 'harvester'}});
-    }
-
-    if (harvesters.length === harvesterNum && upgraders.length < upgraderNum) {
-        newName = 'Upgrader' + Game.time;
-        console.log('Spawning new upgrader: ' + newName);
-        Game.spawns['Spawn1'].spawnCreep(standardConfigForSpawn, newName,
-            {memory: {role: 'upgrader'}});
-    }
-    if (harvesters.length === harvesterNum && upgraders.length === upgraderNum && builders.length < builderNum) {
-        newName = 'Builder' + Game.time;
-        console.log('Spawning new builder: ' + newName);
-        Game.spawns['Spawn1'].spawnCreep(standardConfigForSpawn, newName,
-            {memory: {role: 'builder'}});
-    }
-    if (harvesters.length === harvesterNum && upgraders.length === upgraderNum && builders.length === builderNum
-        && repairers.length < repairerNum) {
-        newName = 'Repairer' + Game.time;
-        Game.spawns.Spawn1.spawnCreep(standardConfigForSpawn, newName,
-            {memory: {role: 'repairer'}});
-    }
+    Game.spawns['Spawn1'].SpawnCreepsIfNecessary();
     if (Game.spawns['Spawn1'].spawning) {
         const spawningCreep = Game.creeps[Game.spawns['Spawn1'].spawning.name];
         Game.spawns['Spawn1'].room.visual.text(
@@ -57,4 +32,4 @@ module.exports.loop = function () {
         const creep = Game.creeps[name];
         creep.runRole();
     }
-}
+});

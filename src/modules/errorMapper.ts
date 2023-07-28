@@ -1,3 +1,5 @@
+// @ts-ignore
+
 /**
  * 校正异常的堆栈信息
  *
@@ -10,7 +12,7 @@
 import {SourceMapConsumer} from 'source-map'
 
 // 缓存 SourceMap
-let consumer = null
+let consumer: SourceMapConsumer | null = null
 
 // 第一次报错时创建 sourceMap
 const getConsumer = function () {
@@ -29,9 +31,10 @@ const cache = {}
  * @param {Error | string} error 错误或原始追踪栈
  * @returns {string} 映射之后的源代码追踪栈
  */
-const sourceMappedStackTrace = function (error) {
+const sourceMappedStackTrace = function (error: Error) {
     const stack = error instanceof Error ? error.stack : error
     // 有缓存直接用
+    // @ts-ignore
     if (cache.hasOwnProperty(stack)) return cache[stack]
 
     const re = /^\s+at\s+(.+?\s+)?\(?([0-z._\-\\\/]+):(\d+):(\d+)\)?$/gm
@@ -39,7 +42,7 @@ const sourceMappedStackTrace = function (error) {
     let outStack = error.toString()
     console.log("ErrorMapper -> sourceMappedStackTrace -> outStack", outStack)
 
-    while ((match = re.exec(stack))) {
+    while ((match = re.exec(<string>stack))) {
         // 解析完成
         if (match[2] !== "main") break
 
@@ -62,6 +65,7 @@ const sourceMappedStackTrace = function (error) {
         }
     }
 
+    // @ts-ignore
     cache[stack] = outStack
     return outStack
 }
@@ -73,7 +77,7 @@ const sourceMappedStackTrace = function (error) {
  *
  * @param next 玩家代码
  */
-export const errorMapper = function (next) {
+export const errorMapper = function (next: () => void) {
     return () => {
         try {
             // 执行玩家代码
