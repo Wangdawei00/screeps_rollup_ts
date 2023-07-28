@@ -32,7 +32,7 @@ const cache = {}
  * @returns {string} 映射之后的源代码追踪栈
  */
 const sourceMappedStackTrace = function (error: Error) {
-    const stack = error instanceof Error ? error.stack : error
+    const stack = error.stack
     // 有缓存直接用
     // @ts-ignore
     if (cache.hasOwnProperty(stack)) return cache[stack]

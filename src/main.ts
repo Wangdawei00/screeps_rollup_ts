@@ -3,14 +3,6 @@ import "./modules/prototype.spawn"
 import {errorMapper} from './modules/errorMapper'
 
 export const loop = errorMapper(function () {
-    const standardConfigForSpawn = [WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE]
-    const harvesterNum = 3;
-    const upgraderNum = 4;
-    const builderNum = 4;
-    const repairerNum = 2;
-    // BuildRoad(Game.spawns["Spawn1"].room, Game.spawns["Spawn1"].pos, Game.flags['FarHarvest'].pos);
-    // BuildRoad(Game.spawns["Spawn1"].room, Game.spawns["Spawn1"].pos, Game.flags['ControllerRoadEndpoint'].pos);
-    let newName;
     let name;
     for (name in Memory.creeps) {
         if (!Game.creeps[name]) {
