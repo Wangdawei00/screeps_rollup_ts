@@ -6,7 +6,7 @@
   "scripts": {
     "push": "rollup -cw --environment DEST:main  --bundleConfigAsCjs",
     "local": "rollup -cw --environment DEST:local --bundleConfigAsCjs",
-    "build": "rollup -cw",
+    "build": "rollup -cw --bundleConfigAsCjs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -21,11 +21,16 @@
   },
   "homepage": "https://github.com/Wangdawei00/screeps_scripts#readme",
   "devDependencies": {
+    "@rollup/plugin-commonjs": "^25.0.3",
+    "@rollup/plugin-node-resolve": "^15.1.0",
     "@types/lodash": "^3.10.1",
     "@types/screeps": "^3.3.3",
     "rollup": "^3.26.3",
     "rollup-plugin-clear": "^2.0.7",
     "rollup-plugin-copy": "^3.4.0",
     "rollup-plugin-screeps": "^1.0.1"
+  },
+  "dependencies": {
+    "source-map": "^0.6.1"
   }
 }
