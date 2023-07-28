@@ -1,6 +1,8 @@
 import clear from 'rollup-plugin-clear'
 import screeps from 'rollup-plugin-screeps'
 import copy from 'rollup-plugin-copy'
+import resolve from "@rollup/plugin-node-resolve";
+import commonjs from "@rollup/plugin-commonjs";
 
 let config
 // 根据指定的目标获取对应的配置项
@@ -41,6 +43,10 @@ export default {
     plugins: [
         // 清除上次编译成果
         clear({ targets: ["dist"] }),
+        // 打包依赖
+        resolve(),
+        // 模块化依赖
+        commonjs(),
         // 执行上传或者复制
         pluginDeploy
     ]
