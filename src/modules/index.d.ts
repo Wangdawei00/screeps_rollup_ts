@@ -28,3 +28,10 @@ interface StructureSpawn {
 interface SpawnMemory {
     minCreeps: Record<string, number>
 }
+
+interface Memory {
+    sourceContainerIds: Array<Id<StructureContainer>>;
+    sinkContainerIds: Array<Id<StructureContainer>>;
+    sourceContainerFlagNames: Array<string>;
+    sinkContainerFlagNames: Array<string>;
+}
