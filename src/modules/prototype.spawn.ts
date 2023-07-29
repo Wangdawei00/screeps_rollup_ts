@@ -1,4 +1,4 @@
-const listOfRoles = ['harvester', 'upgrader', 'builder', 'repairer', 'lorry'];
+const listOfRoles = ['lorry','harvester', 'upgrader', 'builder', 'repairer'];
 
 StructureSpawn.prototype.SpawnCreepsIfNecessary =
     function () {
