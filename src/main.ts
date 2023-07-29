@@ -3,7 +3,7 @@ import "./modules/prototype.spawn"
 import {errorMapper} from './modules/errorMapper'
 
 export const loop = errorMapper(function () {
-    const sourceContainerFlagNames = ["SourceContainer1", "SourceContainer2"];
+    const sourceContainerFlagNames = ["SourceContainer1", "SourceContainer2","SourceContainer3"];
     const sinkContainerFlagNames = ["ControllerRoadEndpoint"];
     if (!Memory.sourceContainerFlagNames || Memory.sourceContainerFlagNames.length !== sourceContainerFlagNames.length ||
         !sourceContainerFlagNames.every((value, index) =>

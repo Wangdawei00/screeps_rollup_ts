@@ -5,9 +5,9 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         const minCreeps: Record<string, number> = {
             harvester: 0,
             upgrader: 0,
-            builder: 4,
+            builder: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 4 : 0,
             repairer: 1,
-            lorry: 5,
+            lorry: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 2 : 9,
             reserver: 0,
             longDistanceHarvester: 6,
         }

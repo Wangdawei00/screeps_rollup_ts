@@ -21,8 +21,10 @@ const roleLongDistanceHarvester = {
                     // the second argument for findClosestByPath is an object which takes
                     // a property called filter which can be a function
                     // we use the arrow operator to define it
-                    filter: (s) => s.structureType == STRUCTURE_CONTAINER &&
-                        Memory.sourceContainerIds.includes(s.id) && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+                    filter: (s) => (s.structureType === STRUCTURE_EXTENSION ||
+                            s.structureType === STRUCTURE_SPAWN || s.structureType === STRUCTURE_TOWER || (
+                                s.structureType == STRUCTURE_CONTAINER && Memory.sourceContainerIds.includes(s.id)))
+                        && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
                 });
 
                 // if we found one

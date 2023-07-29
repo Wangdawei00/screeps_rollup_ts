@@ -1,7 +1,7 @@
 export function withdrawFromContainer(creep: Creep) {
     const source = creep.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
-            structure.store.getUsedCapacity(RESOURCE_ENERGY) > 200 &&
+            structure.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY) &&
             Memory.sourceContainerIds.includes(structure.id)
     });
     if (source) {

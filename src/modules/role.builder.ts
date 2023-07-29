@@ -25,7 +25,15 @@ const roleBuilder = {
                 roleRepairer.run(creep);
             }
         } else {
-            withdrawFromContainer(creep);
+            const resource = creep.room.find(FIND_DROPPED_RESOURCES);
+            if (resource.length > 0) {
+                if (creep.pickup(resource[0]) === ERR_NOT_IN_RANGE) {
+                    creep.moveTo(resource[0], {visualizePathStyle: {stroke: '#ffaa00'}});
+                }
+            } else {
+                withdrawFromContainer(creep);
+
+            }
         }
     }
 };
