@@ -3,7 +3,7 @@ import "./modules/prototype.spawn"
 import {errorMapper} from './modules/errorMapper'
 
 export const loop = errorMapper(function () {
-    const sourceContainerFlagNames = ["SourceContainer1", "SourceContainer2"];
+    const sourceContainerFlagNames = ["SourceContainer1", "SourceContainer2","SourceContainer3"];
     const sinkContainerFlagNames = ["ControllerRoadEndpoint"];
     if (!Memory.sourceContainerFlagNames || Memory.sourceContainerFlagNames.length !== sourceContainerFlagNames.length ||
         !sourceContainerFlagNames.every((value, index) =>
@@ -38,6 +38,15 @@ export const loop = errorMapper(function () {
         if (!Game.creeps[name]) {
             delete Memory.creeps[name];
             console.log('Clearing non-existing creep memory:', name);
+        }
+    }
+    const towers: StructureTower[] = Game.spawns['Spawn1'].room.find(FIND_STRUCTURES, {
+        filter: (structure) => structure.structureType === STRUCTURE_TOWER
+    });
+    for (const tower of towers) {
+        const closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+        if (closestHostile) {
+            tower.attack(closestHostile)
         }
     }
     Game.spawns['Spawn1'].SpawnCreepsIfNecessary();

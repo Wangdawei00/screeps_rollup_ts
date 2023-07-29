@@ -4,7 +4,10 @@ import roleBuilder from "@/modules/role.builder";
 import roleRepairer from "@/modules/role.repairer";
 import roleMiner from "@/modules/role.miner";
 import roleLorry from "@/modules/role.lorry";
+import roleReserver from "@/modules/role.reserver";
 import roleAdvancedUpgrader from "@/modules/role.advancedUpgrader";
+import roleLongDistanceHarvester from "@/modules/role.longDistanceHarvester";
+
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "harvester": roleHarvester,
     "upgrader": roleUpgrader,
@@ -12,7 +15,9 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     "repairer": roleRepairer,
     "miner": roleMiner,
     "lorry": roleLorry,
-    "advancedUpgrader": roleAdvancedUpgrader
+    "advancedUpgrader": roleAdvancedUpgrader,
+    "reserver": roleReserver,
+    "longDistanceHarvester": roleLongDistanceHarvester
 };
 
 Creep.prototype.runRole = function () {

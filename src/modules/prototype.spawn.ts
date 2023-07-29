@@ -1,13 +1,15 @@
-const listOfRoles = ['lorry', 'harvester', 'upgrader', 'builder', 'repairer'];
+const listOfRoles = ['lorry', 'harvester', 'upgrader', 'builder', 'repairer', 'reserver', "longDistanceHarvester"];
 
 StructureSpawn.prototype.SpawnCreepsIfNecessary =
     function () {
         const minCreeps: Record<string, number> = {
-            harvester: 1,
+            harvester: 0,
             upgrader: 0,
-            builder: 4,
-            repairer: 2,
-            lorry: 8,
+            builder: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 4 : 0,
+            repairer: 1,
+            lorry: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 2 : 9,
+            reserver: 0,
+            longDistanceHarvester: 6,
         }
         const room = this.room;
         // find all creeps in room
@@ -19,8 +21,11 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         /** @type {Object.<string, number>} */
         let numberOfCreeps: Record<string, number> = {};
         for (const role of listOfRoles) {
-            numberOfCreeps[role] = _.sum(creepsInRoom, c => c.memory.role === role ? 1 : 0);
-            // numberOfCreeps[role] = _.sum(creepsInRoom, (c) => c.memory.role == role);
+            if (role === 'reserver' || role === 'longDistanceHarvester') {
+                numberOfCreeps[role] = _.sum(Game.creeps, c => c.memory.role === role ? 1 : 0);
+            } else {
+                numberOfCreeps[role] = _.sum(creepsInRoom, c => c.memory.role === role ? 1 : 0);
+            }
         }
         let maxEnergy = room.energyCapacityAvailable;
         let name = undefined;
@@ -67,7 +72,6 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
             // check for advanced upgraders
             const advancedUpgraderFlagNames = ["UpgraderPosition1", "UpgraderPosition2", "ControllerRoadEndpoint"];
             for (const flagName of advancedUpgraderFlagNames) {
-                const flag = Game.flags[flagName];
                 if (!_.some(creepsInRoom, c => c.memory.role == 'advancedUpgrader' && c.memory.upgradePosFlagName == flagName)) {
                     name = this.CreateAdvancedUpgrader(flagName);
                     break;
@@ -90,6 +94,15 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                 if (numberOfCreeps[role] < minCreeps[role]) {
                     if (role == 'lorry') {
                         name = this.CreateLorry(150);
+                    } else if (role === 'reserver') {
+                        name = this.CreateReserver('E56S53');
+                    } else if (role === 'longDistanceHarvester') {
+                        if (Memory.lastLongDistanceTargetRoomName && Memory.lastLongDistanceTargetRoomName === 'E56S53') {
+                            Memory.lastLongDistanceTargetRoomName = 'E57S53';
+                        } else {
+                            Memory.lastLongDistanceTargetRoomName = 'E56S53';
+                        }
+                        name = this.CreateLongDistanceHarvester(Memory.lastLongDistanceTargetRoomName, 'E55S53', maxEnergy);
                     } else {
                         name = this.CreateCustomCreep(maxEnergy, role);
                     }
@@ -100,18 +113,6 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
 
         // // if none of the above caused a spawn command check for LongDistanceHarvesters
         // /** @type {Object.<string, number>} */
-        // let numberOfLongDistanceHarvesters :Record<any, any>= {};
-        // if (name == undefined) {
-        //     // count the number of long distance harvesters globally
-        //     for (let roomName in this.memory.minLongDistanceHarvesters) {
-        //         numberOfLongDistanceHarvesters[roomName] = _.sum(Game.creeps, (c) =>
-        //             c.memory.role == 'longDistanceHarvester' && c.memory.target == roomName)
-        //
-        //         if (numberOfLongDistanceHarvesters[roomName] < this.memory.minLongDistanceHarvesters[roomName]) {
-        //             name = this.createLongDistanceHarvester(maxEnergy, 2, room.name, roomName, 0);
-        //         }
-        //     }
-        // }
 
         // print name to console if spawning was a success
         if (name != undefined && _.isString(name)) {
@@ -198,3 +199,36 @@ StructureSpawn.prototype.CreateAdvancedUpgrader = function (flagName: string) {
         return name;
     }
 }
+
+StructureSpawn.prototype.CreateReserver = function (targetRoomName: string) {
+    const config = [CLAIM, CLAIM, MOVE, MOVE]
+    const name = 'Reserver' + Game.time.toString();
+    if (this.spawnCreep(config, name, {memory: {role: 'reserver', target: targetRoomName}}) == OK) {
+        return name;
+    }
+}
+
+StructureSpawn.prototype.CreateLongDistanceHarvester =
+    function (targetRoomName: string, homeRoomName: string, energy: number) {
+        const config: BodyPartConstant[] = [];
+        const numberOfWorkParts = Math.floor(energy / 250);
+        for (let i = 0; i < numberOfWorkParts; i++) {
+            config.push(WORK);
+        }
+        for (let i = 0; i < numberOfWorkParts; i++) {
+            config.push(CARRY);
+        }
+        for (let i = 0; i < numberOfWorkParts * 2; i++) {
+            config.push(MOVE);
+        }
+        const name = 'LongDistanceHarvester' + Game.time.toString();
+        if (this.spawnCreep(config, name, {
+            memory: {
+                role: 'longDistanceHarvester',
+                home: homeRoomName,
+                target: targetRoomName,
+            }
+        }) == OK) {
+            return name;
+        }
+    }
