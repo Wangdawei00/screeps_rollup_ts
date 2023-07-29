@@ -40,6 +40,15 @@ export const loop = errorMapper(function () {
             console.log('Clearing non-existing creep memory:', name);
         }
     }
+    const towers: StructureTower[] = Game.spawns['Spawn1'].room.find(FIND_STRUCTURES, {
+        filter: (structure) => structure.structureType === STRUCTURE_TOWER
+    });
+    for (const tower of towers) {
+        const closestHostile = tower.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
+        if (closestHostile) {
+            tower.attack(closestHostile)
+        }
+    }
     Game.spawns['Spawn1'].SpawnCreepsIfNecessary();
     if (Game.spawns['Spawn1'].spawning) {
         const spawningCreep = Game.creeps[Game.spawns['Spawn1'].spawning.name];

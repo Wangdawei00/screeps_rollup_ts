@@ -7,6 +7,8 @@ interface CreepMemory {
     containerId?: Id<StructureContainer>;
     transporting?: boolean;
     upgradePosFlagName?: string;
+    target?: string;//room name
+    home?: string;//room name
 }
 
 interface Creep {
@@ -26,6 +28,10 @@ interface StructureSpawn {
     CreateCustomCreep(energy: number, roleName: string): string;
 
     CreateAdvancedUpgrader(flagName: string): string | undefined;
+
+    CreateReserver(flagName: string): string | undefined;
+
+    CreateLongDistanceHarvester(target: string, home: string, energy: number): string | undefined;
 }
 
 interface SpawnMemory {
@@ -37,4 +43,5 @@ interface Memory {
     sinkContainerIds: Array<Id<StructureContainer>>;
     sourceContainerFlagNames: Array<string>;
     sinkContainerFlagNames: Array<string>;
+    lastLongDistanceTargetRoomName:string
 }
