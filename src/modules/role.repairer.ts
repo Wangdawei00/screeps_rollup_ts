@@ -1,4 +1,5 @@
 import roleUpgrader from "./role.upgrader";
+import {withdrawFromContainer} from "@/modules/utils";
 const roleRepairer = {
     run: (creep:Creep) => {
         if (creep.memory.working && creep.store[RESOURCE_ENERGY] === 0) {
@@ -20,12 +21,7 @@ const roleRepairer = {
                 roleUpgrader.run(creep);
             }
         } else {
-            const source = creep.pos.findClosestByPath(FIND_SOURCES)
-            if (source) {
-                if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(source);
-                }
-            }
+            withdrawFromContainer(creep)
         }
     }
 }

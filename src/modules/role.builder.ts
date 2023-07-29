@@ -1,4 +1,5 @@
-import roleUpgrader from "./role.upgrader";
+import roleRepairer from "./role.repairer";
+import {withdrawFromContainer} from "@/modules/utils";
 
 const roleBuilder = {
 
@@ -21,15 +22,10 @@ const roleBuilder = {
                     creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
                 }
             } else {
-                roleUpgrader.run(creep);
+                roleRepairer.run(creep);
             }
         } else {
-            const source = creep.pos.findClosestByPath(FIND_SOURCES)
-            if (source) {
-                if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(source);
-                }
-            }
+            withdrawFromContainer(creep);
         }
     }
 };
