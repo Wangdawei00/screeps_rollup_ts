@@ -3,6 +3,36 @@ import "./modules/prototype.spawn"
 import {errorMapper} from './modules/errorMapper'
 
 export const loop = errorMapper(function () {
+    const sourceContainerFlagNames = ["SourceContainer1", "SourceContainer2"];
+    const sinkContainerFlagNames = ["ControllerRoadEndpoint"];
+    if (!Memory.sourceContainerFlagNames || Memory.sourceContainerFlagNames.length !== sourceContainerFlagNames.length ||
+        !sourceContainerFlagNames.every((value, index) =>
+            value === Memory.sourceContainerFlagNames[index])) {
+        Memory.sourceContainerFlagNames = sourceContainerFlagNames;
+        Memory.sourceContainerIds = [];
+        for (const sourceContainerFlag of sourceContainerFlagNames) {
+            const sourceContainer = Game.flags[sourceContainerFlag].pos.findInRange(FIND_STRUCTURES, 1, {
+                filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
+            });
+            if (sourceContainer.length > 0) {
+                Memory.sourceContainerIds.push(<Id<StructureContainer>>sourceContainer[0].id);
+            }
+        }
+    }
+    if (!Memory.sinkContainerFlagNames || Memory.sinkContainerFlagNames.length !== sinkContainerFlagNames.length ||
+        !sinkContainerFlagNames.every((value, index) =>
+            value === Memory.sinkContainerFlagNames[index])) {
+        Memory.sinkContainerFlagNames = sinkContainerFlagNames;
+        Memory.sinkContainerIds = [];
+        for (const sinkContainerFlag of sinkContainerFlagNames) {
+            const sinkContainer = Game.flags[sinkContainerFlag].pos.findInRange(FIND_STRUCTURES, 1, {
+                filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
+            });
+            if (sinkContainer.length > 0) {
+                Memory.sinkContainerIds.push(<Id<StructureContainer>>sinkContainer[0].id);
+            }
+        }
+    }
     let name;
     for (name in Memory.creeps) {
         if (!Game.creeps[name]) {

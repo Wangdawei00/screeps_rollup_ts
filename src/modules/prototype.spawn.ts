@@ -1,10 +1,10 @@
-const listOfRoles = ['lorry','harvester', 'upgrader', 'builder', 'repairer'];
+const listOfRoles = ['lorry', 'harvester', 'upgrader', 'builder', 'repairer'];
 
 StructureSpawn.prototype.SpawnCreepsIfNecessary =
     function () {
         const minCreeps: Record<string, number> = {
             harvester: 1,
-            upgrader: 4,
+            upgrader: 0,
             builder: 4,
             repairer: 2,
             lorry: 8,
@@ -63,6 +63,17 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         }
 
         // if none of the above caused a spawn command check for other roles
+        if (name == undefined) {
+            // check for advanced upgraders
+            const advancedUpgraderFlagNames = ["UpgraderPosition1", "UpgraderPosition2", "ControllerRoadEndpoint"];
+            for (const flagName of advancedUpgraderFlagNames) {
+                const flag = Game.flags[flagName];
+                if (!_.some(creepsInRoom, c => c.memory.role == 'advancedUpgrader' && c.memory.upgradePosFlagName == flagName)) {
+                    name = this.CreateAdvancedUpgrader(flagName);
+                    break;
+                }
+            }
+        }
         if (name == undefined) {
             for (let role of listOfRoles) {
                 // check for claim order
@@ -132,12 +143,9 @@ StructureSpawn.prototype.CreateMiner =
                         containerId: <Id<StructureContainer>>containerId
                     }
                 });
+                return name;
             }
-
-
         }
-        this.spawnCreep([WORK, WORK, WORK, WORK, WORK, MOVE], name, {memory: {role: 'miner', sourceId: sourceId}});
-        return name;
     };
 
 
@@ -181,4 +189,12 @@ StructureSpawn.prototype.CreateCustomCreep = function (energy: number, roleName:
     const name = roleName + Game.time.toString();
     this.spawnCreep(body, name, {memory: {role: roleName, working: false}});
     return name;
+}
+
+StructureSpawn.prototype.CreateAdvancedUpgrader = function (flagName: string) {
+    const config = [WORK, WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE]
+    const name = 'AdvancedUpgrader' + Game.time.toString();
+    if (this.spawnCreep(config, name, {memory: {role: 'advancedUpgrader', upgradePosFlagName: flagName}}) == OK) {
+        return name;
+    }
 }
