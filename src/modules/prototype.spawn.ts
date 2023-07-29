@@ -1,13 +1,13 @@
-const listOfRoles = ['harvester', 'upgrader', 'builder', 'repairer', 'lorry'];
+const listOfRoles = ['lorry','harvester', 'upgrader', 'builder', 'repairer'];
 
 StructureSpawn.prototype.SpawnCreepsIfNecessary =
     function () {
         const minCreeps: Record<string, number> = {
-            harvester: 3,
+            harvester: 1,
             upgrader: 4,
             builder: 4,
             repairer: 2,
-            lorry: 2,
+            lorry: 8,
         }
         const room = this.room;
         // find all creeps in room
@@ -118,6 +118,24 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
 StructureSpawn.prototype.CreateMiner =
     function (sourceId: Id<Source>) {
         const name = 'Miner' + Game.time.toString()
+        const source = Game.getObjectById(sourceId);
+        if (source !== null) {
+            const containers = source.pos.findInRange(FIND_STRUCTURES, 1, {
+                filter: s => s.structureType == STRUCTURE_CONTAINER
+            })
+            if (containers.length > 0) {
+                const containerId = containers[0].id;
+                this.spawnCreep([WORK, WORK, WORK, WORK, WORK, MOVE], name, {
+                    memory: {
+                        role: 'miner',
+                        sourceId: sourceId,
+                        containerId: <Id<StructureContainer>>containerId
+                    }
+                });
+            }
+
+
+        }
         this.spawnCreep([WORK, WORK, WORK, WORK, WORK, MOVE], name, {memory: {role: 'miner', sourceId: sourceId}});
         return name;
     };

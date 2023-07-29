@@ -30,7 +30,7 @@ const roleLorry = {
 
             });
             if (source) {
-                if (creep.transfer(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                if (creep.withdraw(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                     creep.moveTo(source, {visualizePathStyle: {stroke: '#ffaa00'}});
                 }
             }
