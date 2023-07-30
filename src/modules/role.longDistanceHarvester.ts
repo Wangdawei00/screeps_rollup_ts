@@ -1,5 +1,3 @@
-import {MoveFromHomeToTarget, MoveFromTargetToHome} from "@/modules/utils";
-
 const roleLongDistanceHarvester = {
     run: function (creep: Creep) {
         if (creep.memory.working && creep.store[RESOURCE_ENERGY] === 0) {
@@ -23,7 +21,7 @@ const roleLongDistanceHarvester = {
                     // we use the arrow operator to define it
                     filter: (s) => (s.structureType === STRUCTURE_EXTENSION ||
                             s.structureType === STRUCTURE_SPAWN || s.structureType === STRUCTURE_TOWER || (
-                                s.structureType == STRUCTURE_CONTAINER && Memory.sourceContainerIds.includes(s.id))
+                                s.structureType == STRUCTURE_CONTAINER && creep.room.memory.sourceContainerIds.includes(s.id))
                         || s.structureType == STRUCTURE_STORAGE)
                         && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
                 });
@@ -39,7 +37,7 @@ const roleLongDistanceHarvester = {
             }
             // if not in home room...
             else {
-                MoveFromTargetToHome(creep);
+                creep.MoveToHomeRoom()
             }
         }
         // if creep is supposed to harvest energy from source
@@ -66,7 +64,7 @@ const roleLongDistanceHarvester = {
             }
             // if not in target room
             else {
-                MoveFromHomeToTarget(creep);
+                creep.MoveToTargetRoom()
             }
         }
     }

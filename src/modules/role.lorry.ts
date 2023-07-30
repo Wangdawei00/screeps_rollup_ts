@@ -1,5 +1,3 @@
-import {withdrawFromContainer, withdrawFromContainerOrStorage} from "@/modules/utils";
-
 const roleLorry = {
 
     run: (creep: Creep) => {
@@ -16,7 +14,7 @@ const roleLorry = {
                             structure.structureType === STRUCTURE_SPAWN ||
                             structure.structureType === STRUCTURE_TOWER ||
                             (structure.structureType === STRUCTURE_CONTAINER &&
-                                Memory.sinkContainerIds.includes(structure.id))) &&
+                                creep.room.memory.sinkContainerIds.includes(structure.id))) &&
                         structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
                 }
             });
@@ -34,9 +32,9 @@ const roleLorry = {
             }
         } else {
             if (creep.room.find(FIND_MY_CONSTRUCTION_SITES)) {
-                withdrawFromContainerOrStorage(creep);
+                creep.WithdrawFromContainerOrStorage();
             } else {
-                withdrawFromContainer(creep);
+                creep.WithdrawFromContainer();
             }
         }
     }

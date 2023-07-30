@@ -1,5 +1,7 @@
 const listOfRoles = ['lorry', 'harvester', 'upgrader', 'builder', 'repairer', 'reserver',
-    "longDistanceHarvester", "garbageCollector", "meleeAttacker", "rangedAttacker","controllerAttacker"];
+    "longDistanceHarvester", "garbageCollector", "meleeAttacker", "rangedAttacker", "controllerAttacker", "claimer",
+    "transferer"];
+const specialLorryRoles = ["toStorageLorry", "fromStorageLorry"];
 
 StructureSpawn.prototype.SpawnCreepsIfNecessary =
     function () {
@@ -9,14 +11,21 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
             upgrader: 0,
             builder: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 4 : 0,
             repairer: 0,
-            lorry: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 2 : 7,
+            lorry: 0, //this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 0 : 0,
             reserver: 0,
             longDistanceHarvester: 6,
             garbageCollector: 1,
             meleeAttacker: invasionRooms.length > 0 ? 1 : 0,
             rangedAttacker: invasionRooms.length > 0 ? 0 : 0,
             controllerAttacker: invasionRooms.length > 0 ? 1 : 0,
+            claimer: 0,
+            toStorageLorry: 2,
+            fromStorageLorry: 4,
+            transferer: 2
         }
+
+        const transferWorkerRole = ['toStorageLorry', 'fromStorageLorry', 'transferer', 'lorry', "garbageCollector"]
+        const crossRoomRoles = ['longDistanceHarvester', 'reserver', 'claimer', 'meleeAttacker', 'rangedAttacker', 'controllerAttacker']
         const room = this.room;
         // find all creeps in room
         let creepsInRoom = room.find(FIND_MY_CREEPS);
@@ -27,7 +36,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         /** @type {Object.<string, number>} */
         let numberOfCreeps: Record<string, number> = {};
         for (const role of listOfRoles) {
-            if (role === 'reserver' || role === 'longDistanceHarvester' || role === 'meleeAttacker' || role === 'rangedAttacker'|| role === 'controllerAttacker') {
+            if (crossRoomRoles.includes(role)) {
                 numberOfCreeps[role] = _.sum(Game.creeps, c => c.memory.role === role ? 1 : 0);
             } else {
                 numberOfCreeps[role] = _.sum(creepsInRoom, c => c.memory.role === role ? 1 : 0);
@@ -36,23 +45,34 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         let maxEnergy = room.energyCapacityAvailable;
         let name = undefined;
 
-        // if no harvesters are left AND either no miners or no lorries are left
-        //  create a backup creep
-        if (numberOfCreeps['harvester'] == 0 && numberOfCreeps['lorry'] == 0) {
-            // if there are still miners or enough energy in Storage left
-            if (numberOfCreeps['miner'] > 0 || (room.storage != undefined &&
-                room.storage.store[RESOURCE_ENERGY] >= 150 + 550)) {
-                // create a lorry
-                name = this.CreateLorryOrGarbageCollector(300, "lorry");
+        if (this.room.storage) {
+            if (numberOfCreeps['harvester'] === 0 && numberOfCreeps['transferer'] === 0) {
+                if (numberOfCreeps['miner'] > 0 || (this.room.storage.store.getUsedCapacity(RESOURCE_ENERGY) >= 300 + 550)) {
+                    name = this.CreateTransportWorker(300, "transferer", null, this.room.name);
+                } else {
+                    name = this.CreateCustomCreep(room.energyAvailable, 'harvester');
+                }
             }
-            // if there is no miner and not enough energy in Storage left
-            else {
-                // create a harvester because it can work on its own
-                name = this.CreateCustomCreep(room.energyAvailable, 'harvester');
+        } else {
+            if (numberOfCreeps['harvester'] == 0 && numberOfCreeps['lorry'] == 0) {
+                // if there are still miners or enough energy in Storage left
+                if (numberOfCreeps['miner'] > 0 || (room.storage != undefined &&
+                    room.storage.store[RESOURCE_ENERGY] >= 150 + 550)) {
+                    // create a lorry
+                    name = this.CreateTransportWorker(300, "lorry", null, this.room.name);
+                }
+                // if there is no miner and not enough energy in Storage left
+                else {
+                    // create a harvester because it can work on its own
+                    name = this.CreateCustomCreep(room.energyAvailable, 'harvester');
+                }
             }
         }
+        // if no harvesters are left AND either no miners or no lorries are left
+        //  create a backup creep
+
         // if no backup creep is required
-        else {
+        if (name == undefined) {
             // check if all sources have miners
             let sources = room.find(FIND_SOURCES);
             // iterate over all sources
@@ -86,20 +106,9 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         }
         if (name == undefined) {
             for (let role of listOfRoles) {
-                // check for claim order
-                // if (role == 'claimer' && this.memory.claimRoom != undefined) {
-                //     // try to spawn a claimer
-                //     name = this.createClaimer(this.memory.claimRoom);
-                //     // if that worked
-                //     if (name != undefined && _.isString(name)) {
-                //         // delete the claim order
-                //         delete this.memory.claimRoom;
-                //     }
-                // }
-                // if no claim order was found, check other roles
                 if (numberOfCreeps[role] < minCreeps[role]) {
-                    if (role == 'lorry'|| role == 'garbageCollector') {
-                        name = this.CreateLorryOrGarbageCollector(300, role);
+                    if (transferWorkerRole.includes(role)) {
+                        name = this.CreateTransportWorker(300, role, null, this.room.name);
                     } else if (role === 'reserver') {
                         name = this.CreateReserverOrControllerAttacker('E57S53', role);
                     } else if (role === 'longDistanceHarvester') {
@@ -120,6 +129,21 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                     }
                     break;
                 }
+            }
+        }
+        if (name === undefined) {
+            for (let role of specialLorryRoles) {
+                const ids = role === "fromStorageLorry" ? this.room.memory.sinkContainerIds : this.room.memory.sourceContainerIds;
+                for (const containerId of ids) {
+                    const num = _.sum(Game.creeps, (creep) => {
+                        return creep.memory.role === role && creep.memory.containerId === containerId ? 1 : 0;
+                    });
+                    if (num < minCreeps[role]) {
+                        name = this.CreateTransportWorker(300, role, containerId, this.room.name);
+                        break;
+                    }
+                }
+                if (name) break;
             }
         }
 
@@ -162,8 +186,8 @@ StructureSpawn.prototype.CreateMiner =
     };
 
 
-StructureSpawn.prototype.CreateLorryOrGarbageCollector =
-    function (energy: number, role: string = "lorry") {
+StructureSpawn.prototype.CreateTransportWorker =
+    function (energy: number, role: string = "lorry", containerId: Id<StructureContainer> | null, homeRoomName) {
         // create a body with twice as many CARRY as MOVE parts
         let numberOfParts = Math.floor(energy / 150);
         // make sure the creep is not too big (more than 50 parts)
@@ -178,7 +202,14 @@ StructureSpawn.prototype.CreateLorryOrGarbageCollector =
 
         // create creep with the created body and the role 'lorry'
         const name = role + Game.time.toString();
-        this.spawnCreep(body, name, {memory: {role: role, working: false}});
+        this.spawnCreep(body, name, {
+            memory: {
+                role: role,
+                working: false,
+                containerId: containerId ? containerId : undefined,
+                home: homeRoomName
+            }
+        });
         return name;
     };
 

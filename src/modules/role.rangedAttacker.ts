@@ -1,9 +1,7 @@
-import {MoveFromHomeToTarget} from '@/modules/utils'
-
 const roleRangedAttacker = {
     run: function (creep: Creep) {
         if (creep.room.name !== creep.memory.target) {
-            MoveFromHomeToTarget(creep);
+            creep.MoveToTargetRoom()
         } else {
             if (creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3).length > 2) {
                 creep.rangedMassAttack();

@@ -11,6 +11,10 @@ import roleGarbageCollector from "@/modules/role.garbageCollector";
 import roleMeleeAttacker from "@/modules/role.meleeAttacker";
 import roleRangedAttacker from "@/modules/role.rangedAttacker";
 import roleControllerAttacker from "@/modules/role.controllerAttacker";
+import roleClaimer from "@/modules/role.claimer";
+import roleToStorageLorry from "@/modules/role.toStorageLorry";
+import roleFromStorageLorry from "@/modules/role.fromStorageLorry";
+import roleTransferer from "@/modules/role.transferer";
 
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "harvester": roleHarvester,
@@ -26,6 +30,10 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     "meleeAttacker": roleMeleeAttacker,
     "rangedAttacker": roleRangedAttacker,
     "controllerAttacker": roleControllerAttacker,
+    "claimer": roleClaimer,
+    "toStorageLorry": roleToStorageLorry,
+    "fromStorageLorry": roleFromStorageLorry,
+    "transferer": roleTransferer
 };
 
 Creep.prototype.runRole = function () {
@@ -67,3 +75,60 @@ Creep.prototype.getEnergy =
 
         }
     };
+
+
+Creep.prototype.MoveToTargetRoom = function () {
+    if (this.memory.target && this.room.name !== this.memory.target) {
+        const exit = this.room.findExitTo(this.memory.target);
+        if (exit !== ERR_NO_PATH && exit !== ERR_INVALID_ARGS) {
+            const exitPoint = this.pos.findClosestByRange(exit);
+            if (exitPoint) {
+                this.moveTo(exitPoint);
+            }
+        }
+    }
+}
+
+Creep.prototype.MoveToHomeRoom = function () {
+    if (this.memory.home && this.room.name !== this.memory.home) {
+        const exit = this.room.findExitTo(this.memory.home);
+        if (exit !== ERR_NO_PATH && exit !== ERR_INVALID_ARGS) {
+            const exitPoint = this.pos.findClosestByRange(exit);
+            if (exitPoint) {
+                this.moveTo(exitPoint);
+            }
+        }
+    }
+}
+
+Creep.prototype.WithdrawFromContainerOrStorage = function () {
+    const source = this.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
+            structure.store.getUsedCapacity(RESOURCE_ENERGY) > this.store.getFreeCapacity() &&
+            this.room.memory.sourceContainerIds.includes(structure.id)
+    });
+    if (source) {
+        if (this.withdraw(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+            this.moveTo(source);
+        }
+    } else {
+        if (this.room.storage && this.room.storage.store[RESOURCE_ENERGY] > this.store.getFreeCapacity(RESOURCE_ENERGY)) {
+            if (this.withdraw(this.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                this.moveTo(this.room.storage)
+            }
+        }
+    }
+}
+
+Creep.prototype.WithdrawFromContainer = function () {
+    const source = this.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
+            structure.store.getUsedCapacity(RESOURCE_ENERGY) > this.store.getCapacity(RESOURCE_ENERGY) &&
+            this.room.memory.sourceContainerIds.includes(structure.id)
+    });
+    if (source) {
+        if (this.withdraw(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+            this.moveTo(source);
+        }
+    }
+}
