@@ -37,7 +37,7 @@ const roleLongDistanceHarvester = {
             }
             // if not in home room...
             else {
-                creep.MoveFromTargetToHome()
+                creep.MoveToHomeRoom()
             }
         }
         // if creep is supposed to harvest energy from source
@@ -64,7 +64,7 @@ const roleLongDistanceHarvester = {
             }
             // if not in target room
             else {
-                creep.MoveFromHomeToTarget()
+                creep.MoveToTargetRoom()
             }
         }
     }

@@ -1,7 +1,7 @@
 const roleReserver = {
     run: (creep: Creep) => {
         if (creep.memory.target && creep.room.name !== creep.memory.target) {
-            creep.MoveFromHomeToTarget()
+            creep.MoveToTargetRoom()
         } else {
             const controller = creep.room.controller;
             if (controller) {

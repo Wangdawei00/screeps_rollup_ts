@@ -1,7 +1,7 @@
 const roleMeleeAttacker = {
     run: function (creep: Creep) {
         if (creep.room.name !== creep.memory.target) {
-            creep.MoveFromHomeToTarget()
+            creep.MoveToTargetRoom()
         } else {
             const target = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
             if (target) {

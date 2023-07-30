@@ -11,6 +11,10 @@ import roleGarbageCollector from "@/modules/role.garbageCollector";
 import roleMeleeAttacker from "@/modules/role.meleeAttacker";
 import roleRangedAttacker from "@/modules/role.rangedAttacker";
 import roleControllerAttacker from "@/modules/role.controllerAttacker";
+import roleClaimer from "@/modules/role.claimer";
+import roleToStorageLorry from "@/modules/role.toStorageLorry";
+import roleFromStorageLorry from "@/modules/role.fromStorageLorry";
+import roleTransferer from "@/modules/role.transferer";
 
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "harvester": roleHarvester,
@@ -26,6 +30,10 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     "meleeAttacker": roleMeleeAttacker,
     "rangedAttacker": roleRangedAttacker,
     "controllerAttacker": roleControllerAttacker,
+    "claimer": roleClaimer,
+    "toStorageLorry": roleToStorageLorry,
+    "fromStorageLorry": roleFromStorageLorry,
+    "transferer": roleTransferer
 };
 
 Creep.prototype.runRole = function () {
@@ -69,7 +77,7 @@ Creep.prototype.getEnergy =
     };
 
 
-Creep.prototype.MoveFromHomeToTarget = function () {
+Creep.prototype.MoveToTargetRoom = function () {
     if (this.memory.target && this.room.name !== this.memory.target) {
         const exit = this.room.findExitTo(this.memory.target);
         if (exit !== ERR_NO_PATH && exit !== ERR_INVALID_ARGS) {
@@ -81,7 +89,7 @@ Creep.prototype.MoveFromHomeToTarget = function () {
     }
 }
 
-Creep.prototype.MoveFromTargetToHome = function () {
+Creep.prototype.MoveToHomeRoom = function () {
     if (this.memory.home && this.room.name !== this.memory.home) {
         const exit = this.room.findExitTo(this.memory.home);
         if (exit !== ERR_NO_PATH && exit !== ERR_INVALID_ARGS) {
