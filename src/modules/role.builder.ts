@@ -1,5 +1,5 @@
 import roleRepairer from "./role.repairer";
-import {withdrawFromContainer} from "@/modules/utils";
+import {withdrawFromContainerOrStorage} from "@/modules/utils";
 
 const roleBuilder = {
 
@@ -25,15 +25,7 @@ const roleBuilder = {
                 roleRepairer.run(creep);
             }
         } else {
-            const resource = creep.room.find(FIND_DROPPED_RESOURCES);
-            if (resource.length > 0) {
-                if (creep.pickup(resource[0]) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(resource[0], {visualizePathStyle: {stroke: '#ffaa00'}});
-                }
-            } else {
-                withdrawFromContainer(creep);
-
-            }
+            withdrawFromContainerOrStorage(creep);
         }
     }
 };

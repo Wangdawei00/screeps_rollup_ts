@@ -1,4 +1,4 @@
-const listOfRoles = ['lorry', 'harvester', 'upgrader', 'builder', 'repairer', 'reserver', "longDistanceHarvester"];
+const listOfRoles = ['lorry', 'harvester', 'upgrader', 'builder', 'repairer', 'reserver', "longDistanceHarvester", "garbageCollector"];
 
 StructureSpawn.prototype.SpawnCreepsIfNecessary =
     function () {
@@ -7,9 +7,10 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
             upgrader: 0,
             builder: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 4 : 0,
             repairer: 1,
-            lorry: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 2 : 9,
+            lorry: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 2 : 7,
             reserver: 0,
             longDistanceHarvester: 6,
+            garbageCollector: 1
         }
         const room = this.room;
         // find all creeps in room
@@ -37,7 +38,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
             if (numberOfCreeps['miner'] > 0 || (room.storage != undefined &&
                 room.storage.store[RESOURCE_ENERGY] >= 150 + 550)) {
                 // create a lorry
-                name = this.CreateLorry(150);
+                name = this.CreateLorryOrGarbageCollector(300, "lorry");
             }
             // if there is no miner and not enough energy in Storage left
             else {
@@ -93,7 +94,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                 // if no claim order was found, check other roles
                 if (numberOfCreeps[role] < minCreeps[role]) {
                     if (role == 'lorry') {
-                        name = this.CreateLorry(150);
+                        name = this.CreateLorryOrGarbageCollector(300, role);
                     } else if (role === 'reserver') {
                         name = this.CreateReserver('E56S53');
                     } else if (role === 'longDistanceHarvester') {
@@ -150,8 +151,8 @@ StructureSpawn.prototype.CreateMiner =
     };
 
 
-StructureSpawn.prototype.CreateLorry =
-    function (energy: number) {
+StructureSpawn.prototype.CreateLorryOrGarbageCollector =
+    function (energy: number, role: string = "lorry") {
         // create a body with twice as many CARRY as MOVE parts
         let numberOfParts = Math.floor(energy / 150);
         // make sure the creep is not too big (more than 50 parts)
@@ -166,7 +167,7 @@ StructureSpawn.prototype.CreateLorry =
 
         // create creep with the created body and the role 'lorry'
         const name = 'Lorry' + Game.time.toString();
-        this.spawnCreep(body, name, {memory: {role: 'lorry', working: false}});
+        this.spawnCreep(body, name, {memory: {role: role, working: false}});
         return name;
     };
 

@@ -23,7 +23,7 @@ interface StructureSpawn {
 
     CreateMiner(sourceId: Id<Source>): string | undefined;
 
-    CreateLorry(capacity: number): string;
+    CreateLorryOrGarbageCollector(capacity: number, role: string): string;
 
     CreateCustomCreep(energy: number, roleName: string): string;
 
@@ -43,5 +43,5 @@ interface Memory {
     sinkContainerIds: Array<Id<StructureContainer>>;
     sourceContainerFlagNames: Array<string>;
     sinkContainerFlagNames: Array<string>;
-    lastLongDistanceTargetRoomName:string
+    lastLongDistanceTargetRoomName: string
 }
