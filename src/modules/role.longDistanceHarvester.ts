@@ -23,7 +23,8 @@ const roleLongDistanceHarvester = {
                     // we use the arrow operator to define it
                     filter: (s) => (s.structureType === STRUCTURE_EXTENSION ||
                             s.structureType === STRUCTURE_SPAWN || s.structureType === STRUCTURE_TOWER || (
-                                s.structureType == STRUCTURE_CONTAINER && Memory.sourceContainerIds.includes(s.id)))
+                                s.structureType == STRUCTURE_CONTAINER && Memory.sourceContainerIds.includes(s.id))
+                        || s.structureType == STRUCTURE_STORAGE)
                         && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
                 });
 

@@ -1,5 +1,5 @@
 import roleUpgrader from "./role.upgrader";
-import {withdrawFromContainer} from "@/modules/utils";
+import {withdrawFromContainerOrStorage} from "@/modules/utils";
 const roleRepairer = {
     run: (creep:Creep) => {
         if (creep.memory.working && creep.store[RESOURCE_ENERGY] === 0) {
@@ -21,7 +21,7 @@ const roleRepairer = {
                 roleUpgrader.run(creep);
             }
         } else {
-            withdrawFromContainer(creep)
+            withdrawFromContainerOrStorage(creep)
         }
     }
 }
