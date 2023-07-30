@@ -6,12 +6,12 @@ export function withdrawFromContainerOrStorage(creep: Creep) {
     });
     if (source) {
         if (creep.withdraw(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-            creep.moveTo(source, {visualizePathStyle: {stroke: '#ffaa00'}});
+            creep.moveTo(source);
         }
     } else {
         if (creep.room.storage && creep.room.storage.store[RESOURCE_ENERGY] > creep.store.getFreeCapacity(RESOURCE_ENERGY)) {
             if (creep.withdraw(creep.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                creep.moveTo(creep.room.storage, {visualizePathStyle: {stroke: '#ffaa00'}})
+                creep.moveTo(creep.room.storage)
             }
         }
     }

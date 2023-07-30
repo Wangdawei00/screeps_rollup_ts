@@ -1,13 +1,22 @@
 interface CreepMemory {
     role: string;
+    /**Builder state*/
     building?: boolean;
+    /**LongDistanceHarvester and repairer state*/
     working?: boolean;
+    /**(Advanced) Upgrader state*/
     upgrading?: boolean;
-    sourceId?: Id<Source>;
-    containerId?: Id<StructureContainer>;
+    /**GarbageCollector and Lorry state*/
     transporting?: boolean;
+    /**Miner and LongDistanceHarvester target source*/
+    sourceId?: Id<Source>;
+    /**Miner target container*/
+    containerId?: Id<StructureContainer>;
+    /**Advanced Upgrader target flag*/
     upgradePosFlagName?: string;
+    /**Reserver and longDistanceHarvester and Army target room name*/
     target?: string;//room name
+    /**LongDistanceHarvester home room name*/
     home?: string;//room name
 }
 
@@ -29,9 +38,13 @@ interface StructureSpawn {
 
     CreateAdvancedUpgrader(flagName: string): string | undefined;
 
-    CreateReserver(flagName: string): string | undefined;
+    CreateReserverOrControllerAttacker(flagName: string, role: string): string | undefined;
 
     CreateLongDistanceHarvester(target: string, home: string, energy: number): string | undefined;
+
+    CreateMeleeAttacker(target: string, energy: number): string | undefined;
+
+    CreateRangedAttacker(target: string, energy: number): string | undefined;
 }
 
 interface SpawnMemory {

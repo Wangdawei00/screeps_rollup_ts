@@ -22,10 +22,10 @@ const roleHarvester = {
             if (targets.length > 0) {
                 const transferResult = creep.transfer(targets[0], RESOURCE_ENERGY);
                 if (transferResult === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(targets[0], {visualizePathStyle: {stroke: '#ffffff'}});
+                    creep.moveTo(targets[0]);
                 }
             } else {
-                creep.moveTo(Game.flags["Idle"], {visualizePathStyle: {stroke: '#ffffff'}})
+                creep.moveTo(Game.flags["Idle"])
             }
         }
     }

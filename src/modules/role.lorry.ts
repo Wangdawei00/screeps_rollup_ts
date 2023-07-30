@@ -23,12 +23,12 @@ const roleLorry = {
             if (targets) {
                 const transferResult = creep.transfer(targets, RESOURCE_ENERGY);
                 if (transferResult === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(targets, {visualizePathStyle: {stroke: '#ffffff'}});
+                    creep.moveTo(targets);
                 }
             } else {
                 if (creep.room.storage) {
                     if (creep.transfer(creep.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                        creep.moveTo(creep.room.storage, {visualizePathStyle: {stroke: '#ffffff'}});
+                        creep.moveTo(creep.room.storage);
                     }
                 }
             }
