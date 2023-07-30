@@ -14,7 +14,7 @@ const roleUpgrader = {
 
         if (creep.memory.upgrading) {
             if (creep.upgradeController(creep.room.controller as StructureController) === ERR_NOT_IN_RANGE) {
-                creep.moveTo((<StructureController>creep.room.controller).pos, {visualizePathStyle: {stroke: '#ffffff'}});
+                creep.moveTo((<StructureController>creep.room.controller).pos);
             }
         } else {
             const source = creep.pos.findClosestByPath(FIND_SOURCES)

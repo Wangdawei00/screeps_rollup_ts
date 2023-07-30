@@ -1,7 +1,9 @@
-const listOfRoles = ['lorry', 'harvester', 'upgrader', 'builder', 'repairer', 'reserver', "longDistanceHarvester", "garbageCollector"];
+const listOfRoles = ['lorry', 'harvester', 'upgrader', 'builder', 'repairer', 'reserver',
+    "longDistanceHarvester", "garbageCollector", "meleeAttacker", "rangedAttacker","controllerAttacker"];
 
 StructureSpawn.prototype.SpawnCreepsIfNecessary =
     function () {
+        const invasionRooms: string[] = ["E54S53"]
         const minCreeps: Record<string, number> = {
             harvester: 0,
             upgrader: 0,
@@ -10,7 +12,10 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
             lorry: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 2 : 7,
             reserver: 0,
             longDistanceHarvester: 6,
-            garbageCollector: 1
+            garbageCollector: 1,
+            meleeAttacker: invasionRooms.length > 0 ? 1 : 0,
+            rangedAttacker: invasionRooms.length > 0 ? 0 : 0,
+            controllerAttacker: invasionRooms.length > 0 ? 1 : 0,
         }
         const room = this.room;
         // find all creeps in room
@@ -22,7 +27,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         /** @type {Object.<string, number>} */
         let numberOfCreeps: Record<string, number> = {};
         for (const role of listOfRoles) {
-            if (role === 'reserver' || role === 'longDistanceHarvester') {
+            if (role === 'reserver' || role === 'longDistanceHarvester' || role === 'meleeAttacker' || role === 'rangedAttacker'|| role === 'controllerAttacker') {
                 numberOfCreeps[role] = _.sum(Game.creeps, c => c.memory.role === role ? 1 : 0);
             } else {
                 numberOfCreeps[role] = _.sum(creepsInRoom, c => c.memory.role === role ? 1 : 0);
@@ -93,10 +98,10 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                 // }
                 // if no claim order was found, check other roles
                 if (numberOfCreeps[role] < minCreeps[role]) {
-                    if (role == 'lorry') {
+                    if (role == 'lorry'|| role == 'garbageCollector') {
                         name = this.CreateLorryOrGarbageCollector(300, role);
                     } else if (role === 'reserver') {
-                        name = this.CreateReserver('E56S53');
+                        name = this.CreateReserverOrControllerAttacker('E57S53', role);
                     } else if (role === 'longDistanceHarvester') {
                         if (Memory.lastLongDistanceTargetRoomName && Memory.lastLongDistanceTargetRoomName === 'E56S53') {
                             Memory.lastLongDistanceTargetRoomName = 'E57S53';
@@ -104,6 +109,12 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                             Memory.lastLongDistanceTargetRoomName = 'E56S53';
                         }
                         name = this.CreateLongDistanceHarvester(Memory.lastLongDistanceTargetRoomName, 'E55S53', maxEnergy);
+                    } else if (role === 'meleeAttacker' && invasionRooms.length > 0) {
+                        name = this.CreateMeleeAttacker(invasionRooms[0], maxEnergy);
+                    } else if (role === 'rangedAttacker' && invasionRooms.length > 0) {
+                        name = this.CreateRangedAttacker(invasionRooms[0], maxEnergy);
+                    } else if (role === 'controllerAttacker' && invasionRooms.length > 0) {
+                        name = this.CreateReserverOrControllerAttacker(invasionRooms[0], role);
                     } else {
                         name = this.CreateCustomCreep(maxEnergy, role);
                     }
@@ -166,7 +177,7 @@ StructureSpawn.prototype.CreateLorryOrGarbageCollector =
         }
 
         // create creep with the created body and the role 'lorry'
-        const name = 'Lorry' + Game.time.toString();
+        const name = role + Game.time.toString();
         this.spawnCreep(body, name, {memory: {role: role, working: false}});
         return name;
     };
@@ -194,17 +205,17 @@ StructureSpawn.prototype.CreateCustomCreep = function (energy: number, roleName:
 }
 
 StructureSpawn.prototype.CreateAdvancedUpgrader = function (flagName: string) {
-    const config = [WORK, WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE]
+    const config = [WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE]
     const name = 'AdvancedUpgrader' + Game.time.toString();
     if (this.spawnCreep(config, name, {memory: {role: 'advancedUpgrader', upgradePosFlagName: flagName}}) == OK) {
         return name;
     }
 }
 
-StructureSpawn.prototype.CreateReserver = function (targetRoomName: string) {
+StructureSpawn.prototype.CreateReserverOrControllerAttacker = function (targetRoomName: string, role: string) {
     const config = [CLAIM, CLAIM, MOVE, MOVE]
-    const name = 'Reserver' + Game.time.toString();
-    if (this.spawnCreep(config, name, {memory: {role: 'reserver', target: targetRoomName}}) == OK) {
+    const name = role + Game.time.toString();
+    if (this.spawnCreep(config, name, {memory: {role: role, target: targetRoomName}}) == OK) {
         return name;
     }
 }
@@ -228,6 +239,52 @@ StructureSpawn.prototype.CreateLongDistanceHarvester =
                 role: 'longDistanceHarvester',
                 home: homeRoomName,
                 target: targetRoomName,
+            }
+        }) == OK) {
+            return name;
+        }
+    };
+
+StructureSpawn.prototype.CreateMeleeAttacker =
+    function (target, energy) {
+        const config: BodyPartConstant[] = [];
+        const numberOfAttackParts = Math.floor(energy / 250);
+        for (let i = 0; i < numberOfAttackParts * 2; i++) {
+            config.push(TOUGH);
+            config.push(MOVE);
+        }
+        for (let i = 0; i < numberOfAttackParts; i++) {
+            config.push(ATTACK);
+            config.push(MOVE)
+        }
+        const name = 'MeleeAttacker' + Game.time.toString();
+        if (this.spawnCreep(config, name, {
+            memory: {
+                role: 'meleeAttacker',
+                target: target,
+            }
+        }) == OK) {
+            return name;
+        }
+    };
+
+StructureSpawn.prototype.CreateRangedAttacker =
+    function (target, energy) {
+        const config: BodyPartConstant[] = [];
+        const numberOfAttackParts = Math.floor(energy / 260);
+        for (let i = 0; i < numberOfAttackParts; i++) {
+            config.push(TOUGH);
+            config.push(MOVE);
+        }
+        for (let i = 0; i < numberOfAttackParts; i++) {
+            config.push(RANGED_ATTACK);
+            config.push(MOVE)
+        }
+        const name = 'RangedAttacker' + Game.time.toString();
+        if (this.spawnCreep(config, name, {
+            memory: {
+                role: 'rangedAttacker',
+                target: target,
             }
         }) == OK) {
             return name;

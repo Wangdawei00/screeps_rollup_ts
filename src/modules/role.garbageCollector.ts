@@ -17,12 +17,12 @@ const roleGarbageCollector = {
             });
             if (target) {
                 if (creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(target, {visualizePathStyle: {stroke: '#ffffff'}});
+                    creep.moveTo(target);
                 }
             } else {
                 if (creep.room.storage) {
                     if (creep.transfer(creep.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                        creep.moveTo(creep.room.storage, {visualizePathStyle: {stroke: '#ffffff'}});
+                        creep.moveTo(creep.room.storage);
                     }
                 }
             }
@@ -30,7 +30,7 @@ const roleGarbageCollector = {
             const resource = creep.room.find(FIND_DROPPED_RESOURCES);
             if (resource.length > 0) {
                 if (creep.pickup(resource[0]) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(resource[0], {visualizePathStyle: {stroke: '#ffaa00'}});
+                    creep.moveTo(resource[0]);
                 }
             } else {
                 roleLorry.run(creep);
