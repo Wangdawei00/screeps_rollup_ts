@@ -1,9 +1,7 @@
-import {MoveFromHomeToTarget} from "@/modules/utils";
-
 const roleControllerAttacker = {
     run: (creep: Creep) => {
         if (creep.memory.target && creep.room.name !== creep.memory.target) {
-            MoveFromHomeToTarget(creep);
+            creep.MoveFromHomeToTarget()
         } else {
             const controller = creep.room.controller;
             if (controller) {

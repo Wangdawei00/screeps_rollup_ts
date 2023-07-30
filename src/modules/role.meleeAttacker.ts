@@ -1,9 +1,7 @@
-import {MoveFromHomeToTarget} from '@/modules/utils'
-
 const roleMeleeAttacker = {
     run: function (creep: Creep) {
         if (creep.room.name !== creep.memory.target) {
-            MoveFromHomeToTarget(creep);
+            creep.MoveFromHomeToTarget()
         } else {
             const target = creep.pos.findClosestByRange(FIND_HOSTILE_CREEPS);
             if (target) {

@@ -25,6 +25,14 @@ interface Creep {
     getEnergy(useContainer: boolean, useSource: boolean): void;
 
     runRole(): void;
+
+    MoveFromHomeToTarget(): void;
+
+    MoveFromTargetToHome(): void;
+
+    WithdrawFromContainerOrStorage(): void;
+
+    WithdrawFromContainer(): void;
 }
 
 interface StructureSpawn {
@@ -52,9 +60,16 @@ interface SpawnMemory {
 }
 
 interface Memory {
+    lastLongDistanceTargetRoomName: string
+}
+
+interface Room {
+    run(sourceContainerFlagNames: string[], sinkContainerFlagNames: string[]): void;
+}
+
+interface RoomMemory {
+    sourceContainerFlagNames: string[];
+    sinkContainerFlagNames: string[];
     sourceContainerIds: Array<Id<StructureContainer>>;
     sinkContainerIds: Array<Id<StructureContainer>>;
-    sourceContainerFlagNames: Array<string>;
-    sinkContainerFlagNames: Array<string>;
-    lastLongDistanceTargetRoomName: string
 }

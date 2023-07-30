@@ -1,5 +1,4 @@
 import roleRepairer from "./role.repairer";
-import {withdrawFromContainerOrStorage} from "@/modules/utils";
 
 const roleBuilder = {
 
@@ -25,7 +24,7 @@ const roleBuilder = {
                 roleRepairer.run(creep);
             }
         } else {
-            withdrawFromContainerOrStorage(creep);
+            creep.WithdrawFromContainerOrStorage();
         }
     }
 };
