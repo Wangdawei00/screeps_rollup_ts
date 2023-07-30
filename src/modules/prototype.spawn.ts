@@ -133,7 +133,8 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         }
         if (name === undefined) {
             for (let role of specialLorryRoles) {
-                for (const containerId of room.memory.sourceContainerIds) {
+                const ids = role === "fromStorageLorry" ? this.room.memory.sinkContainerIds : this.room.memory.sourceContainerIds;
+                for (const containerId of ids) {
                     const num = _.sum(Game.creeps, (creep) => {
                         return creep.memory.role === role && creep.memory.containerId === containerId ? 1 : 0;
                     });
