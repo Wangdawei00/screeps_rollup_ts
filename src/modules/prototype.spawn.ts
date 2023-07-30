@@ -8,7 +8,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
             harvester: 0,
             upgrader: 0,
             builder: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 4 : 0,
-            repairer: 1,
+            repairer: 0,
             lorry: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 2 : 7,
             reserver: 0,
             longDistanceHarvester: 6,
