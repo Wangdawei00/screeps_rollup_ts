@@ -15,6 +15,10 @@ import roleClaimer from "@/modules/role.claimer";
 import roleToStorageLorry from "@/modules/role.toStorageLorry";
 import roleFromStorageLorry from "@/modules/role.fromStorageLorry";
 import roleTransferer from "@/modules/role.transferer";
+import roleLongDistanceBuilder from "@/modules/role.longDistanceBuilder";
+import roleLongDistanceRepairer from "@/modules/role.longDistanceRepairer";
+import roleInterRoomMiner from "@/modules/role.interRoomMiner";
+import roleInterRoomLorry from "@/modules/role.interRoomLorry";
 
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "harvester": roleHarvester,
@@ -33,7 +37,11 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     "claimer": roleClaimer,
     "toStorageLorry": roleToStorageLorry,
     "fromStorageLorry": roleFromStorageLorry,
-    "transferer": roleTransferer
+    "transferer": roleTransferer,
+    "longDistanceBuilder": roleLongDistanceBuilder,
+    "longDistanceRepairer": roleLongDistanceRepairer,
+    "interRoomMiner": roleInterRoomMiner,
+    "interRoomLorry": roleInterRoomLorry,
 };
 
 Creep.prototype.runRole = function () {
@@ -126,6 +134,15 @@ Creep.prototype.WithdrawFromContainer = function () {
             structure.store.getUsedCapacity(RESOURCE_ENERGY) > this.store.getCapacity(RESOURCE_ENERGY) &&
             this.room.memory.sourceContainerIds.includes(structure.id)
     });
+    if (source) {
+        if (this.withdraw(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+            this.moveTo(source);
+        }
+    }
+}
+
+Creep.prototype.WithdrawFromStorage = function () {
+    const source = this.room.storage;
     if (source) {
         if (this.withdraw(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
             this.moveTo(source);

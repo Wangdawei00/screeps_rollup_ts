@@ -12,9 +12,13 @@ interface StructureSpawn {
 
     CreateAdvancedUpgrader(flagName: string): string | undefined;
 
+    CreateInterRoomMiner(sourceId: Id<Source>, containerId: Id<StructureContainer>, target: string): string | undefined;
+
+    CreateInterRoomLorry(containerId: Id<StructureContainer>, target: string, home: string): string | undefined;
+
     CreateReserverOrControllerAttacker(flagName: string, role: string): string | undefined;
 
-    CreateLongDistanceHarvester(target: string, home: string, energy: number): string | undefined;
+    CreateLongDistanceWorker(target: string, home: string, energy: number, role: string): string | undefined;
 
     CreateMeleeAttacker(target: string, energy: number): string | undefined;
 

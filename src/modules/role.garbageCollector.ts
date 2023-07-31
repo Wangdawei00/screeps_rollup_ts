@@ -11,8 +11,8 @@ const roleGarbageCollector = {
         if (creep.memory.transporting) {
             const target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
                 filter: (s) => (s.structureType === STRUCTURE_SPAWN ||
-                    s.structureType === STRUCTURE_EXTENSION || s.structureType === STRUCTURE_TOWER ||
-                    s.structureType === STRUCTURE_CONTAINER)
+                        s.structureType === STRUCTURE_EXTENSION || s.structureType === STRUCTURE_TOWER ||
+                        s.structureType === STRUCTURE_CONTAINER && creep.room.memory.sinkContainerIds.includes(s.id))
                     && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
             });
             if (target) {
@@ -27,14 +27,34 @@ const roleGarbageCollector = {
                 }
             }
         } else {
-            const resource = creep.room.find(FIND_DROPPED_RESOURCES);
-            if (resource.length > 0) {
-                if (creep.pickup(resource[0]) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(resource[0]);
+            const ruin = creep.pos.findClosestByPath(FIND_RUINS, {
+                filter: (r) => r.store.getUsedCapacity(RESOURCE_ENERGY) > 0
+            })
+            if (ruin) {
+                if (creep.withdraw(ruin, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                    creep.moveTo(ruin);
                 }
             } else {
-                roleLorry.run(creep);
+                const tombstone = creep.pos.findClosestByPath(FIND_TOMBSTONES, {
+                    filter: (t) => t.store.getUsedCapacity(RESOURCE_ENERGY) > 0
+                });
+                if (tombstone) {
+                    if (creep.withdraw(tombstone, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                        creep.moveTo(tombstone);
+                    }
+                } else {
+                    const resource = creep.room.find(FIND_DROPPED_RESOURCES);
+                    if (resource.length > 0) {
+                        if (creep.pickup(resource[0]) === ERR_NOT_IN_RANGE) {
+                            creep.moveTo(resource[0]);
+                        }
+                    } else {
+                        roleLorry.run(creep);
+                    }
+                }
             }
+
+
         }
 
     }

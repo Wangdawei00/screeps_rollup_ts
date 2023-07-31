@@ -1,8 +1,14 @@
 const roleHarvester = {
 
     /** @param {Creep} creep **/
-    run: function (creep:Creep) {
-        if (creep.store.getFreeCapacity() > 0) {
+    run: function (creep: Creep) {
+        if(creep.memory.harvesting && creep.store.getFreeCapacity() === 0) {
+            creep.memory.harvesting = false;
+        }
+        if(!creep.memory.harvesting && creep.store.getUsedCapacity() === 0) {
+            creep.memory.harvesting = true;
+        }
+        if (creep.memory.harvesting) {
             const source = creep.pos.findClosestByPath(FIND_SOURCES)
             if (source) {
                 if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
@@ -11,7 +17,7 @@ const roleHarvester = {
             }
 
         } else {
-            const targets = creep.room.find(FIND_STRUCTURES, {
+            const target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
                 filter: (structure) => {
                     return (structure.structureType === STRUCTURE_EXTENSION ||
                             structure.structureType === STRUCTURE_SPAWN ||
@@ -19,10 +25,10 @@ const roleHarvester = {
                         structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
                 }
             });
-            if (targets.length > 0) {
-                const transferResult = creep.transfer(targets[0], RESOURCE_ENERGY);
+            if (target) {
+                const transferResult = creep.transfer(target, RESOURCE_ENERGY);
                 if (transferResult === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(targets[0]);
+                    creep.moveTo(target);
                 }
             } else {
                 creep.moveTo(Game.flags["Idle"])

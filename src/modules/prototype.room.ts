@@ -39,12 +39,18 @@ Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames)
         if (closestHostile) {
             tower.attack(closestHostile)
         } else {
-            const closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
+            // const closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
+            //     filter: (structure) => structure.hits < structure.hitsMax && structure.structureType !== STRUCTURE_WALL
+            // });
+            // if (closestDamagedStructure) {
+            //     tower.repair(closestDamagedStructure);
+            // }
+            const damagedStructures = tower.room.find(FIND_STRUCTURES, {
                 filter: (structure) => structure.hits < structure.hitsMax && structure.structureType !== STRUCTURE_WALL
             });
-            if (closestDamagedStructure) {
-                tower.repair(closestDamagedStructure);
-            }
+            damagedStructures.forEach((structure) => {
+                tower.repair(structure);
+            });
         }
     }
     const spawns: StructureSpawn[] = this.find(FIND_STRUCTURES, {

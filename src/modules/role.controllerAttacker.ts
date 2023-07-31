@@ -5,9 +5,15 @@ const roleControllerAttacker = {
         } else {
             const controller = creep.room.controller;
             if (controller) {
-                if (creep.attackController(controller) === ERR_NOT_IN_RANGE) {
+                const result = creep.reserveController(controller);
+                if (result === ERR_NOT_IN_RANGE) {
                     creep.moveTo(controller);
+                } else if (result === ERR_INVALID_TARGET) {
+                    if (creep.attackController(controller) === ERR_NOT_IN_RANGE) {
+                        creep.moveTo(controller);
+                    }
                 }
+
             }
         }
     }

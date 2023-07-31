@@ -1,5 +1,8 @@
 interface CreepMemory {
     role: string;
+    repairing?: boolean;
+    /**Harvester state*/
+    harvesting?: boolean;
     /**Builder state*/
     building?: boolean;
     /**LongDistanceHarvester and repairer state*/
@@ -33,4 +36,6 @@ interface Creep {
     WithdrawFromContainerOrStorage(): void;
 
     WithdrawFromContainer(): void;
+
+    WithdrawFromStorage(): void;
 }
