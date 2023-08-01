@@ -2,20 +2,14 @@ const roleHarvester = {
 
     /** @param {Creep} creep **/
     run: function (creep: Creep) {
-        if(creep.memory.harvesting && creep.store.getFreeCapacity() === 0) {
+        if (creep.memory.harvesting && creep.store.getFreeCapacity() === 0) {
             creep.memory.harvesting = false;
         }
-        if(!creep.memory.harvesting && creep.store.getUsedCapacity() === 0) {
+        if (!creep.memory.harvesting && creep.store.getUsedCapacity() === 0) {
             creep.memory.harvesting = true;
         }
         if (creep.memory.harvesting) {
-            const source = creep.pos.findClosestByPath(FIND_SOURCES)
-            if (source) {
-                if (creep.harvest(source) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(source);
-                }
-            }
-
+            creep.HarvestSource();
         } else {
             const target = creep.pos.findClosestByPath(FIND_STRUCTURES, {
                 filter: (structure) => {

@@ -12,7 +12,7 @@ interface StructureSpawn {
 
     CreateAdvancedUpgrader(flagName: string): string | undefined;
 
-    CreateInterRoomMiner(sourceId: Id<Source>, containerId: Id<StructureContainer>, target: string): string | undefined;
+    CreateInterRoomMiner(sourceId: Id<Source>, target: string, containerId?: Id<StructureContainer>): string | undefined;
 
     CreateInterRoomLorry(containerId: Id<StructureContainer>, target: string, home: string): string | undefined;
 
@@ -23,6 +23,8 @@ interface StructureSpawn {
     CreateMeleeAttacker(target: string, energy: number): string | undefined;
 
     CreateRangedAttacker(target: string, energy: number): string | undefined;
+
+    CreateLinkStorageCommunicator(): string | undefined;
 }
 
 interface SpawnMemory {

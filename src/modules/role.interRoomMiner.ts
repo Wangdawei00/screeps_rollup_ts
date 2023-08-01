@@ -15,8 +15,25 @@ const roleInterRoomMiner = {
                 } else {
                     console.log("Error in role.interRoomMiner.ts: container or source is undefined")
                 }
+            } else if (!creep.memory.containerId && creep.memory.sourceId) {
+                creep.HarvestSource();
             } else {
-                console.log("Error in role.interRoomMiner.ts: containerId or sourceId is undefined")
+                const sources = creep.room.find(FIND_SOURCES);
+                for (const source of sources) {
+                    const creeps = creep.room.find(FIND_MY_CREEPS, {
+                        filter: (c) => c.memory.role === "interRoomMiner" && c.memory.sourceId === source.id
+                    });
+                    if (creeps.length === 0) {
+                        creep.memory.sourceId = source.id;
+                        const container = source.pos.findInRange(FIND_STRUCTURES, 1, {
+                            filter: (s) => s.structureType === STRUCTURE_CONTAINER
+                        })
+                        if (container.length > 0) {
+                            creep.memory.containerId = <Id<StructureContainer>>container[0].id;
+                        }
+                        break;
+                    }
+                }
             }
         }
     }

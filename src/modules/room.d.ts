@@ -1,10 +1,8 @@
 interface Room {
-    run(sourceContainerFlagNames: string[], sinkContainerFlagNames: string[]): void;
+    run(sourceContainerFlagNames: string[]): void;
 }
 
 interface RoomMemory {
     sourceContainerFlagNames: string[];
-    sinkContainerFlagNames: string[];
     sourceContainerIds: Array<Id<StructureContainer>>;
-    sinkContainerIds: Array<Id<StructureContainer>>;
 }

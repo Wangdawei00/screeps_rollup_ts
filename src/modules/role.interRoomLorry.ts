@@ -23,14 +23,8 @@ const roleInterRoomLorry = {
             if (creep.room.name !== creep.memory.target) {
                 creep.MoveToTargetRoom();
             } else {
-                if (creep.memory.containerId) {
-                    const targetContainer = Game.getObjectById(creep.memory.containerId);
-                    if (targetContainer) {
-                        if (creep.withdraw(targetContainer, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                            creep.moveTo(targetContainer);
-                        }
-                    }
-                }
+                creep.PickupGarbage();
+                creep.WithdrawFromContainer();
             }
         }
 

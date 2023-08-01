@@ -38,4 +38,8 @@ interface Creep {
     WithdrawFromContainer(): void;
 
     WithdrawFromStorage(): void;
+
+    PickupGarbage(): void;
+
+    HarvestSource(): void;
 }
