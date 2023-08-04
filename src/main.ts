@@ -21,4 +21,5 @@ export const loop = errorMapper(function () {
         const creep = Game.creeps[name];
         creep.runRole();
     }
+
 });

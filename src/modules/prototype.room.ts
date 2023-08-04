@@ -1,5 +1,5 @@
-Room.prototype.run = function (sourceContainerFlagNames) {
-    if (sourceContainerFlagNames.length !== 0 && (!this.memory.sourceContainerFlagNames ||
+Room.prototype.run = function (/*sourceContainerFlagNames*/) {
+    /*if (sourceContainerFlagNames.length !== 0 && (!this.memory.sourceContainerFlagNames ||
         this.memory.sourceContainerFlagNames.length !== sourceContainerFlagNames.length ||
         sourceContainerFlagNames.every(
             (value, index) => value === this.memory.sourceContainerFlagNames[index]
@@ -13,6 +13,15 @@ Room.prototype.run = function (sourceContainerFlagNames) {
             if (sourceContainer.length > 0) {
                 this.memory.sourceContainerIds.push(<Id<StructureContainer>>sourceContainer[0].id);
             }
+        }
+    }*/
+    const containers = this.find(FIND_STRUCTURES, {
+        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
+    })
+    if(containers.length !== this.memory.sourceContainerIds?.length) {
+        this.memory.sourceContainerIds = [];
+        for (const container of containers) {
+            this.memory.sourceContainerIds.push(<Id<StructureContainer>>container.id);
         }
     }
     const towers: StructureTower[] = this.find(FIND_STRUCTURES, {
@@ -51,22 +60,25 @@ Room.prototype.run = function (sourceContainerFlagNames) {
                 {align: 'left', opacity: 0.8});
         }
     }
-    const storage = this.storage;
-    if (storage) {
-        const storageLink = storage.pos.findInRange(FIND_MY_STRUCTURES, 2, {
-            filter: (structure) => {
-                return structure.structureType === STRUCTURE_LINK;
-            }
-        })
-        if (storageLink.length > 0) {
-            const target = this.controller?.pos.findInRange(FIND_STRUCTURES, 4, {
+    if (this.energyAvailable === this.energyCapacityAvailable) {
+        const storage = this.storage;
+        if (storage) {
+            const storageLink = storage.pos.findInRange(FIND_MY_STRUCTURES, 2, {
                 filter: (structure) => {
                     return structure.structureType === STRUCTURE_LINK;
                 }
             })
-            if (target && target.length > 0) {
-                (<StructureLink>storageLink[0]).transferEnergy(<StructureLink>target[0]);
+            if (storageLink.length > 0) {
+                const target = this.controller?.pos.findInRange(FIND_STRUCTURES, 4, {
+                    filter: (structure) => {
+                        return structure.structureType === STRUCTURE_LINK;
+                    }
+                })
+                if (target && target.length > 0) {
+                    (<StructureLink>storageLink[0]).transferEnergy(<StructureLink>target[0]);
+                }
             }
         }
     }
+
 }

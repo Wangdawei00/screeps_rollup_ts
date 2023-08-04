@@ -20,6 +20,8 @@ import roleLongDistanceRepairer from "@/modules/role.longDistanceRepairer";
 import roleInterRoomMiner from "@/modules/role.interRoomMiner";
 import roleInterRoomLorry from "@/modules/role.interRoomLorry";
 import roleLinkStorageCommunicator from "@/modules/role.LinkStorageCommunicator";
+import roleHealer from "@/modules/role.Healer";
+import roleLongDistanceUpgrader from "@/modules/role.longDistanceUpgrader";
 
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "harvester": roleHarvester,
@@ -43,7 +45,9 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     "longDistanceRepairer": roleLongDistanceRepairer,
     "interRoomMiner": roleInterRoomMiner,
     "interRoomLorry": roleInterRoomLorry,
-    "linkStorageCommunicator": roleLinkStorageCommunicator
+    "linkStorageCommunicator": roleLinkStorageCommunicator,
+    "healer": roleHealer,
+    "longDistanceUpgrader": roleLongDistanceUpgrader
 };
 
 Creep.prototype.runRole = function () {
@@ -113,7 +117,7 @@ Creep.prototype.MoveToHomeRoom = function () {
 
 Creep.prototype.WithdrawFromContainerOrStorage = function () {
     const source = this.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
+        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER && this.room.memory.sourceContainerIds &&
             structure.store.getUsedCapacity(RESOURCE_ENERGY) > this.store.getFreeCapacity() &&
             this.room.memory.sourceContainerIds.includes(structure.id)
     });
@@ -177,7 +181,7 @@ Creep.prototype.PickupGarbage = function () {
                     this.moveTo(resource[0]);
                 }
             } else {
-                roleLorry.run(this);
+                this.moveTo(Game.flags['Idle']);
             }
         }
     }

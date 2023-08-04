@@ -25,6 +25,12 @@ interface StructureSpawn {
     CreateRangedAttacker(target: string, energy: number): string | undefined;
 
     CreateLinkStorageCommunicator(): string | undefined;
+
+    CreateOutpostCreep(target: string, energy: number, role: string): string | undefined;
+
+    CreateHealer(target: string, energy: number): string | undefined;
+
+    CreateClaimer(target: string): string | undefined;
 }
 
 interface SpawnMemory {

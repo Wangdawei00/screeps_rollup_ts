@@ -3,7 +3,7 @@ const roleGarbageCollector = {
         if (creep.memory.transporting && creep.store[RESOURCE_ENERGY] === 0) {
             creep.memory.transporting = false;
         }
-        if (!creep.memory.transporting && creep.store.getFreeCapacity() === 0) {
+        if (!creep.memory.transporting && creep.store[RESOURCE_ENERGY] > 0) {
             creep.memory.transporting = true;
         }
         if (creep.memory.transporting) {

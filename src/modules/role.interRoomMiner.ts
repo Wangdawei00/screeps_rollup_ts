@@ -1,7 +1,9 @@
 const roleInterRoomMiner = {
     run: function (creep: Creep) {
-        if (creep.room.name !== creep.memory.target) {
-            creep.MoveToTargetRoom();
+        if (creep.memory.target && creep.room.name !== creep.memory.target) {
+            if (Game.rooms[creep.memory.target]) {
+                creep.MoveToTargetRoom();
+            }
         } else {
             if (creep.memory.containerId && creep.memory.sourceId) {
                 const container = Game.getObjectById(creep.memory.containerId);
