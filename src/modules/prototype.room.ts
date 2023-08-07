@@ -1,5 +1,6 @@
-Room.prototype.run = function (/*sourceContainerFlagNames*/) {
-    /*if (sourceContainerFlagNames.length !== 0 && (!this.memory.sourceContainerFlagNames ||
+Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames) {
+
+    if (sourceContainerFlagNames.length !== 0 && (!this.memory.sourceContainerFlagNames ||
         this.memory.sourceContainerFlagNames.length !== sourceContainerFlagNames.length ||
         sourceContainerFlagNames.every(
             (value, index) => value === this.memory.sourceContainerFlagNames[index]
@@ -7,23 +8,45 @@ Room.prototype.run = function (/*sourceContainerFlagNames*/) {
         this.memory.sourceContainerFlagNames = sourceContainerFlagNames;
         this.memory.sourceContainerIds = [];
         for (const sourceContainerFlag of sourceContainerFlagNames) {
-            const sourceContainer = Game.flags[sourceContainerFlag].pos.findInRange(FIND_STRUCTURES, 1, {
-                filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
-            });
-            if (sourceContainer.length > 0) {
-                this.memory.sourceContainerIds.push(<Id<StructureContainer>>sourceContainer[0].id);
+            if (Game.flags[sourceContainerFlag].room?.name === this.name) {
+                const sourceContainer = Game.flags[sourceContainerFlag].pos.findInRange(FIND_STRUCTURES, 1, {
+                    filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
+                });
+                if (sourceContainer.length > 0) {
+                    this.memory.sourceContainerIds.push(<Id<StructureContainer>>sourceContainer[0].id);
+                }
             }
-        }
-    }*/
-    const containers = this.find(FIND_STRUCTURES, {
-        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
-    })
-    if(containers.length !== this.memory.sourceContainerIds?.length) {
-        this.memory.sourceContainerIds = [];
-        for (const container of containers) {
-            this.memory.sourceContainerIds.push(<Id<StructureContainer>>container.id);
+
         }
     }
+    if (sinkContainerFlagNames.length !== 0 && (!this.memory.sinkContainerFlagNames ||
+        this.memory.sinkContainerFlagNames.length !== sinkContainerFlagNames.length ||
+        sinkContainerFlagNames.every(
+            (value, index) => value === this.memory.sinkContainerFlagNames[index]
+        ))) {
+        this.memory.sinkContainerFlagNames = sinkContainerFlagNames;
+        this.memory.sinkContainerIds = [];
+        for (const sinkContainerFlag of sinkContainerFlagNames) {
+            if(Game.flags[sinkContainerFlag].room?.name === this.name){
+                const sinkContainer = Game.flags[sinkContainerFlag].pos.findInRange(FIND_STRUCTURES, 1, {
+                    filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
+                });
+                if (sinkContainer.length > 0) {
+                    this.memory.sinkContainerIds.push(<Id<StructureContainer>>sinkContainer[0].id);
+                }
+            }
+
+        }
+    }
+    // const containers = this.find(FIND_STRUCTURES, {
+    //     filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
+    // })
+    // if(containers.length !== this.memory.sourceContainerIds?.length) {
+    //     this.memory.sourceContainerIds = [];
+    //     for (const container of containers) {
+    //         this.memory.sourceContainerIds.push(<Id<StructureContainer>>container.id);
+    //     }
+    // }
     const towers: StructureTower[] = this.find(FIND_STRUCTURES, {
         filter: (structure) => structure.structureType === STRUCTURE_TOWER
     });
@@ -38,12 +61,12 @@ Room.prototype.run = function (/*sourceContainerFlagNames*/) {
             // if (closestDamagedStructure) {
             //     tower.repair(closestDamagedStructure);
             // }
-            const damagedStructures = tower.room.find(FIND_STRUCTURES, {
-                filter: (structure) => structure.hits < structure.hitsMax && structure.structureType !== STRUCTURE_WALL
-            });
-            damagedStructures.forEach((structure) => {
-                tower.repair(structure);
-            });
+            // const damagedStructures = tower.room.find(FIND_STRUCTURES, {
+            //     filter: (structure) => structure.hits < structure.hitsMax && structure.structureType !== STRUCTURE_WALL
+            // });
+            // damagedStructures.forEach((structure) => {
+            //     tower.repair(structure);
+            // });
         }
     }
     const spawns: StructureSpawn[] = this.find(FIND_STRUCTURES, {

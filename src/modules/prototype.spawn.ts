@@ -1,18 +1,17 @@
 const listOfRoles = ['linkStorageCommunicator', 'lorry', 'harvester', 'upgrader', "transferer", 'repairer',
-    "longDistanceHarvester",
-    "garbageCollector", "controllerAttacker", "claimer",
-    "longDistanceBuilder", "longDistanceRepairer", 'builder',];
-const specialLorryRoles = ["toStorageLorry"];
+    "longDistanceHarvester", "garbageCollector", "controllerAttacker", "claimer", "longDistanceBuilder",
+    "longDistanceRepairer", 'builder',];
+const specialLorryRoles = ["toStorageLorry", 'fromStorageLorry'];
 
-const outpostRoles = ["meleeAttacker", "rangedAttacker", "healer", "reserver", "longDistanceBuilder", "longDistanceRepairer","longDistanceUpgrader"];
+const outpostRoles = ["meleeAttacker", "rangedAttacker", "healer", "reserver", "longDistanceBuilder", "longDistanceRepairer", "longDistanceUpgrader"];
 StructureSpawn.prototype.SpawnCreepsIfNecessary =
     function () {
-        const outposts: string[] = ["E54S53"]//, "E56S53"]
+        const outposts: string[] = [];//["E54S53"]//, "E56S53"]
         const minCreeps: Record<string, number> = {
             harvester: 0,
             upgrader: 0,
             builder: this.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES) ? 1 : 0,
-            repairer: 0,
+            repairer: 1,
             lorry: 0, //this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 0 : 0,
             reserver: 0,
             longDistanceHarvester: 0,
@@ -23,7 +22,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
             controllerAttacker: outposts.length > 0 ? 0 : 0,
             claimer: 0,
             toStorageLorry: 1,
-            fromStorageLorry: 0,//this.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES) ? 1 : 4,
+            fromStorageLorry: 1,//this.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES) ? 1 : 4,
             transferer: 2,
             longDistanceBuilder: 1,
             longDistanceRepairer: 1,
@@ -35,7 +34,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         const transferWorkerRole = ['toStorageLorry', 'fromStorageLorry', 'transferer', 'lorry',
             "garbageCollector"]
         const crossRoomRoles = ['longDistanceHarvester', 'longDistanceBuilder', 'reserver', 'claimer',
-            'meleeAttacker', 'rangedAttacker', 'controllerAttacker', 'longDistanceRepairer']
+            'meleeAttacker', 'rangedAttacker', 'controllerAttacker', 'longDistanceRepairer', 'linkStorageCommunicator']
         const claimRoom = ['E53S55']
         const room = this.room;
         // find all creeps in room
@@ -84,7 +83,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         //  create a backup creep
         if (name === undefined) {
             for (let role of specialLorryRoles) {
-                const ids = this.room.memory.sourceContainerIds;
+                const ids = role === 'toStorageLorry' ? this.room.memory.sourceContainerIds : this.room.memory.sinkContainerIds;
                 for (const containerId of ids) {
                     const num = _.sum(Game.creeps, (creep) => {
                         return creep.memory.role === role && creep.memory.containerId === containerId ? 1 : 0;
@@ -127,19 +126,6 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                         name = this.CreateClaimer(claimRoom[0]);
                     } else if (role === 'linkStorageCommunicator') {
                         name = this.CreateLinkStorageCommunicator();
-                    } else if (role === 'longDistanceHarvester') {
-                        if (Memory.lastLongDistanceTargetRoomName && Memory.lastLongDistanceTargetRoomName === 'E56S53') {
-                            Memory.lastLongDistanceTargetRoomName = 'E57S53';
-                        } else {
-                            Memory.lastLongDistanceTargetRoomName = 'E56S53';
-                        }
-                        name = this.CreateLongDistanceWorker(Memory.lastLongDistanceTargetRoomName, 'E55S53', maxEnergy, role);
-                    } else if (role === 'longDistanceBuilder') {
-                        name = this.CreateLongDistanceWorker('E54S53', 'E55S53', maxEnergy, role);
-                    } else if (role === 'longDistanceRepairer') {
-                        name = this.CreateLongDistanceWorker('E54S53', 'E55S53', maxEnergy, role);
-                    } else if (role === 'builder') {
-                        name = this.CreateLongDistanceWorker('E55S53', 'E54S53', maxEnergy, role);
                     } else {
                         name = this.CreateCustomCreep(maxEnergy, role);
                     }
@@ -215,15 +201,16 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         }
 
 
-
-
         if (name == undefined) {
             // check for advanced upgraders
-            const advancedUpgraderFlagNames = ["UpgraderPosition1", "UpgraderPosition3", "UpgraderPosition2", "ControllerRoadEndpoint"];
+            const advancedUpgraderFlagNames = ["ControllerRoadEndpoint"];
+            for (let i = 1; i < 8; i++) {
+                advancedUpgraderFlagNames.push("UpgraderPosition" + i);
+            }
             for (const flagName of advancedUpgraderFlagNames) {
                 if (!_.some(Game.creeps, c =>
                     c.memory.role == 'advancedUpgrader' && c.memory.upgradePosFlagName == flagName
-                )) {
+                ) && this.room.name === Game.flags[flagName].room?.name) {
                     name = this.CreateAdvancedUpgrader(flagName);
                     break;
                 }

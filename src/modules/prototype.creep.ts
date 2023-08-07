@@ -160,7 +160,7 @@ Creep.prototype.WithdrawFromStorage = function () {
 
 Creep.prototype.PickupGarbage = function () {
     const ruin = this.pos.findClosestByPath(FIND_RUINS, {
-        filter: (r) => r.store.getUsedCapacity(RESOURCE_ENERGY) > 0
+        filter: (r) => r.store.getUsedCapacity(RESOURCE_ENERGY) > 0 && r.room?.name === this.room.name
     })
     if (ruin) {
         if (this.withdraw(ruin, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
@@ -168,20 +168,20 @@ Creep.prototype.PickupGarbage = function () {
         }
     } else {
         const tombstone = this.pos.findClosestByPath(FIND_TOMBSTONES, {
-            filter: (t) => t.store.getUsedCapacity(RESOURCE_ENERGY) > 0
+            filter: (t) => t.store.getUsedCapacity(RESOURCE_ENERGY) > 0 && t.room?.name === this.room.name
         });
         if (tombstone) {
             if (this.withdraw(tombstone, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                 this.moveTo(tombstone);
             }
         } else {
-            const resource = this.room.find(FIND_DROPPED_RESOURCES);
+            const resource = this.room.find(FIND_DROPPED_RESOURCES, {
+                filter: (r) => r.resourceType === RESOURCE_ENERGY && r.room?.name === this.room.name
+            });
             if (resource.length > 0) {
                 if (this.pickup(resource[0]) === ERR_NOT_IN_RANGE) {
                     this.moveTo(resource[0]);
                 }
-            } else {
-                this.moveTo(Game.flags['Idle']);
             }
         }
     }
