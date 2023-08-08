@@ -4,12 +4,13 @@ import "./modules/prototype.room"
 import {errorMapper} from './modules/errorMapper'
 
 export const loop = errorMapper(function () {
-    const sourceContainerFlagNames = ["SourceContainer1", "SourceContainer2", 'Container1','Container2'];
-    const sinkContainerFlagNames = ["UpgraderPosition4"];
+    const sourceContainerFlagNames = ["SourceContainer1", "SourceContainer2", 'Container1', 'Container2'];
+    const sinkContainerFlagNames = ["UpgraderPosition1"];
+    const idleFlagNames = ["Idle", "Idle2"];
     for (const roomName in Game.rooms) {
         const room = Game.rooms[roomName];
         if (room.controller?.my)
-            room.run(sourceContainerFlagNames, sinkContainerFlagNames);
+            room.run(sourceContainerFlagNames, sinkContainerFlagNames, idleFlagNames);
     }
     let name;
     for (name in Memory.creeps) {

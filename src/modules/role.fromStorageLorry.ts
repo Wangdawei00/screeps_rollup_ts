@@ -24,7 +24,7 @@ const roleFromStorageLorry = {
                         creep.moveTo(source);
                     }
                 } else {
-                    creep.moveTo(Game.flags['Idle']);
+                    if (creep.room.memory.idleFlagName) creep.moveTo(Game.flags[creep.room.memory.idleFlagName]);
                 }
             } else {
                 creep.MoveToHomeRoom()

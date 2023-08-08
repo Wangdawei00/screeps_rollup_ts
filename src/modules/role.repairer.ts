@@ -17,11 +17,9 @@ const roleRepairer = {
                 if (creep.repair(structure) === ERR_NOT_IN_RANGE) {
                     creep.moveTo(structure);
                 }
-            } else {
-                roleUpgrader.run(creep);
             }
         } else {
-            creep.WithdrawFromContainerOrStorage();
+            creep.WithdrawFromStorage();
         }
     }
 }

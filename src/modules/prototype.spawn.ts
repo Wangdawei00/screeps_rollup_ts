@@ -1,6 +1,5 @@
 const listOfRoles = ['linkStorageCommunicator', 'lorry', 'harvester', 'upgrader', "transferer", 'repairer',
-    "longDistanceHarvester", "garbageCollector", "controllerAttacker", "claimer", "longDistanceBuilder",
-    "longDistanceRepairer", 'builder',];
+    "garbageCollector", "controllerAttacker", "claimer", 'builder', 'mineralHarvester'];
 const specialLorryRoles = ["toStorageLorry", 'fromStorageLorry'];
 
 const outpostRoles = ["meleeAttacker", "rangedAttacker", "healer", "reserver", "longDistanceBuilder", "longDistanceRepairer", "longDistanceUpgrader"];
@@ -22,13 +21,14 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
             controllerAttacker: outposts.length > 0 ? 0 : 0,
             claimer: 0,
             toStorageLorry: 1,
-            fromStorageLorry: 1,//this.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES) ? 1 : 4,
+            fromStorageLorry: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 0 : 2,
             transferer: 2,
             longDistanceBuilder: 1,
             longDistanceRepairer: 1,
             interRoomLorry: 1,
-            linkStorageCommunicator: 1,
+            linkStorageCommunicator: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 0 : 1,
             longDistanceUpgrader: 2,
+            mineralHarvester: 1
         }
 
         const transferWorkerRole = ['toStorageLorry', 'fromStorageLorry', 'transferer', 'lorry',
@@ -126,10 +126,19 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                         name = this.CreateClaimer(claimRoom[0]);
                     } else if (role === 'linkStorageCommunicator') {
                         name = this.CreateLinkStorageCommunicator();
+                    } else if (role === 'mineralHarvester') {
+                        if (this.room.controller && this.room.controller.level >= 6 && this.room.find(FIND_MY_STRUCTURES, {
+                            filter: s => s.structureType === STRUCTURE_EXTRACTOR
+                        }).length > 0) {
+                            const mineral = this.room.find(FIND_MINERALS)[0]
+                            if (mineral.mineralAmount > 0) {
+                                name = this.CreateMineralHarvester(mineral.mineralType, mineral.id, maxEnergy);
+                            }
+                        }
                     } else {
                         name = this.CreateCustomCreep(maxEnergy, role);
                     }
-                    break;
+                    if (name) break;
                 }
             }
         }
@@ -201,17 +210,17 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         }
 
 
-        if (name == undefined) {
+        if (name == undefined && this.room.find(FIND_MY_CONSTRUCTION_SITES).length === 0) {
             // check for advanced upgraders
             const advancedUpgraderFlagNames = ["ControllerRoadEndpoint"];
-            for (let i = 1; i < 8; i++) {
+            for (let i = 1; i < 2; i++) {
                 advancedUpgraderFlagNames.push("UpgraderPosition" + i);
             }
             for (const flagName of advancedUpgraderFlagNames) {
                 if (!_.some(Game.creeps, c =>
                     c.memory.role == 'advancedUpgrader' && c.memory.upgradePosFlagName == flagName
                 ) && this.room.name === Game.flags[flagName].room?.name) {
-                    name = this.CreateAdvancedUpgrader(flagName);
+                    name = this.CreateAdvancedUpgrader(flagName, maxEnergy);
                     break;
                 }
             }
@@ -330,13 +339,23 @@ StructureSpawn.prototype.CreateCustomCreep = function (energy: number, roleName:
 
     // create creep with the created body and the given role
     const name = roleName + Game.time.toString();
-    this.spawnCreep(body, name, {memory: {role: roleName, working: false}});
+    this.spawnCreep(body, name, {memory: {role: roleName}});
     return name;
 }
 
-StructureSpawn.prototype.CreateAdvancedUpgrader = function (flagName: string) {
-    const config = [WORK, WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE]
+StructureSpawn.prototype.CreateAdvancedUpgrader = function (flagName: string, energy: number) {
+
+    const config: BodyPartConstant[] = []
     const name = 'AdvancedUpgrader' + Game.time.toString();
+    const numberOfMoveParts = Math.floor((energy - 200) / 250) + 1;
+    const numberOfWorkParts = numberOfMoveParts * 2 - 1;
+    for (let i = 0; i < numberOfWorkParts; i++) {
+        config.push(WORK);
+    }
+    for (let i = 0; i < numberOfMoveParts; i++) {
+        config.push(MOVE);
+    }
+    config.push(CARRY);
     if (this.spawnCreep(config, name, {memory: {role: 'advancedUpgrader', upgradePosFlagName: flagName}}) == OK) {
         return name;
     }
@@ -430,9 +449,7 @@ StructureSpawn.prototype.CreateLinkStorageCommunicator = function () {
     for (let i = 0; i < CarryParts; i++) {
         config.push(CARRY);
     }
-    for (let i = 0; i < CarryParts / 2; i++) {
-        config.push(MOVE);
-    }
+    config.push(MOVE)
     const name = 'LinkStorageCommunicator' + Game.time.toString();
     if (this.spawnCreep(config, name, {
         memory: {
@@ -487,6 +504,34 @@ StructureSpawn.prototype.CreateClaimer = function (target) {
     const config = [CLAIM, MOVE]
     const name = 'Claimer' + Game.time.toString();
     if (this.spawnCreep(config, name, {memory: {role: 'claimer', target: target}}) == OK) {
+        return name;
+    }
+}
+
+StructureSpawn.prototype.CreateMineralHarvester = function (target, id, energy) {
+    const config: BodyPartConstant[] = [];
+    // create a balanced body as big as possible with the given energy
+    let numberOfParts = Math.floor(energy / 200);
+    // make sure the creep is not too big (more than 50 parts)
+    numberOfParts = Math.min(numberOfParts, Math.floor(50 / 3));
+    const body: BodyPartConstant[] = [];
+    for (let i = 0; i < numberOfParts; i++) {
+        body.push(WORK);
+    }
+    for (let i = 0; i < numberOfParts; i++) {
+        body.push(CARRY);
+    }
+    for (let i = 0; i < numberOfParts; i++) {
+        body.push(MOVE);
+    }
+    const name = 'MineralHarvester' + Game.time.toString();
+    if (this.spawnCreep(body, name, {
+        memory: {
+            role: 'mineralHarvester',
+            mineralType: target,
+            sourceId: id,
+        }
+    }) == OK) {
         return name;
     }
 }

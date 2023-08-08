@@ -1,4 +1,4 @@
-Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames) {
+Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames, idleFlagNames) {
 
     if (sourceContainerFlagNames.length !== 0 && (!this.memory.sourceContainerFlagNames ||
         this.memory.sourceContainerFlagNames.length !== sourceContainerFlagNames.length ||
@@ -27,7 +27,7 @@ Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames)
         this.memory.sinkContainerFlagNames = sinkContainerFlagNames;
         this.memory.sinkContainerIds = [];
         for (const sinkContainerFlag of sinkContainerFlagNames) {
-            if(Game.flags[sinkContainerFlag].room?.name === this.name){
+            if (Game.flags[sinkContainerFlag].room?.name === this.name) {
                 const sinkContainer = Game.flags[sinkContainerFlag].pos.findInRange(FIND_STRUCTURES, 1, {
                     filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
                 });
@@ -36,6 +36,19 @@ Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames)
                 }
             }
 
+        }
+    }
+
+    if (idleFlagNames.length !== 0 && (!Memory.idleFlagNames ||
+        Memory.idleFlagNames.length !== idleFlagNames.length ||
+        idleFlagNames.every(
+            (value, index) => value === Memory.idleFlagNames[index]
+        ))) {
+        Memory.idleFlagNames = idleFlagNames;
+        for (const name of idleFlagNames) {
+            if (Game.flags[name].room?.name === this.name) {
+                this.memory.idleFlagName = name;
+            }
         }
     }
     // const containers = this.find(FIND_STRUCTURES, {
@@ -83,7 +96,7 @@ Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames)
                 {align: 'left', opacity: 0.8});
         }
     }
-    if (this.energyAvailable === this.energyCapacityAvailable) {
+    if (this.energyAvailable === this.energyCapacityAvailable && this.find(FIND_MY_CONSTRUCTION_SITES).length === 0) {
         const storage = this.storage;
         if (storage) {
             const storageLink = storage.pos.findInRange(FIND_MY_STRUCTURES, 2, {

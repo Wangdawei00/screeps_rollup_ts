@@ -12,7 +12,7 @@ interface CreepMemory {
     /**GarbageCollector and Lorry state*/
     transporting?: boolean;
     /**Miner and LongDistanceHarvester target source*/
-    sourceId?: Id<Source>;
+    sourceId?: Id<Source>|Id<Mineral>;
     /**Miner and Lorry target container*/
     containerId?: Id<StructureContainer>;
     /**Advanced Upgrader target flag*/
@@ -21,6 +21,8 @@ interface CreepMemory {
     target?: string;//room name
     /**LongDistanceHarvester home room name*/
     home?: string;//room name
+    /**Mineral Type*/
+    mineralType?: MineralConstant;
 }
 
 interface Creep {

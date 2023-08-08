@@ -12,7 +12,7 @@ const roleTransferer = {
                 filter: (structure) => {
                     return (structure.structureType === STRUCTURE_EXTENSION ||
                             structure.structureType === STRUCTURE_SPAWN ||
-                            structure.structureType === STRUCTURE_TOWER) &&
+                            structure.structureType === STRUCTURE_TOWER || structure.structureType ===STRUCTURE_LAB) &&
                         structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0;
                 }
             })
@@ -20,6 +20,8 @@ const roleTransferer = {
                 if (creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
                     creep.moveTo(target);
                 }
+            }else{
+                if (creep.room.memory.idleFlagName) creep.moveTo(Game.flags[creep.room.memory.idleFlagName]);
             }
         } else {
             if (creep.room.name === creep.memory.home) {

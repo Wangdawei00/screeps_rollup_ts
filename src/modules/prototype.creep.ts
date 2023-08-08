@@ -22,6 +22,7 @@ import roleInterRoomLorry from "@/modules/role.interRoomLorry";
 import roleLinkStorageCommunicator from "@/modules/role.LinkStorageCommunicator";
 import roleHealer from "@/modules/role.Healer";
 import roleLongDistanceUpgrader from "@/modules/role.longDistanceUpgrader";
+import roleMineralHarvester from "@/modules/role.mineralHarvester";
 
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "harvester": roleHarvester,
@@ -47,7 +48,8 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     "interRoomLorry": roleInterRoomLorry,
     "linkStorageCommunicator": roleLinkStorageCommunicator,
     "healer": roleHealer,
-    "longDistanceUpgrader": roleLongDistanceUpgrader
+    "longDistanceUpgrader": roleLongDistanceUpgrader,
+    'mineralHarvester': roleMineralHarvester,
 };
 
 Creep.prototype.runRole = function () {
@@ -138,7 +140,7 @@ Creep.prototype.WithdrawFromContainer = function () {
     const source = this.memory.containerId ? Game.getObjectById(this.memory.containerId) :
         this.pos.findClosestByPath(FIND_STRUCTURES, {
             filter: (structure) => structure.structureType === STRUCTURE_CONTAINER && this.room.memory.sourceContainerIds &&
-                structure.store.getUsedCapacity(RESOURCE_ENERGY) > this.store.getCapacity(RESOURCE_ENERGY) &&
+                structure.store.getUsedCapacity(RESOURCE_ENERGY) >= this.store.getCapacity(RESOURCE_ENERGY) &&
                 this.room.memory.sourceContainerIds.includes(structure.id)
         });
     if (source) {
@@ -150,9 +152,13 @@ Creep.prototype.WithdrawFromContainer = function () {
 
 Creep.prototype.WithdrawFromStorage = function () {
     const source = this.room.storage;
-    if (source) {
+    if (source && source.store.getUsedCapacity(RESOURCE_ENERGY) >= this.store.getFreeCapacity(RESOURCE_ENERGY)) {
         if (this.withdraw(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
             this.moveTo(source);
+        }
+    } else {
+        if (this.room.memory.idleFlagName) {
+            this.moveTo(Game.flags[this.room.memory.idleFlagName])
         }
     }
 }
@@ -181,6 +187,10 @@ Creep.prototype.PickupGarbage = function () {
             if (resource.length > 0) {
                 if (this.pickup(resource[0]) === ERR_NOT_IN_RANGE) {
                     this.moveTo(resource[0]);
+                }
+            } else {
+                if (this.room.memory.idleFlagName) {
+                    this.moveTo(Game.flags[this.room.memory.idleFlagName])
                 }
             }
         }
