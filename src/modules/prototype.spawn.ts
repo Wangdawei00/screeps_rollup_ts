@@ -1,10 +1,16 @@
 const listOfRoles = ['linkStorageCommunicator', 'lorry', 'harvester', 'upgrader', "transferer", 'repairer',
     "garbageCollector", "controllerAttacker", "claimer", 'builder', 'mineralHarvester'];
 const specialLorryRoles = ["toStorageLorry", 'fromStorageLorry'];
+const communicatorRole = {
+    'linkStorageCommunicator': "linkStorageCommunicatorFlagNames",
+    'containerLinkCommunicator': "containerLinkCommunicatorFlagNames",
+    'storageLinkCommunicator': "storageLinkCommunicatorFlagNames"
+}
 
 const outpostRoles = ["meleeAttacker", "rangedAttacker", "healer", "reserver", "longDistanceBuilder", "longDistanceRepairer", "longDistanceUpgrader"];
 StructureSpawn.prototype.SpawnCreepsIfNecessary =
     function () {
+        // noinspection JSMismatchedCollectionQueryUpdate
         const outposts: string[] = [];//["E54S53"]//, "E56S53"]
         const minCreeps: Record<string, number> = {
             harvester: 0,
@@ -26,9 +32,8 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
             longDistanceBuilder: 1,
             longDistanceRepairer: 1,
             interRoomLorry: 1,
-            linkStorageCommunicator: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 0 : 1,
             longDistanceUpgrader: 2,
-            mineralHarvester: 1
+            mineralHarvester: 1,
         }
 
         const transferWorkerRole = ['toStorageLorry', 'fromStorageLorry', 'transferer', 'lorry',
@@ -140,6 +145,20 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                     }
                     if (name) break;
                 }
+            }
+        }
+        for (const role in communicatorRole) {
+            // @ts-ignore
+            const flagNames = this.room.memory[communicatorRole[role]];
+            for (const flagName of flagNames) {
+                if (!_.some(Game.creeps, (creep) => creep.memory.role === role && creep.memory.targetFlagName === flagName)) {
+                    name = this.CreateCommunicator(role, flagName);
+                    break;
+                }
+
+            }
+            if (name) {
+                break;
             }
         }
         // if none of the above caused a spawn command check for other roles
@@ -444,7 +463,7 @@ StructureSpawn.prototype.CreateRangedAttacker =
     };
 
 StructureSpawn.prototype.CreateLinkStorageCommunicator = function () {
-    const CarryParts = 16;
+    const CarryParts = 1;
     const config: BodyPartConstant[] = [];
     for (let i = 0; i < CarryParts; i++) {
         config.push(CARRY);
@@ -529,6 +548,20 @@ StructureSpawn.prototype.CreateMineralHarvester = function (target, id, energy) 
             role: 'mineralHarvester',
             mineralType: target,
             sourceId: id,
+        }
+    }) == OK) {
+        return name;
+    }
+}
+
+StructureSpawn.prototype.CreateCommunicator = function (role, flagName) {
+    const config = [CARRY, MOVE];
+
+    const name = role + Game.time.toString();
+    if (this.spawnCreep(config, name, {
+        memory: {
+            role: role,
+            targetFlagName: flagName,
         }
     }) == OK) {
         return name;

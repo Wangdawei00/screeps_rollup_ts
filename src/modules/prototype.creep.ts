@@ -23,6 +23,8 @@ import roleLinkStorageCommunicator from "@/modules/role.LinkStorageCommunicator"
 import roleHealer from "@/modules/role.Healer";
 import roleLongDistanceUpgrader from "@/modules/role.longDistanceUpgrader";
 import roleMineralHarvester from "@/modules/role.mineralHarvester";
+import roleContainerLinkCommunicator from "@/modules/role.containerLinkCommunicator";
+import roleStorageLinkCommunicator from "@/modules/role.storageLinkCommunicator";
 
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "harvester": roleHarvester,
@@ -50,6 +52,8 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     "healer": roleHealer,
     "longDistanceUpgrader": roleLongDistanceUpgrader,
     'mineralHarvester': roleMineralHarvester,
+    'containerLinkCommunicator': roleContainerLinkCommunicator,
+    'storageLinkCommunicator': roleStorageLinkCommunicator,
 };
 
 Creep.prototype.runRole = function () {
@@ -157,8 +161,8 @@ Creep.prototype.WithdrawFromStorage = function () {
             this.moveTo(source);
         }
     } else {
-        if (this.room.memory.idleFlagName) {
-            this.moveTo(Game.flags[this.room.memory.idleFlagName])
+        if (this.room.memory.idleFlagNames) {
+            this.moveTo(Game.flags[this.room.memory.idleFlagNames[0]])
         }
     }
 }
@@ -189,8 +193,8 @@ Creep.prototype.PickupGarbage = function () {
                     this.moveTo(resource[0]);
                 }
             } else {
-                if (this.room.memory.idleFlagName) {
-                    this.moveTo(Game.flags[this.room.memory.idleFlagName])
+                if (this.room.memory.idleFlagNames) {
+                    this.moveTo(Game.flags[this.room.memory.idleFlagNames[0]]);
                 }
             }
         }

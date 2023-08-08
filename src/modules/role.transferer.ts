@@ -21,7 +21,7 @@ const roleTransferer = {
                     creep.moveTo(target);
                 }
             }else{
-                if (creep.room.memory.idleFlagName) creep.moveTo(Game.flags[creep.room.memory.idleFlagName]);
+                if (creep.room.memory.idleFlagNames[0]) creep.moveTo(Game.flags[creep.room.memory.idleFlagNames[0]]);
             }
         } else {
             if (creep.room.name === creep.memory.home) {

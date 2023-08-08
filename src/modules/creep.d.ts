@@ -23,6 +23,8 @@ interface CreepMemory {
     home?: string;//room name
     /**Mineral Type*/
     mineralType?: MineralConstant;
+
+    targetFlagName?: string;
 }
 
 interface Creep {

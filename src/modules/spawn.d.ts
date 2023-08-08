@@ -10,7 +10,7 @@ interface StructureSpawn {
 
     CreateCustomCreep(energy: number, roleName: string): string;
 
-    CreateAdvancedUpgrader(flagName: string,energy:number): string | undefined;
+    CreateAdvancedUpgrader(flagName: string, energy: number): string | undefined;
 
     CreateInterRoomMiner(sourceId: Id<Source>, target: string, containerId?: Id<StructureContainer>): string | undefined;
 
@@ -33,6 +33,8 @@ interface StructureSpawn {
     CreateClaimer(target: string): string | undefined;
 
     CreateMineralHarvester(mineralType: MineralConstant, target: Id<Mineral>, energy: number): string | undefined;
+
+    CreateCommunicator(role: string, flagName: string): string | undefined;
 }
 
 interface SpawnMemory {

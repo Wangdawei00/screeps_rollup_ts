@@ -1,65 +1,67 @@
-Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames, idleFlagNames) {
-
-    if (sourceContainerFlagNames.length !== 0 && (!this.memory.sourceContainerFlagNames ||
-        this.memory.sourceContainerFlagNames.length !== sourceContainerFlagNames.length ||
-        sourceContainerFlagNames.every(
-            (value, index) => value === this.memory.sourceContainerFlagNames[index]
+function UpdateContainerFlagNamesAndId(inputFlagName: string[], roomMemory: RoomMemory,
+                                       inputName: string, idName: string, roomName: string) {
+    // @ts-ignore
+    if (inputFlagName.length !== 0 && (!Memory[inputName] || Memory[inputName].length !== inputFlagName.length
+        // @ts-ignore
+        || !inputFlagName.every((value, index) => value === Memory[inputName][index]
         ))) {
-        this.memory.sourceContainerFlagNames = sourceContainerFlagNames;
-        this.memory.sourceContainerIds = [];
-        for (const sourceContainerFlag of sourceContainerFlagNames) {
-            if (Game.flags[sourceContainerFlag].room?.name === this.name) {
-                const sourceContainer = Game.flags[sourceContainerFlag].pos.findInRange(FIND_STRUCTURES, 1, {
+        // @ts-ignore
+        Memory[inputName] = inputFlagName;
+        // @ts-ignore
+        roomMemory[idName] = [];
+        for (const flagName of inputFlagName) {
+            if (Game.flags[flagName].room?.name === roomName) {
+                const container = Game.flags[flagName].pos.findInRange(FIND_STRUCTURES, 1, {
                     filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
                 });
-                if (sourceContainer.length > 0) {
-                    this.memory.sourceContainerIds.push(<Id<StructureContainer>>sourceContainer[0].id);
+                if (container.length > 0) {
+                    // @ts-ignore
+                    roomMemory[idName].push(<Id<StructureContainer>>container[0].id);
                 }
             }
 
         }
     }
-    if (sinkContainerFlagNames.length !== 0 && (!this.memory.sinkContainerFlagNames ||
-        this.memory.sinkContainerFlagNames.length !== sinkContainerFlagNames.length ||
-        sinkContainerFlagNames.every(
-            (value, index) => value === this.memory.sinkContainerFlagNames[index]
-        ))) {
-        this.memory.sinkContainerFlagNames = sinkContainerFlagNames;
-        this.memory.sinkContainerIds = [];
-        for (const sinkContainerFlag of sinkContainerFlagNames) {
-            if (Game.flags[sinkContainerFlag].room?.name === this.name) {
-                const sinkContainer = Game.flags[sinkContainerFlag].pos.findInRange(FIND_STRUCTURES, 1, {
-                    filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
-                });
-                if (sinkContainer.length > 0) {
-                    this.memory.sinkContainerIds.push(<Id<StructureContainer>>sinkContainer[0].id);
-                }
-            }
+}
 
-        }
-    }
-
-    if (idleFlagNames.length !== 0 && (!Memory.idleFlagNames ||
-        Memory.idleFlagNames.length !== idleFlagNames.length ||
-        idleFlagNames.every(
-            (value, index) => value === Memory.idleFlagNames[index]
-        ))) {
-        Memory.idleFlagNames = idleFlagNames;
-        for (const name of idleFlagNames) {
-            if (Game.flags[name].room?.name === this.name) {
-                this.memory.idleFlagName = name;
+function UpdateFlagName(input: string[], roomMemory: RoomMemory, inputName: string, roomName: string) {
+    // @ts-ignore
+    if (input.length !== 0 && (!Memory[inputName] || Memory[inputName].length !== input.length ||
+        // @ts-ignore
+        input.every((value, index) => value === Memory[inputName][index]))) {
+        // @ts-ignore
+        Memory[inputName] = input;
+        // @ts-ignore
+        roomMemory[inputName] = [];
+        for (const name of input) {
+            if (Game.flags[name].room?.name === roomName) {
+                // @ts-ignore
+                roomMemory[inputName].push(name);
             }
         }
     }
-    // const containers = this.find(FIND_STRUCTURES, {
-    //     filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
-    // })
-    // if(containers.length !== this.memory.sourceContainerIds?.length) {
-    //     this.memory.sourceContainerIds = [];
-    //     for (const container of containers) {
-    //         this.memory.sourceContainerIds.push(<Id<StructureContainer>>container.id);
-    //     }
-    // }
+}
+
+Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames, idleFlagNames,
+                               storageLinkCommunicatorFlagNames, linkStorageCommunicatorFlagNames, containerLinkCommunicatorFlagNames) {
+
+    const containerConfig: Record<string, [string[], string]> = {
+        "sourceContainerFlagNames": [sourceContainerFlagNames, "sourceContainerIds"],
+        "sinkContainerFlagNames": [sinkContainerFlagNames, "sinkContainerIds"],
+    }
+    const flagConfig: Record<string, string[]> = {
+        "idleFlagNames": idleFlagNames,
+        "storageLinkCommunicatorFlagNames": storageLinkCommunicatorFlagNames,
+        "linkStorageCommunicatorFlagNames": linkStorageCommunicatorFlagNames,
+        "containerLinkCommunicatorFlagNames": containerLinkCommunicatorFlagNames,
+    }
+    for (const containerConfigKey in containerConfig) {
+        UpdateContainerFlagNamesAndId(containerConfig[containerConfigKey][0], this.memory, containerConfigKey,
+            containerConfig[containerConfigKey][1], this.name)
+    }
+    for (const flagConfigKey in flagConfig) {
+        UpdateFlagName(flagConfig[flagConfigKey], this.memory, flagConfigKey, this.name)
+    }
     const towers: StructureTower[] = this.find(FIND_STRUCTURES, {
         filter: (structure) => structure.structureType === STRUCTURE_TOWER
     });
@@ -96,25 +98,71 @@ Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames,
                 {align: 'left', opacity: 0.8});
         }
     }
-    if (this.energyAvailable === this.energyCapacityAvailable && this.find(FIND_MY_CONSTRUCTION_SITES).length === 0) {
-        const storage = this.storage;
-        if (storage) {
-            const storageLink = storage.pos.findInRange(FIND_MY_STRUCTURES, 2, {
-                filter: (structure) => {
-                    return structure.structureType === STRUCTURE_LINK;
-                }
-            })
-            if (storageLink.length > 0) {
-                const target = this.controller?.pos.findInRange(FIND_STRUCTURES, 4, {
+    if (this.memory.updateLink) {
+        this.memory.sourceLinks = [];
+        this.memory.sinkLinks = [];
+        if (this.memory.linkMining) {
+            const sources = this.find(FIND_SOURCES);
+            for (const source of sources) {
+                this.memory.sourceLinks = this.memory.sourceLinks.concat((<StructureLink[]>source.pos.findInRange(FIND_STRUCTURES, 3, {
                     filter: (structure) => {
                         return structure.structureType === STRUCTURE_LINK;
                     }
-                })
-                if (target && target.length > 0) {
-                    (<StructureLink>storageLink[0]).transferEnergy(<StructureLink>target[0]);
+                })).map((structure) => structure.id));
+            }
+            if (this.storage) {
+                this.memory.sinkLinks.push(<Id<StructureLink>>this.storage.pos.findInRange(FIND_STRUCTURES, 2, {
+                    filter: (structure) => structure.structureType === STRUCTURE_LINK
+                })[0]?.id);
+            }
+        } else {
+            if (this.storage) {
+                this.memory.sourceLinks.push(<Id<StructureLink>>this.storage.pos.findInRange(FIND_STRUCTURES, 2, {
+                    filter: (structure) => structure.structureType === STRUCTURE_LINK
+                })[0]?.id);
+            }
+            if (this.controller) {
+                this.memory.sinkLinks.push(<Id<StructureLink>>this.controller.pos.findInRange(FIND_STRUCTURES, 4, {
+                    filter: (structure) => structure.structureType === STRUCTURE_LINK
+                })[0]?.id);
+            }
+        }
+        this.memory.updateLink = false;
+    }
+    if (this.memory.linkMining || (this.energyAvailable === this.energyCapacityAvailable
+        && this.find(FIND_MY_CONSTRUCTION_SITES).length === 0)) {
+        const sourceLinks = this.memory.sourceLinks.map((id) => Game.getObjectById(id));
+        const sinkLinks = this.memory.sinkLinks.map((id) => Game.getObjectById(id));
+        for (const sourceLink of sourceLinks) {
+            if (sourceLink && sourceLink.store[RESOURCE_ENERGY] === sourceLink.store.getCapacity(RESOURCE_ENERGY)) {
+                for (const sinkLink of sinkLinks) {
+                    if (sinkLink && sinkLink.store[RESOURCE_ENERGY] === 0) {
+                        sourceLink.transferEnergy(sinkLink);
+                    }
                 }
             }
         }
     }
+
+// if () {
+//     const storage = this.storage;
+//     if (storage) {
+//         const storageLink = storage.pos.findInRange(FIND_MY_STRUCTURES, 2, {
+//             filter: (structure) => {
+//                 return structure.structureType === STRUCTURE_LINK;
+//             }
+//         })
+//         if (storageLink.length > 0) {
+//             const target = this.controller?.pos.findInRange(FIND_STRUCTURES, 4, {
+//                 filter: (structure) => {
+//                     return structure.structureType === STRUCTURE_LINK;
+//                 }
+//             })
+//             if (target && target.length > 0) {
+//                 (<StructureLink>storageLink[0]).transferEnergy(<StructureLink>target[0]);
+//             }
+//         }
+//     }
+// }
 
 }
