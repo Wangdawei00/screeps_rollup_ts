@@ -509,7 +509,6 @@ StructureSpawn.prototype.CreateClaimer = function (target) {
 }
 
 StructureSpawn.prototype.CreateMineralHarvester = function (target, id, energy) {
-    const config: BodyPartConstant[] = [];
     // create a balanced body as big as possible with the given energy
     let numberOfParts = Math.floor(energy / 200);
     // make sure the creep is not too big (more than 50 parts)

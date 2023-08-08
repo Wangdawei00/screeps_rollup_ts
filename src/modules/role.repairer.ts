@@ -1,5 +1,3 @@
-import roleUpgrader from "./role.upgrader";
-
 const roleRepairer = {
     run: (creep:Creep) => {
         if (creep.memory.working && creep.store[RESOURCE_ENERGY] === 0) {
