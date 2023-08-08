@@ -14,7 +14,7 @@ const roleLinkMiner = {
                 }
             }
         } else {
-            const link = creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
+            creep.pos.findClosestByPath(FIND_MY_STRUCTURES, {
                 filter: (s) => {
                     return s.structureType === STRUCTURE_LINK && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
                 }
