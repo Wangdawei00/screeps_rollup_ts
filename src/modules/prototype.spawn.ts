@@ -232,7 +232,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         if (name == undefined && this.room.find(FIND_MY_CONSTRUCTION_SITES).length === 0) {
             // check for advanced upgraders
             const advancedUpgraderFlagNames = ["ControllerRoadEndpoint"];
-            for (let i = 1; i < 2; i++) {
+            for (let i = 1; i < 4; i++) {
                 advancedUpgraderFlagNames.push("UpgraderPosition" + i);
             }
             for (const flagName of advancedUpgraderFlagNames) {
@@ -366,15 +366,18 @@ StructureSpawn.prototype.CreateAdvancedUpgrader = function (flagName: string, en
 
     const config: BodyPartConstant[] = []
     const name = 'AdvancedUpgrader' + Game.time.toString();
-    const numberOfMoveParts = Math.floor((energy - 200) / 250) + 1;
-    const numberOfWorkParts = numberOfMoveParts * 2 - 1;
+    const numberOfMoveParts = Math.floor((energy - 200) / 250);
+    const numberOfWorkParts = numberOfMoveParts * 2;
     for (let i = 0; i < numberOfWorkParts; i++) {
         config.push(WORK);
     }
     for (let i = 0; i < numberOfMoveParts; i++) {
         config.push(MOVE);
     }
-    config.push(CARRY);
+    for (let i = 0; i < 4; i++) {
+        config.push(CARRY);
+
+    }
     if (this.spawnCreep(config, name, {memory: {role: 'advancedUpgrader', upgradePosFlagName: flagName}}) == OK) {
         return name;
     }
