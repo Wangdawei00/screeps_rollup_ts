@@ -1,5 +1,5 @@
 const listOfRoles = ['linkStorageCommunicator', 'lorry', 'harvester', 'upgrader', "transferer", 'repairer',
-    "garbageCollector", "controllerAttacker", "claimer", 'builder', 'mineralHarvester'];
+    "garbageCollector", "controllerAttacker", "claimer", 'builder', 'mineralHarvester', 'wallRepairer','rampartRepairer'];
 const specialLorryRoles = ["toStorageLorry", 'fromStorageLorry'];
 const communicatorRole = {
     'linkStorageCommunicator': "linkStorageCommunicatorFlagNames",
@@ -27,13 +27,15 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
             controllerAttacker: outposts.length > 0 ? 0 : 0,
             claimer: 0,
             toStorageLorry: 1,
-            fromStorageLorry: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 0 : 2,
+            fromStorageLorry: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 0 : 1,
             transferer: 2,
             longDistanceBuilder: 1,
             longDistanceRepairer: 1,
             interRoomLorry: 1,
             longDistanceUpgrader: 2,
             mineralHarvester: 1,
+            wallRepairer: 0,
+            rampartRepairer: 1,
         }
 
         const transferWorkerRole = ['toStorageLorry', 'fromStorageLorry', 'transferer', 'lorry',
@@ -232,7 +234,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         if (name == undefined && this.room.find(FIND_MY_CONSTRUCTION_SITES).length === 0) {
             // check for advanced upgraders
             const advancedUpgraderFlagNames = ["ControllerRoadEndpoint"];
-            for (let i = 1; i < 4; i++) {
+            for (let i = 1; i < 2; i++) {
                 advancedUpgraderFlagNames.push("UpgraderPosition" + i);
             }
             for (const flagName of advancedUpgraderFlagNames) {
