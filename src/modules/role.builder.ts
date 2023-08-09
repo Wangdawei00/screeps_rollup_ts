@@ -1,4 +1,4 @@
-import roleRepairer from "./role.repairer";
+import roleLorry from "@/modules/role.lorry";
 
 const roleBuilder = {
 
@@ -15,16 +15,16 @@ const roleBuilder = {
         }
 
         if (creep.memory.building) {
-            const target = creep.pos.findClosestByPath(FIND_CONSTRUCTION_SITES)
+            const target = creep.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES)
             if (target) {
                 if (creep.build(target) === ERR_NOT_IN_RANGE) {
                     creep.moveTo(target);
                 }
             } else {
-                roleRepairer.run(creep);
+                roleLorry.run(creep);
             }
         } else {
-            creep.WithdrawFromContainerOrStorage();
+            creep.WithdrawFromStorage();
         }
     }
 };

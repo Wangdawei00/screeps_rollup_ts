@@ -18,7 +18,7 @@ const roleAdvancedUpgrader = {
                     creep.upgradeController(creep.room.controller as StructureController);
                 } else {
                     const source = creep.pos.findInRange(FIND_STRUCTURES, 1, {
-                        filter: (s) => s.structureType === STRUCTURE_CONTAINER && s.store[RESOURCE_ENERGY] > 0
+                        filter: (s) => s.structureType === STRUCTURE_LINK || s.structureType === STRUCTURE_CONTAINER
                     })
                     if (source.length > 0) {
                         creep.withdraw(source[0], RESOURCE_ENERGY);

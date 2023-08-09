@@ -1,31 +1,46 @@
-const listOfRoles = ['lorry', 'harvester', 'upgrader', 'builder', 'repairer', 'reserver',
-    "longDistanceHarvester", "garbageCollector", "meleeAttacker", "rangedAttacker", "controllerAttacker", "claimer",
-    "transferer"];
-const specialLorryRoles = ["toStorageLorry", "fromStorageLorry"];
+const listOfRoles = ['linkStorageCommunicator', 'lorry', 'harvester', 'upgrader', "transferer", 'repairer',
+    "garbageCollector", "controllerAttacker", "claimer", 'builder', 'mineralHarvester'];
+const specialLorryRoles = ["toStorageLorry", 'fromStorageLorry'];
+const communicatorRole = {
+    'linkStorageCommunicator': "linkStorageCommunicatorFlagNames",
+    'containerLinkCommunicator': "containerLinkCommunicatorFlagNames",
+    'storageLinkCommunicator': "storageLinkCommunicatorFlagNames"
+}
 
+const outpostRoles = ["meleeAttacker", "rangedAttacker", "healer", "reserver", "longDistanceBuilder", "longDistanceRepairer", "longDistanceUpgrader"];
 StructureSpawn.prototype.SpawnCreepsIfNecessary =
     function () {
-        const invasionRooms: string[] = ["E54S53"]
+        // noinspection JSMismatchedCollectionQueryUpdate
+        const outposts: string[] = [];//["E54S53"]//, "E56S53"]
         const minCreeps: Record<string, number> = {
             harvester: 0,
             upgrader: 0,
-            builder: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 4 : 0,
-            repairer: 0,
+            builder: this.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES) ? 1 : 0,
+            repairer: 1,
             lorry: 0, //this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 0 : 0,
             reserver: 0,
-            longDistanceHarvester: 6,
+            longDistanceHarvester: 0,
             garbageCollector: 1,
-            meleeAttacker: invasionRooms.length > 0 ? 1 : 0,
-            rangedAttacker: invasionRooms.length > 0 ? 0 : 0,
-            controllerAttacker: invasionRooms.length > 0 ? 1 : 0,
+            meleeAttacker: outposts.length > 0 ? 1 : 0,
+            rangedAttacker: outposts.length > 0 ? 1 : 0,
+            healer: outposts.length > 0 ? 1 : 0,
+            controllerAttacker: outposts.length > 0 ? 0 : 0,
             claimer: 0,
-            toStorageLorry: 2,
-            fromStorageLorry: 4,
-            transferer: 2
+            toStorageLorry: 1,
+            fromStorageLorry: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 0 : 2,
+            transferer: 2,
+            longDistanceBuilder: 1,
+            longDistanceRepairer: 1,
+            interRoomLorry: 1,
+            longDistanceUpgrader: 2,
+            mineralHarvester: 1,
         }
 
-        const transferWorkerRole = ['toStorageLorry', 'fromStorageLorry', 'transferer', 'lorry', "garbageCollector"]
-        const crossRoomRoles = ['longDistanceHarvester', 'reserver', 'claimer', 'meleeAttacker', 'rangedAttacker', 'controllerAttacker']
+        const transferWorkerRole = ['toStorageLorry', 'fromStorageLorry', 'transferer', 'lorry',
+            "garbageCollector"]
+        const crossRoomRoles = ['longDistanceHarvester', 'longDistanceBuilder', 'reserver', 'claimer',
+            'meleeAttacker', 'rangedAttacker', 'controllerAttacker', 'longDistanceRepairer', 'linkStorageCommunicator']
+        const claimRoom = ['E53S55']
         const room = this.room;
         // find all creeps in room
         let creepsInRoom = room.find(FIND_MY_CREEPS);
@@ -42,11 +57,12 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                 numberOfCreeps[role] = _.sum(creepsInRoom, c => c.memory.role === role ? 1 : 0);
             }
         }
+        numberOfCreeps['toStorageLorry'] = _.sum(creepsInRoom, c => c.memory.role === 'toStorageLorry' ? 1 : 0);
         let maxEnergy = room.energyCapacityAvailable;
         let name = undefined;
 
         if (this.room.storage) {
-            if (numberOfCreeps['harvester'] === 0 && numberOfCreeps['transferer'] === 0) {
+            if (numberOfCreeps['harvester'] === 0 && numberOfCreeps['transferer'] === 0 && numberOfCreeps['toStorageLorry'] === 0) {
                 if (numberOfCreeps['miner'] > 0 || (this.room.storage.store.getUsedCapacity(RESOURCE_ENERGY) >= 300 + 550)) {
                     name = this.CreateTransportWorker(300, "transferer", null, this.room.name);
                 } else {
@@ -59,7 +75,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                 if (numberOfCreeps['miner'] > 0 || (room.storage != undefined &&
                     room.storage.store[RESOURCE_ENERGY] >= 150 + 550)) {
                     // create a lorry
-                    name = this.CreateTransportWorker(300, "lorry", null, this.room.name);
+                    name = this.CreateTransportWorker(600, "lorry", null, this.room.name);
                 }
                 // if there is no miner and not enough energy in Storage left
                 else {
@@ -70,7 +86,21 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         }
         // if no harvesters are left AND either no miners or no lorries are left
         //  create a backup creep
-
+        if (name === undefined) {
+            for (let role of specialLorryRoles) {
+                const ids = role === 'toStorageLorry' ? this.room.memory.sourceContainerIds : this.room.memory.sinkContainerIds;
+                for (const containerId of ids) {
+                    const num = _.sum(Game.creeps, (creep) => {
+                        return creep.memory.role === role && creep.memory.containerId === containerId ? 1 : 0;
+                    });
+                    if (num < minCreeps[role]) {
+                        name = this.CreateTransportWorker(600, role, containerId, this.room.name);
+                        break;
+                    }
+                }
+                if (name) break;
+            }
+        }
         // if no backup creep is required
         if (name == undefined) {
             // check if all sources have miners
@@ -92,60 +122,130 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                 }
             }
         }
-
-        // if none of the above caused a spawn command check for other roles
-        if (name == undefined) {
-            // check for advanced upgraders
-            const advancedUpgraderFlagNames = ["UpgraderPosition1", "UpgraderPosition2", "ControllerRoadEndpoint"];
-            for (const flagName of advancedUpgraderFlagNames) {
-                if (!_.some(creepsInRoom, c => c.memory.role == 'advancedUpgrader' && c.memory.upgradePosFlagName == flagName)) {
-                    name = this.CreateAdvancedUpgrader(flagName);
-                    break;
-                }
-            }
-        }
         if (name == undefined) {
             for (let role of listOfRoles) {
                 if (numberOfCreeps[role] < minCreeps[role]) {
                     if (transferWorkerRole.includes(role)) {
-                        name = this.CreateTransportWorker(300, role, null, this.room.name);
-                    } else if (role === 'reserver') {
-                        name = this.CreateReserverOrControllerAttacker('E57S53', role);
-                    } else if (role === 'longDistanceHarvester') {
-                        if (Memory.lastLongDistanceTargetRoomName && Memory.lastLongDistanceTargetRoomName === 'E56S53') {
-                            Memory.lastLongDistanceTargetRoomName = 'E57S53';
-                        } else {
-                            Memory.lastLongDistanceTargetRoomName = 'E56S53';
+                        name = this.CreateTransportWorker(600, role, null, this.room.name);
+                    } else if (role === 'claimer' && (!Game.rooms[claimRoom[0]] || !Game.rooms[claimRoom[0]].controller?.my)) {
+                        name = this.CreateClaimer(claimRoom[0]);
+                    } else if (role === 'linkStorageCommunicator') {
+                        name = this.CreateLinkStorageCommunicator();
+                    } else if (role === 'mineralHarvester') {
+                        if (this.room.controller && this.room.controller.level >= 6 && this.room.find(FIND_MY_STRUCTURES, {
+                            filter: s => s.structureType === STRUCTURE_EXTRACTOR
+                        }).length > 0) {
+                            const mineral = this.room.find(FIND_MINERALS)[0]
+                            if (mineral.mineralAmount > 0) {
+                                name = this.CreateMineralHarvester(mineral.mineralType, mineral.id, maxEnergy);
+                            }
                         }
-                        name = this.CreateLongDistanceHarvester(Memory.lastLongDistanceTargetRoomName, 'E55S53', maxEnergy);
-                    } else if (role === 'meleeAttacker' && invasionRooms.length > 0) {
-                        name = this.CreateMeleeAttacker(invasionRooms[0], maxEnergy);
-                    } else if (role === 'rangedAttacker' && invasionRooms.length > 0) {
-                        name = this.CreateRangedAttacker(invasionRooms[0], maxEnergy);
-                    } else if (role === 'controllerAttacker' && invasionRooms.length > 0) {
-                        name = this.CreateReserverOrControllerAttacker(invasionRooms[0], role);
                     } else {
                         name = this.CreateCustomCreep(maxEnergy, role);
                     }
+                    if (name) break;
+                }
+            }
+        }
+        for (const role in communicatorRole) {
+            // @ts-ignore
+            const flagNames = this.room.memory[communicatorRole[role]];
+            for (const flagName of flagNames) {
+                if (!_.some(Game.creeps, (creep) => creep.memory.role === role && creep.memory.targetFlagName === flagName)) {
+                    name = this.CreateCommunicator(role, flagName);
+                    break;
+                }
+
+            }
+            if (name) {
+                break;
+            }
+        }
+        // if none of the above caused a spawn command check for other roles
+        if (name === undefined) {
+            for (const invasionRole of outpostRoles) {
+                for (const invasionRoom of outposts) {
+                    const num = _.sum(Game.creeps, (creep) => {
+                        return creep.memory.role === invasionRole && creep.memory.target === invasionRoom ? 1 : 0;
+                    });
+                    console.log(invasionRoom + invasionRole + num)
+                    if (num < minCreeps[invasionRole]) {
+                        name = this.CreateOutpostCreep(invasionRoom, maxEnergy, invasionRole);
+                        break;
+                    }
+                }
+                if (name) {
                     break;
                 }
             }
         }
         if (name === undefined) {
-            for (let role of specialLorryRoles) {
-                const ids = role === "fromStorageLorry" ? this.room.memory.sinkContainerIds : this.room.memory.sourceContainerIds;
-                for (const containerId of ids) {
-                    const num = _.sum(Game.creeps, (creep) => {
-                        return creep.memory.role === role && creep.memory.containerId === containerId ? 1 : 0;
-                    });
-                    if (num < minCreeps[role]) {
-                        name = this.CreateTransportWorker(300, role, containerId, this.room.name);
-                        break;
+            for (const room of outposts) {
+                if (Game.rooms[room]) {
+                    const sources = Game.rooms[room].find(FIND_SOURCES);
+                    for (const source of sources) {
+                        if (!_.some(Game.creeps, c =>
+                            c.memory.role == 'interRoomMiner' && c.memory.sourceId == source.id
+                        )) {
+                            const container = source.pos.findInRange(FIND_STRUCTURES, 1, {
+                                filter: s => s.structureType == STRUCTURE_CONTAINER
+                            })
+                            if (container.length > 0) {
+                                name = this.CreateInterRoomMiner(source.id, room, <Id<StructureContainer>>container[0].id);
+                                break;
+                            } else {
+                                name = this.CreateInterRoomMiner(source.id, room);
+                                break;
+                            }
+                        }
                     }
                 }
-                if (name) break;
+
+            }
+
+        }
+        //InterRoomLorry
+        if (name === undefined) {
+            for (const room of outposts) {
+                if (Game.rooms[room]) {
+                    const sources = Game.rooms[room].find(FIND_SOURCES);
+                    for (const source of sources) {
+                        const containers = source.pos.findInRange(FIND_STRUCTURES, 1, {
+                            filter: s => s.structureType == STRUCTURE_CONTAINER
+                        })
+                        if (containers.length > 0) {
+                            const container = <StructureContainer>containers[0];
+                            const num = _.sum(Game.creeps, (creep) => {
+                                return creep.memory.role === 'interRoomLorry' && creep.memory.containerId === container.id ? 1 : 0;
+                            })
+                            if (num < minCreeps['interRoomLorry']) {
+                                name = this.CreateInterRoomLorry(container.id, room, 'E55S53');
+                                break;
+                            }
+                        }
+                    }
+                }
             }
         }
+
+
+        if (name == undefined && this.room.find(FIND_MY_CONSTRUCTION_SITES).length === 0) {
+            // check for advanced upgraders
+            const advancedUpgraderFlagNames = ["ControllerRoadEndpoint"];
+            for (let i = 1; i < 4; i++) {
+                advancedUpgraderFlagNames.push("UpgraderPosition" + i);
+            }
+            for (const flagName of advancedUpgraderFlagNames) {
+                if (!_.some(Game.creeps, c =>
+                    c.memory.role == 'advancedUpgrader' && c.memory.upgradePosFlagName == flagName
+                ) && this.room.name === Game.flags[flagName].room?.name) {
+                    name = this.CreateAdvancedUpgrader(flagName, maxEnergy);
+                    break;
+                }
+            }
+        }
+        //InterRoomMiner
+
 
         // // if none of the above caused a spawn command check for LongDistanceHarvesters
         // /** @type {Object.<string, number>} */
@@ -162,6 +262,33 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         }
     };
 
+StructureSpawn.prototype.CreateInterRoomMiner = function (sourceId, target, containerId) {
+    const name = 'InterRoomMiner' + Game.time.toString();
+    if (this.spawnCreep([WORK, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE, MOVE], name, {
+        memory: {
+            role: 'interRoomMiner',
+            sourceId: sourceId,
+            containerId: containerId,
+            target: target
+        }
+    }) === OK) {
+        return name;
+    }
+}
+
+StructureSpawn.prototype.CreateInterRoomLorry = function (containerId, target, home) {
+    const name = 'InterRoomLorry' + Game.time.toString();
+    if (this.spawnCreep([CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE], name, {
+        memory: {
+            role: 'interRoomLorry',
+            containerId: containerId,
+            target: target,
+            home: home
+        }
+    }) === OK) {
+        return name;
+    }
+}
 
 StructureSpawn.prototype.CreateMiner =
     function (sourceId: Id<Source>) {
@@ -173,7 +300,7 @@ StructureSpawn.prototype.CreateMiner =
             })
             if (containers.length > 0) {
                 const containerId = containers[0].id;
-                this.spawnCreep([WORK, WORK, WORK, WORK, WORK, MOVE], name, {
+                this.spawnCreep([WORK, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE], name, {
                     memory: {
                         role: 'miner',
                         sourceId: sourceId,
@@ -231,13 +358,26 @@ StructureSpawn.prototype.CreateCustomCreep = function (energy: number, roleName:
 
     // create creep with the created body and the given role
     const name = roleName + Game.time.toString();
-    this.spawnCreep(body, name, {memory: {role: roleName, working: false}});
+    this.spawnCreep(body, name, {memory: {role: roleName}});
     return name;
 }
 
-StructureSpawn.prototype.CreateAdvancedUpgrader = function (flagName: string) {
-    const config = [WORK, WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE]
+StructureSpawn.prototype.CreateAdvancedUpgrader = function (flagName: string, energy: number) {
+
+    const config: BodyPartConstant[] = []
     const name = 'AdvancedUpgrader' + Game.time.toString();
+    const numberOfMoveParts = Math.floor((energy - 200) / 250);
+    const numberOfWorkParts = numberOfMoveParts * 2;
+    for (let i = 0; i < numberOfWorkParts; i++) {
+        config.push(WORK);
+    }
+    for (let i = 0; i < numberOfMoveParts; i++) {
+        config.push(MOVE);
+    }
+    for (let i = 0; i < 4; i++) {
+        config.push(CARRY);
+
+    }
     if (this.spawnCreep(config, name, {memory: {role: 'advancedUpgrader', upgradePosFlagName: flagName}}) == OK) {
         return name;
     }
@@ -251,8 +391,8 @@ StructureSpawn.prototype.CreateReserverOrControllerAttacker = function (targetRo
     }
 }
 
-StructureSpawn.prototype.CreateLongDistanceHarvester =
-    function (targetRoomName: string, homeRoomName: string, energy: number) {
+StructureSpawn.prototype.CreateLongDistanceWorker =
+    function (targetRoomName: string, homeRoomName: string, energy: number, role: string) {
         const config: BodyPartConstant[] = [];
         const numberOfWorkParts = Math.floor(energy / 250);
         for (let i = 0; i < numberOfWorkParts; i++) {
@@ -264,10 +404,10 @@ StructureSpawn.prototype.CreateLongDistanceHarvester =
         for (let i = 0; i < numberOfWorkParts * 2; i++) {
             config.push(MOVE);
         }
-        const name = 'LongDistanceHarvester' + Game.time.toString();
+        const name = role + Game.time.toString();
         if (this.spawnCreep(config, name, {
             memory: {
-                role: 'longDistanceHarvester',
+                role: role,
                 home: homeRoomName,
                 target: targetRoomName,
             }
@@ -282,10 +422,11 @@ StructureSpawn.prototype.CreateMeleeAttacker =
         const numberOfAttackParts = Math.floor(energy / 250);
         for (let i = 0; i < numberOfAttackParts * 2; i++) {
             config.push(TOUGH);
-            config.push(MOVE);
         }
         for (let i = 0; i < numberOfAttackParts; i++) {
             config.push(ATTACK);
+        }
+        for (let i = 0; i < numberOfAttackParts * 3; i++) {
             config.push(MOVE)
         }
         const name = 'MeleeAttacker' + Game.time.toString();
@@ -302,15 +443,17 @@ StructureSpawn.prototype.CreateMeleeAttacker =
 StructureSpawn.prototype.CreateRangedAttacker =
     function (target, energy) {
         const config: BodyPartConstant[] = [];
-        const numberOfAttackParts = Math.floor(energy / 260);
+        const numberOfAttackParts = Math.floor((energy - 300) / 260);
         for (let i = 0; i < numberOfAttackParts; i++) {
             config.push(TOUGH);
-            config.push(MOVE);
         }
         for (let i = 0; i < numberOfAttackParts; i++) {
             config.push(RANGED_ATTACK);
-            config.push(MOVE)
         }
+        for (let i = 0; i < numberOfAttackParts * 2 + 1; i++) {
+            config.push(MOVE);
+        }
+        config.push(HEAL);
         const name = 'RangedAttacker' + Game.time.toString();
         if (this.spawnCreep(config, name, {
             memory: {
@@ -320,4 +463,110 @@ StructureSpawn.prototype.CreateRangedAttacker =
         }) == OK) {
             return name;
         }
+    };
+
+StructureSpawn.prototype.CreateLinkStorageCommunicator = function () {
+    const CarryParts = 1;
+    const config: BodyPartConstant[] = [];
+    for (let i = 0; i < CarryParts; i++) {
+        config.push(CARRY);
     }
+    config.push(MOVE)
+    const name = 'LinkStorageCommunicator' + Game.time.toString();
+    if (this.spawnCreep(config, name, {
+        memory: {
+            role: 'linkStorageCommunicator',
+        }
+    }) == OK) {
+        return name;
+    }
+}
+
+StructureSpawn.prototype.CreateOutpostCreep = function (target, energy, role) {
+    if (role == 'meleeAttacker') {
+        return this.CreateMeleeAttacker(target, energy);
+    } else if (role === 'rangedAttacker') {
+        return this.CreateRangedAttacker(target, energy);
+    } else if (role === 'healer') {
+        return this.CreateHealer(target, energy);
+    } else {
+        if (role === 'reserver') {
+            return this.CreateReserverOrControllerAttacker(target, role);
+        } else {
+            return this.CreateLongDistanceWorker(target, this.room.name, energy, role);
+        }
+
+    }
+}
+
+StructureSpawn.prototype.CreateHealer = function (targetRoomName: string, energy) {
+    const config: BodyPartConstant[] = [];
+    const numberOfHealParts = Math.floor(energy / 320);
+    for (let i = 0; i < numberOfHealParts; i++) {
+        config.push(TOUGH);
+    }
+    for (let i = 0; i < numberOfHealParts; i++) {
+        config.push(HEAL);
+    }
+    for (let i = 0; i < numberOfHealParts * 2; i++) {
+        config.push(MOVE);
+    }
+    const name = 'Healer' + Game.time.toString();
+    if (this.spawnCreep(config, name, {
+        memory: {
+            role: 'healer',
+            target: targetRoomName,
+        }
+    }) == OK) {
+        return name;
+    }
+}
+
+StructureSpawn.prototype.CreateClaimer = function (target) {
+    const config = [CLAIM, MOVE]
+    const name = 'Claimer' + Game.time.toString();
+    if (this.spawnCreep(config, name, {memory: {role: 'claimer', target: target}}) == OK) {
+        return name;
+    }
+}
+
+StructureSpawn.prototype.CreateMineralHarvester = function (target, id, energy) {
+    // create a balanced body as big as possible with the given energy
+    let numberOfParts = Math.floor(energy / 200);
+    // make sure the creep is not too big (more than 50 parts)
+    numberOfParts = Math.min(numberOfParts, Math.floor(50 / 3));
+    const body: BodyPartConstant[] = [];
+    for (let i = 0; i < numberOfParts; i++) {
+        body.push(WORK);
+    }
+    for (let i = 0; i < numberOfParts; i++) {
+        body.push(CARRY);
+    }
+    for (let i = 0; i < numberOfParts; i++) {
+        body.push(MOVE);
+    }
+    const name = 'MineralHarvester' + Game.time.toString();
+    if (this.spawnCreep(body, name, {
+        memory: {
+            role: 'mineralHarvester',
+            mineralType: target,
+            sourceId: id,
+        }
+    }) == OK) {
+        return name;
+    }
+}
+
+StructureSpawn.prototype.CreateCommunicator = function (role, flagName) {
+    const config = [CARRY, MOVE];
+
+    const name = role + Game.time.toString();
+    if (this.spawnCreep(config, name, {
+        memory: {
+            role: role,
+            targetFlagName: flagName,
+        }
+    }) == OK) {
+        return name;
+    }
+}

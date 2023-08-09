@@ -15,6 +15,16 @@ import roleClaimer from "@/modules/role.claimer";
 import roleToStorageLorry from "@/modules/role.toStorageLorry";
 import roleFromStorageLorry from "@/modules/role.fromStorageLorry";
 import roleTransferer from "@/modules/role.transferer";
+import roleLongDistanceBuilder from "@/modules/role.longDistanceBuilder";
+import roleLongDistanceRepairer from "@/modules/role.longDistanceRepairer";
+import roleInterRoomMiner from "@/modules/role.interRoomMiner";
+import roleInterRoomLorry from "@/modules/role.interRoomLorry";
+import roleLinkStorageCommunicator from "@/modules/role.LinkStorageCommunicator";
+import roleHealer from "@/modules/role.Healer";
+import roleLongDistanceUpgrader from "@/modules/role.longDistanceUpgrader";
+import roleMineralHarvester from "@/modules/role.mineralHarvester";
+import roleContainerLinkCommunicator from "@/modules/role.containerLinkCommunicator";
+import roleStorageLinkCommunicator from "@/modules/role.storageLinkCommunicator";
 
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "harvester": roleHarvester,
@@ -33,7 +43,17 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     "claimer": roleClaimer,
     "toStorageLorry": roleToStorageLorry,
     "fromStorageLorry": roleFromStorageLorry,
-    "transferer": roleTransferer
+    "transferer": roleTransferer,
+    "longDistanceBuilder": roleLongDistanceBuilder,
+    "longDistanceRepairer": roleLongDistanceRepairer,
+    "interRoomMiner": roleInterRoomMiner,
+    "interRoomLorry": roleInterRoomLorry,
+    "linkStorageCommunicator": roleLinkStorageCommunicator,
+    "healer": roleHealer,
+    "longDistanceUpgrader": roleLongDistanceUpgrader,
+    'mineralHarvester': roleMineralHarvester,
+    'containerLinkCommunicator': roleContainerLinkCommunicator,
+    'storageLinkCommunicator': roleStorageLinkCommunicator,
 };
 
 Creep.prototype.runRole = function () {
@@ -103,7 +123,7 @@ Creep.prototype.MoveToHomeRoom = function () {
 
 Creep.prototype.WithdrawFromContainerOrStorage = function () {
     const source = this.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
+        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER && this.room.memory.sourceContainerIds &&
             structure.store.getUsedCapacity(RESOURCE_ENERGY) > this.store.getFreeCapacity() &&
             this.room.memory.sourceContainerIds.includes(structure.id)
     });
@@ -121,13 +141,70 @@ Creep.prototype.WithdrawFromContainerOrStorage = function () {
 }
 
 Creep.prototype.WithdrawFromContainer = function () {
-    const source = this.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
-            structure.store.getUsedCapacity(RESOURCE_ENERGY) > this.store.getCapacity(RESOURCE_ENERGY) &&
-            this.room.memory.sourceContainerIds.includes(structure.id)
-    });
+    const source = this.memory.containerId ? Game.getObjectById(this.memory.containerId) :
+        this.pos.findClosestByPath(FIND_STRUCTURES, {
+            filter: (structure) => structure.structureType === STRUCTURE_CONTAINER && this.room.memory.sourceContainerIds &&
+                structure.store.getUsedCapacity(RESOURCE_ENERGY) >= this.store.getCapacity(RESOURCE_ENERGY) &&
+                this.room.memory.sourceContainerIds.includes(structure.id)
+        });
     if (source) {
         if (this.withdraw(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+            this.moveTo(source);
+        }
+    }
+}
+
+Creep.prototype.WithdrawFromStorage = function () {
+    const source = this.room.storage;
+    if (source && source.store.getUsedCapacity(RESOURCE_ENERGY) >= this.store.getFreeCapacity(RESOURCE_ENERGY)) {
+        if (this.withdraw(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+            this.moveTo(source);
+        }
+    } else {
+        if (this.room.memory.idleFlagNames) {
+            this.moveTo(Game.flags[this.room.memory.idleFlagNames[0]])
+        }
+    }
+}
+
+
+Creep.prototype.PickupGarbage = function () {
+    const ruin = this.pos.findClosestByPath(FIND_RUINS, {
+        filter: (r) => r.store.getUsedCapacity(RESOURCE_ENERGY) > 0 && r.room?.name === this.room.name
+    })
+    if (ruin) {
+        if (this.withdraw(ruin, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+            this.moveTo(ruin);
+        }
+    } else {
+        const tombstone = this.pos.findClosestByPath(FIND_TOMBSTONES, {
+            filter: (t) => t.store.getUsedCapacity(RESOURCE_ENERGY) > 0 && t.room?.name === this.room.name
+        });
+        if (tombstone) {
+            if (this.withdraw(tombstone, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                this.moveTo(tombstone);
+            }
+        } else {
+            const resource = this.room.find(FIND_DROPPED_RESOURCES, {
+                filter: (r) => r.resourceType === RESOURCE_ENERGY && r.room?.name === this.room.name
+            });
+            if (resource.length > 0) {
+                if (this.pickup(resource[0]) === ERR_NOT_IN_RANGE) {
+                    this.moveTo(resource[0]);
+                }
+            } else {
+                if (this.room.memory.idleFlagNames) {
+                    this.moveTo(Game.flags[this.room.memory.idleFlagNames[0]]);
+                }
+            }
+        }
+    }
+}
+
+Creep.prototype.HarvestSource = function () {
+    const source = this.memory.sourceId ? Game.getObjectById(this.memory.sourceId) : this.pos.findClosestByPath(FIND_SOURCES)
+    if (source) {
+        if (this.harvest(source) === ERR_NOT_IN_RANGE) {
             this.moveTo(source);
         }
     }

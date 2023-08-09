@@ -1,5 +1,8 @@
 interface CreepMemory {
     role: string;
+    repairing?: boolean;
+    /**Harvester state*/
+    harvesting?: boolean;
     /**Builder state*/
     building?: boolean;
     /**LongDistanceHarvester and repairer state*/
@@ -9,7 +12,7 @@ interface CreepMemory {
     /**GarbageCollector and Lorry state*/
     transporting?: boolean;
     /**Miner and LongDistanceHarvester target source*/
-    sourceId?: Id<Source>;
+    sourceId?: Id<Source>|Id<Mineral>;
     /**Miner and Lorry target container*/
     containerId?: Id<StructureContainer>;
     /**Advanced Upgrader target flag*/
@@ -18,6 +21,10 @@ interface CreepMemory {
     target?: string;//room name
     /**LongDistanceHarvester home room name*/
     home?: string;//room name
+    /**Mineral Type*/
+    mineralType?: MineralConstant;
+
+    targetFlagName?: string;
 }
 
 interface Creep {
@@ -33,4 +40,10 @@ interface Creep {
     WithdrawFromContainerOrStorage(): void;
 
     WithdrawFromContainer(): void;
+
+    WithdrawFromStorage(): void;
+
+    PickupGarbage(): void;
+
+    HarvestSource(): void;
 }
