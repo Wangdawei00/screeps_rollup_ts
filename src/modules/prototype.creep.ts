@@ -25,7 +25,8 @@ import roleLongDistanceUpgrader from "@/modules/role.longDistanceUpgrader";
 import roleMineralHarvester from "@/modules/role.mineralHarvester";
 import roleContainerLinkCommunicator from "@/modules/role.containerLinkCommunicator";
 import roleStorageLinkCommunicator from "@/modules/role.storageLinkCommunicator";
-
+import roleWallRepairer from "@/modules/role.wallRepairer";
+import roleRampartRepairer from "@/modules/role.rampartRepairer";
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "harvester": roleHarvester,
     "upgrader": roleUpgrader,
@@ -54,6 +55,8 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     'mineralHarvester': roleMineralHarvester,
     'containerLinkCommunicator': roleContainerLinkCommunicator,
     'storageLinkCommunicator': roleStorageLinkCommunicator,
+    'wallRepairer': roleWallRepairer,
+    'rampartRepairer': roleRampartRepairer,
 };
 
 Creep.prototype.runRole = function () {
