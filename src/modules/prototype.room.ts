@@ -62,7 +62,7 @@ Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames,
     for (const flagConfigKey in flagConfig) {
         UpdateFlagName(flagConfig[flagConfigKey], this.memory, flagConfigKey, this.name)
     }
-    const towers: StructureTower[] = this.find(FIND_STRUCTURES, {
+    const towers: StructureTower[] = this.find(FIND_MY_STRUCTURES, {
         filter: (structure) => structure.structureType === STRUCTURE_TOWER
     });
     for (const tower of towers) {
@@ -84,7 +84,7 @@ Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames,
             // });
         }
     }
-    const spawns: StructureSpawn[] = this.find(FIND_STRUCTURES, {
+    const spawns: StructureSpawn[] = this.find(FIND_MY_STRUCTURES, {
         filter: (structure) => structure.structureType === STRUCTURE_SPAWN
     });
     for (const spawn of spawns) {
@@ -129,8 +129,8 @@ Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames,
         }
         this.memory.updateLink = false;
     }
-    if (this.memory.linkMining || (this.energyAvailable === this.energyCapacityAvailable
-        && this.find(FIND_MY_CONSTRUCTION_SITES).length === 0)) {
+    if (this.controller?.my && (this.memory.linkMining || (this.energyAvailable === this.energyCapacityAvailable
+        && this.find(FIND_MY_CONSTRUCTION_SITES).length === 0))) {
         const sourceLinks = this.memory.sourceLinks.map((id) => Game.getObjectById(id));
         const sinkLinks = this.memory.sinkLinks.map((id) => Game.getObjectById(id));
         for (const sourceLink of sourceLinks) {

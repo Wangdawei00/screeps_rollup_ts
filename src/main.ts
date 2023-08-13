@@ -6,15 +6,14 @@ import {errorMapper} from './modules/errorMapper'
 export const loop = errorMapper(function () {
     const sourceContainerFlagNames = ["SourceContainer1", "SourceContainer2", 'Container1'];
     const sinkContainerFlagNames = ["UpgraderPosition1"];
-    const idleFlagNames = ["Idle", "Idle2"];
+    const idleFlagNames = ["Idle", "Idle2",'Idle3'];
     const storageLinkCommunicatorFlagNames = ["linkToStorage"]; // Link to Storage
     const linkStorageCommunicatorFlagNames = ["StorageLinkFlag"]; // Storage to Link
     const containerLinkCommunicatorFlagNames = ["ContainerToLink"]; // Container to Link
     for (const roomName in Game.rooms) {
         const room = Game.rooms[roomName];
-        if (room.controller?.my)
-            room.run(sourceContainerFlagNames, sinkContainerFlagNames, idleFlagNames, storageLinkCommunicatorFlagNames,
-                linkStorageCommunicatorFlagNames, containerLinkCommunicatorFlagNames);
+        room.run(sourceContainerFlagNames, sinkContainerFlagNames, idleFlagNames, storageLinkCommunicatorFlagNames,
+            linkStorageCommunicatorFlagNames, containerLinkCommunicatorFlagNames);
     }
     let name;
     for (name in Memory.creeps) {

@@ -25,7 +25,7 @@ const roleWallRepairer = {
                     creep.moveTo(storage);
                 }
             } else {
-                creep.moveTo(Game.flags['Idle']);
+                creep.moveTo(Game.flags[creep.room.memory.idleFlagNames[0]]);
             }
         }
     }
