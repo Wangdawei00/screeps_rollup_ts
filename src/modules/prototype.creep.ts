@@ -27,6 +27,9 @@ import roleContainerLinkCommunicator from "@/modules/role.containerLinkCommunica
 import roleStorageLinkCommunicator from "@/modules/role.storageLinkCommunicator";
 import roleWallRepairer from "@/modules/role.wallRepairer";
 import roleRampartRepairer from "@/modules/role.rampartRepairer";
+import roleDismantler from "@/modules/role.dismantler";
+import roleInterRoomGarbageCollector from "@/modules/role.interRoomGarbageCollector";
+
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "harvester": roleHarvester,
     "upgrader": roleUpgrader,
@@ -57,6 +60,8 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     'storageLinkCommunicator': roleStorageLinkCommunicator,
     'wallRepairer': roleWallRepairer,
     'rampartRepairer': roleRampartRepairer,
+    'dismantler': roleDismantler,
+    'interRoomGarbageCollector': roleInterRoomGarbageCollector,
 };
 
 Creep.prototype.runRole = function () {
@@ -146,9 +151,8 @@ Creep.prototype.WithdrawFromContainerOrStorage = function () {
 Creep.prototype.WithdrawFromContainer = function () {
     const source = this.memory.containerId ? Game.getObjectById(this.memory.containerId) :
         this.pos.findClosestByPath(FIND_STRUCTURES, {
-            filter: (structure) => structure.structureType === STRUCTURE_CONTAINER && this.room.memory.sourceContainerIds &&
-                structure.store.getUsedCapacity(RESOURCE_ENERGY) >= this.store.getCapacity(RESOURCE_ENERGY) &&
-                this.room.memory.sourceContainerIds.includes(structure.id)
+            filter: (structure) => structure.structureType === STRUCTURE_CONTAINER &&
+                structure.store.getUsedCapacity(RESOURCE_ENERGY) >= this.store.getCapacity(RESOURCE_ENERGY)
         });
     if (source) {
         if (this.withdraw(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
@@ -191,14 +195,27 @@ Creep.prototype.PickupGarbage = function () {
             const resource = this.room.find(FIND_DROPPED_RESOURCES, {
                 filter: (r) => r.resourceType === RESOURCE_ENERGY && r.room?.name === this.room.name
             });
-            if (resource.length > 0) {
-                if (this.pickup(resource[0]) === ERR_NOT_IN_RANGE) {
-                    this.moveTo(resource[0]);
+            let target: Resource | undefined = undefined;
+            for (const resourceElement of resource) {
+                if (resourceElement.amount >= this.store.getFreeCapacity()) {
+                    target = resourceElement;
+                }
+            }
+            if (target) {
+                if (this.pickup(target) === ERR_NOT_IN_RANGE) {
+                    this.moveTo(target);
                 }
             } else {
-                if (this.room.memory.idleFlagNames) {
-                    this.moveTo(Game.flags[this.room.memory.idleFlagNames[0]]);
+                if (resource.length > 0) {
+                    if (this.pickup(resource[0]) === ERR_NOT_IN_RANGE) {
+                        this.moveTo(resource[0]);
+                    }
+                } else {
+                    if (this.room.memory.idleFlagNames) {
+                        this.moveTo(Game.flags[this.room.memory.idleFlagNames[0]]);
+                    }
                 }
+
             }
         }
     }
@@ -209,6 +226,29 @@ Creep.prototype.HarvestSource = function () {
     if (source) {
         if (this.harvest(source) === ERR_NOT_IN_RANGE) {
             this.moveTo(source);
+        }
+    }
+}
+
+Creep.prototype.DepositToStorage = function () {
+    const storage = this.room.storage;
+    if (storage) {
+        if (this.transfer(storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+            this.moveTo(storage);
+        }
+    }
+}
+
+Creep.prototype.DepositToAnything = function () {
+    const target = this.pos.findClosestByPath(FIND_STRUCTURES, {
+        filter: (structure) => (structure.structureType === STRUCTURE_EXTENSION ||
+                structure.structureType === STRUCTURE_SPAWN || structure.structureType === STRUCTURE_TOWER ||
+                structure.structureType === STRUCTURE_STORAGE || structure.structureType === STRUCTURE_CONTAINER) &&
+            structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+    });
+    if (target) {
+        if (this.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+            this.moveTo(target);
         }
     }
 }

@@ -46,4 +46,8 @@ interface Creep {
     PickupGarbage(): void;
 
     HarvestSource(): void;
+
+    DepositToStorage(): void;
+
+    DepositToAnything():void;
 }

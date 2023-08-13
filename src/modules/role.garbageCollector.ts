@@ -7,12 +7,7 @@ const roleGarbageCollector = {
             creep.memory.transporting = true;
         }
         if (creep.memory.transporting) {
-            const target = creep.room.storage
-            if (target) {
-                if (creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                    creep.moveTo(target);
-                }
-            }
+            creep.DepositToAnything()
         } else {
             creep.PickupGarbage();
         }

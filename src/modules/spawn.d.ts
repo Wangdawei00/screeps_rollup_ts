@@ -35,6 +35,10 @@ interface StructureSpawn {
     CreateMineralHarvester(mineralType: MineralConstant, target: Id<Mineral>, energy: number): string | undefined;
 
     CreateCommunicator(role: string, flagName: string): string | undefined;
+
+    CreateDismantler(energy: number, targetFlag: string): string | undefined;
+
+    CreateInterRoomGarbageCollector(targetRoom: string, homeRoom: string, energy: number): string | undefined;
 }
 
 interface SpawnMemory {

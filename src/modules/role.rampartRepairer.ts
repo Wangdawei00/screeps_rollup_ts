@@ -21,7 +21,7 @@ const roleRampartRepairer = {
                 const target2 = creep.pos.findClosestByPath(FIND_STRUCTURES, {
                     filter: (structure) => {
                         return (structure.structureType === STRUCTURE_RAMPART)
-                            && structure.hits < 300000 && structure.room === creep.room;
+                            && structure.hits < 3000000 && structure.room === creep.room;
                     }
                 })
                 if (target2) {
@@ -37,7 +37,7 @@ const roleRampartRepairer = {
                     creep.moveTo(storage);
                 }
             } else {
-                creep.moveTo(Game.flags['Idle']);
+                creep.moveTo(Game.flags[creep.room.memory.idleFlagNames[0]]);
             }
         }
     }
