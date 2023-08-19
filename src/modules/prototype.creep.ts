@@ -29,6 +29,7 @@ import roleWallRepairer from "@/modules/role.wallRepairer";
 import roleRampartRepairer from "@/modules/role.rampartRepairer";
 import roleDismantler from "@/modules/role.dismantler";
 import roleInterRoomGarbageCollector from "@/modules/role.interRoomGarbageCollector";
+import queueOperator from "@/modules/queueOperator";
 
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "harvester": roleHarvester,
@@ -203,8 +204,8 @@ Creep.prototype.PickupGarbage = function () {
                 if (this.pickup(resource) === ERR_NOT_IN_RANGE) {
                     this.moveTo(resource);
                 }
-            }else{
-                if(this.room.memory.idleFlagNames){
+            } else {
+                if (this.room.memory.idleFlagNames) {
                     this.moveTo(Game.flags[this.room.memory.idleFlagNames[0]]);
                 }
             }
@@ -240,6 +241,27 @@ Creep.prototype.DepositToAnything = function () {
     if (target) {
         if (this.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
             this.moveTo(target);
+        }
+    }
+}
+
+Creep.prototype.NotifySpawn = function () {
+    if (!this.memory.notified) {
+        if (this.memory.notifyCountdown) {
+            if (this.ticksToLive && this.ticksToLive < this.memory.notifyCountdown) {
+                const task: SpawnTask = {
+                    memory: this.memory,
+                    config: this.body.map((part) => part.type),
+                };
+                if (this.memory.notifyType === "GLOBAL") {
+                    if (Memory.spawnQueue) {
+                        queueOperator.enqueue(Memory.spawnQueue, task);
+                    } else {
+                        Memory.spawnQueue = [task];
+                    }
+                }
+                this.memory.notified = true;
+            }
         }
     }
 }

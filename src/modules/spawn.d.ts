@@ -39,6 +39,12 @@ interface StructureSpawn {
     CreateDismantler(energy: number, targetFlag: string): string | undefined;
 
     CreateInterRoomGarbageCollector(targetRoom: string, homeRoom: string, energy: number): string | undefined;
+
+    TakeTask(): string | undefined;
+
+    TakeTaskFromQueue(queue: SpawnTask[]): string | undefined;
+
+    SpawnCreep():void;
 }
 
 interface SpawnMemory {
