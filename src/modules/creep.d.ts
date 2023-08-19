@@ -39,7 +39,7 @@ interface Creep {
 
     WithdrawFromContainerOrStorage(): void;
 
-    WithdrawFromContainer(): void;
+    WithdrawFromContainer(): boolean;
 
     WithdrawFromStorage(): void;
 

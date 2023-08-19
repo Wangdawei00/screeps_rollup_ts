@@ -70,6 +70,12 @@ Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames,
         if (closestHostile) {
             tower.attack(closestHostile)
         } else {
+            const closestDamagedCreep = tower.pos.findClosestByRange(FIND_MY_CREEPS, {
+                filter: (creep) => creep.hits < creep.hitsMax && creep.room.name === this.name
+            });
+            if (closestDamagedCreep) {
+                tower.heal(closestDamagedCreep);
+            }
             // const closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
             //     filter: (structure) => structure.hits < structure.hitsMax && structure.structureType !== STRUCTURE_WALL
             // });
