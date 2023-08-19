@@ -23,8 +23,10 @@ const roleLongDistanceBuilder = {
                     }
                 }
             } else {
-                creep.WithdrawFromContainer();
-                creep.PickupGarbage();
+                if(!creep.WithdrawFromContainer()){
+                    creep.PickupGarbage();
+                }
+
             }
         }
 

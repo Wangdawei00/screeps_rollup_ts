@@ -1,6 +1,6 @@
 const listOfRoles = ['linkStorageCommunicator', 'lorry', 'harvester', 'upgrader', "transferer", 'repairer',
     "garbageCollector", "controllerAttacker", "claimer", 'builder', 'mineralHarvester', 'wallRepairer', 'rampartRepairer'
-    , "interRoomGarbageCollector"];
+    ];
 const specialLorryRoles = ["toStorageLorry", 'fromStorageLorry'];
 const communicatorRole = {
     'linkStorageCommunicator': "linkStorageCommunicatorFlagNames",
@@ -8,15 +8,15 @@ const communicatorRole = {
     'storageLinkCommunicator': "storageLinkCommunicatorFlagNames"
 }
 
-const outpostRoles = [/*"meleeAttacker", "rangedAttacker", "healer"*/ "reserver", "longDistanceBuilder", "longDistanceRepairer"]//, "longDistanceUpgrader"];
+const outpostRoles = ["meleeAttacker", "rangedAttacker",/* "healer"*/ "reserver", "longDistanceBuilder", "longDistanceRepairer", 'interRoomGarbageCollector']//, "longDistanceUpgrader"];
 StructureSpawn.prototype.SpawnCreepsIfNecessary =
     function () {
         // noinspection JSMismatchedCollectionQueryUpdate
-        const outposts: string[] = ["E53S53"];//["E54S53"]//, "E56S53"]
+        const outposts: string[] = ["E53S53", "E53S52"];//["E54S53"]//, "E56S53"]
         const minCreeps: Record<string, number> = {
             harvester: 0,
             upgrader: 0,
-            builder: this.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES) ? 1 : 0,
+            builder: this.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES) ? 2 : 0,
             repairer: 1,
             lorry: 0, //this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 0 : 0,
             reserver: 1,
@@ -29,7 +29,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
             claimer: 0,
             toStorageLorry: 1,
             fromStorageLorry: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 0 : 1,
-            transferer: 1,
+            transferer: 2,
             longDistanceBuilder: 1,
             longDistanceRepairer: 1,
             interRoomLorry: 2,
@@ -43,7 +43,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         const transferWorkerRole = ['toStorageLorry', 'fromStorageLorry', 'transferer', 'lorry',
             "garbageCollector"]
         const crossRoomRoles = ['longDistanceHarvester', 'longDistanceBuilder', 'reserver', 'claimer',
-            'meleeAttacker', 'rangedAttacker', 'controllerAttacker', 'longDistanceRepairer', 'linkStorageCommunicator', "interRoomGarbageCollector"]
+            'meleeAttacker', 'rangedAttacker', 'controllerAttacker', 'longDistanceRepairer', 'linkStorageCommunicator']
         const claimRoom = ['E53S55']
         const room = this.room;
         // find all creeps in room
@@ -67,8 +67,9 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
 
         if (this.room.storage) {
             if (numberOfCreeps['harvester'] === 0 && numberOfCreeps['transferer'] === 0 && numberOfCreeps['toStorageLorry'] === 0) {
-                if (numberOfCreeps['miner'] > 0 || (this.room.storage.store.getUsedCapacity(RESOURCE_ENERGY) >= 300 + 550)) {
-                    name = this.CreateTransportWorker(300, "transferer", null, this.room.name);
+                if (numberOfCreeps['miner'] > 0 || (this.room.storage.store.getUsedCapacity(RESOURCE_ENERGY) +
+                    this.room.energyAvailable >= 600 + 650)) {
+                    name = this.CreateTransportWorker(600, "transferer", null, this.room.name);
                 } else {
                     name = this.CreateCustomCreep(room.energyAvailable, 'harvester');
                 }
@@ -113,6 +114,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         if (name === undefined) {
             for (let role of specialLorryRoles) {
                 const ids = role === 'toStorageLorry' ? this.room.memory.sourceContainerIds : this.room.memory.sinkContainerIds;
+                if (ids === undefined) continue;
                 for (const containerId of ids) {
                     const num = _.sum(Game.creeps, (creep) => {
                         return creep.memory.role === role && creep.memory.containerId === containerId ? 1 : 0;
@@ -159,8 +161,6 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                                 name = this.CreateMineralHarvester(mineral.mineralType, mineral.id, maxEnergy);
                             }
                         }
-                    } else if (role === 'interRoomGarbageCollector') {
-                        name = this.CreateInterRoomGarbageCollector("E53S53", "E54S53", 600);
                     } else {
                         name = this.CreateCustomCreep(maxEnergy, role);
                     }
@@ -247,16 +247,16 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
 
         // if (name === undefined) {
         //     const dismantleFlagNames: string[] = [];
-        //     for (let i = 0; i < 5; i++) {
+        //     for (let i = 0; i < 3; i++) {
         //         dismantleFlagNames.push("DismantleFlag" + i);
         //     }
         //     for (const flagName of dismantleFlagNames) {
         //
         //         if (!_.some(Game.creeps, c => c.memory.role == 'dismantler'
         //             && c.memory.targetFlagName == flagName)) {
-        //             const walls = Game.flags[flagName].pos.lookFor(LOOK_STRUCTURES).filter(s =>
+        //             const walls = Game.flags[flagName]?.pos.lookFor(LOOK_STRUCTURES).filter(s =>
         //                 s.structureType === STRUCTURE_WALL);
-        //             if (walls.length !== 0) {
+        //             if (walls?.length !== 0) {
         //                 name = this.CreateDismantler(maxEnergy, flagName);
         //                 break;
         //             }
@@ -267,7 +267,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         if (name == undefined && this.room.find(FIND_MY_CONSTRUCTION_SITES).length === 0) {
             // check for advanced upgraders
             const advancedUpgraderFlagNames = ["ControllerRoadEndpoint"];
-            for (let i = 1; i < 4; i++) {
+            for (let i = 1; i < 2; i++) {
                 advancedUpgraderFlagNames.push("UpgraderPosition" + i);
             }
             for (const flagName of advancedUpgraderFlagNames) {
@@ -524,6 +524,9 @@ StructureSpawn.prototype.CreateOutpostCreep = function (target, energy, role) {
         return this.CreateRangedAttacker(target, energy);
     } else if (role === 'healer') {
         return this.CreateHealer(target, energy);
+
+    } else if (role === 'interRoomGarbageCollector') {
+        return this.CreateInterRoomGarbageCollector(target, this.room.name,1200);
     } else {
         if (role === 'reserver') {
             return this.CreateReserverOrControllerAttacker(target, role);
@@ -593,7 +596,7 @@ StructureSpawn.prototype.CreateMineralHarvester = function (target, id, energy) 
 }
 
 StructureSpawn.prototype.CreateCommunicator = function (role, flagName) {
-    const config = [CARRY, MOVE];
+    const config = [CARRY, CARRY, MOVE];
 
     const name = role + Game.time.toString();
     if (this.spawnCreep(config, name, {
@@ -608,8 +611,8 @@ StructureSpawn.prototype.CreateCommunicator = function (role, flagName) {
 
 StructureSpawn.prototype.CreateDismantler = function (energy, targetFlag) {
     const config: BodyPartConstant[] = [];
-    const numberOfAttackParts = Math.floor(energy / 150);
-    for (let i = 0; i < numberOfAttackParts; i++) {
+    const numberOfAttackParts = Math.floor(energy / 250);
+    for (let i = 0; i < numberOfAttackParts * 2; i++) {
         config.push(WORK);
     }
     for (let i = 0; i < numberOfAttackParts; i++) {

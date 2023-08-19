@@ -112,6 +112,8 @@ Creep.prototype.MoveToTargetRoom = function () {
             const exitPoint = this.pos.findClosestByRange(exit);
             if (exitPoint) {
                 this.moveTo(exitPoint);
+            } else {
+                console.log('test')
             }
         }
     }
@@ -119,31 +121,30 @@ Creep.prototype.MoveToTargetRoom = function () {
 
 Creep.prototype.MoveToHomeRoom = function () {
     if (this.memory.home && this.room.name !== this.memory.home) {
-        const exit = this.room.findExitTo(this.memory.home);
-        if (exit !== ERR_NO_PATH && exit !== ERR_INVALID_ARGS) {
-            const exitPoint = this.pos.findClosestByRange(exit);
-            if (exitPoint) {
-                this.moveTo(exitPoint);
+        if (Game.flags['Exit'].room === this.room) {
+            const exitPoint = Game.flags['Exit'];
+            this.moveTo(exitPoint);
+        } else {
+            const exit = this.room.findExitTo(this.memory.home);
+            if (exit !== ERR_NO_PATH && exit !== ERR_INVALID_ARGS) {
+                const exitPoint = this.pos.findClosestByRange(exit);
+                if (exitPoint) {
+                    this.moveTo(exitPoint);
+                }
             }
         }
+
     }
 }
 
 Creep.prototype.WithdrawFromContainerOrStorage = function () {
     const source = this.pos.findClosestByPath(FIND_STRUCTURES, {
-        filter: (structure) => structure.structureType === STRUCTURE_CONTAINER && this.room.memory.sourceContainerIds &&
-            structure.store.getUsedCapacity(RESOURCE_ENERGY) > this.store.getFreeCapacity() &&
-            this.room.memory.sourceContainerIds.includes(structure.id)
+        filter: structure => (structure.structureType === STRUCTURE_STORAGE || structure.structureType === STRUCTURE_CONTAINER) &&
+            structure.store.getUsedCapacity(RESOURCE_ENERGY) > this.store.getFreeCapacity()
     });
     if (source) {
         if (this.withdraw(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
             this.moveTo(source);
-        }
-    } else {
-        if (this.room.storage && this.room.storage.store[RESOURCE_ENERGY] > this.store.getFreeCapacity(RESOURCE_ENERGY)) {
-            if (this.withdraw(this.room.storage, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
-                this.moveTo(this.room.storage)
-            }
         }
     }
 }
@@ -158,7 +159,9 @@ Creep.prototype.WithdrawFromContainer = function () {
         if (this.withdraw(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
             this.moveTo(source);
         }
+        return true;
     }
+    return false
 }
 
 Creep.prototype.WithdrawFromStorage = function () {
@@ -192,30 +195,18 @@ Creep.prototype.PickupGarbage = function () {
                 this.moveTo(tombstone);
             }
         } else {
-            const resource = this.room.find(FIND_DROPPED_RESOURCES, {
-                filter: (r) => r.resourceType === RESOURCE_ENERGY && r.room?.name === this.room.name
+            const resource = this.pos.findClosestByPath(FIND_DROPPED_RESOURCES, {
+                filter: (r) => r.resourceType === RESOURCE_ENERGY && r.room?.name === this.room.name && r.amount >= this.store.getFreeCapacity()
             });
-            let target: Resource | undefined = undefined;
-            for (const resourceElement of resource) {
-                if (resourceElement.amount >= this.store.getFreeCapacity()) {
-                    target = resourceElement;
-                }
-            }
-            if (target) {
-                if (this.pickup(target) === ERR_NOT_IN_RANGE) {
-                    this.moveTo(target);
-                }
-            } else {
-                if (resource.length > 0) {
-                    if (this.pickup(resource[0]) === ERR_NOT_IN_RANGE) {
-                        this.moveTo(resource[0]);
-                    }
-                } else {
-                    if (this.room.memory.idleFlagNames) {
-                        this.moveTo(Game.flags[this.room.memory.idleFlagNames[0]]);
-                    }
-                }
 
+            if (resource) {
+                if (this.pickup(resource) === ERR_NOT_IN_RANGE) {
+                    this.moveTo(resource);
+                }
+            }else{
+                if(this.room.memory.idleFlagNames){
+                    this.moveTo(Game.flags[this.room.memory.idleFlagNames[0]]);
+                }
             }
         }
     }
@@ -243,7 +234,7 @@ Creep.prototype.DepositToAnything = function () {
     const target = this.pos.findClosestByPath(FIND_STRUCTURES, {
         filter: (structure) => (structure.structureType === STRUCTURE_EXTENSION ||
                 structure.structureType === STRUCTURE_SPAWN || structure.structureType === STRUCTURE_TOWER ||
-                structure.structureType === STRUCTURE_STORAGE || structure.structureType === STRUCTURE_CONTAINER) &&
+                structure.structureType === STRUCTURE_STORAGE || structure.structureType === STRUCTURE_CONTAINER || structure.structureType === STRUCTURE_LAB) &&
             structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
     });
     if (target) {
