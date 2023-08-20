@@ -62,7 +62,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         const minCreeps: Record<string, number> = {
             harvester: 0,
             upgrader: 0,
-            builder: this.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES) ? 2 : 0,
+            builder: this.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES) ? 1 : 0,
             repairer: 1,
             lorry: 0, //this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 0 : 0,
             reserver: 1,
@@ -143,15 +143,15 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                 // if the source has no miner
                 if (!_.some(creepsInRoom, c => c.memory.role == 'miner' && c.memory.sourceId == source.id)) {
                     // check whether the source has a container
-                    let containers: StructureContainer[] = source.pos.findInRange(FIND_STRUCTURES, 1, {
-                        filter: s => s.structureType == STRUCTURE_CONTAINER
-                    });
+                    // let containers: StructureContainer[] = source.pos.findInRange(FIND_STRUCTURES, 1, {
+                    //     filter: s => s.structureType == STRUCTURE_CONTAINER
+                    // });
                     // if there is a container next to the source
-                    if (containers.length > 0) {
-                        // spawn a miner
-                        name = this.CreateMiner(source.id);
-                        break;
-                    }
+                    // if (containers.length > 0) {
+                    // spawn a miner
+                    name = this.CreateMiner(source.id);
+                    break;
+                    // }
                 }
             }
         }
@@ -246,7 +246,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                     const num = _.sum(Game.creeps, (creep) => {
                         return creep.memory.role === invasionRole && creep.memory.target === invasionRoom ? 1 : 0;
                     });
-                    console.log(invasionRoom + invasionRole + num)
+                    // console.log(invasionRoom + invasionRole + num)
                     if (num < minCreeps[invasionRole]) {
                         if (invasionRole === 'longDistanceBuilder') {
                             if (Game.rooms[invasionRoom] && Game.rooms[invasionRoom].find(FIND_MY_CONSTRUCTION_SITES).length > 0) {
@@ -309,22 +309,25 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         //         }
         //     }
         // }
-
-        if (name == undefined && this.room.find(FIND_MY_CONSTRUCTION_SITES).length === 0) {
-            // check for advanced upgraders
-            const advancedUpgraderFlagNames = ["ControllerRoadEndpoint"];
-            for (let i = 1; i < 3; i++) {
-                advancedUpgraderFlagNames.push("UpgraderPosition" + i);
-            }
-            for (const flagName of advancedUpgraderFlagNames) {
-                if (!_.some(Game.creeps, c =>
-                    c.memory.role == 'advancedUpgrader' && c.memory.upgradePosFlagName == flagName
-                ) && this.room.name === Game.flags[flagName].room?.name) {
-                    name = this.CreateAdvancedUpgrader(flagName, maxEnergy);
-                    break;
+        if (this.room.storage) {
+            if (name == undefined && this.room.find(FIND_MY_CONSTRUCTION_SITES).length === 0 &&
+                this.room.storage.store.getUsedCapacity(RESOURCE_ENERGY) >= 10000) {
+                // check for advanced upgraders
+                const advancedUpgraderFlagNames = ["ControllerRoadEndpoint"];
+                for (let i = 1; i < 3; i++) {
+                    advancedUpgraderFlagNames.push("UpgraderPosition" + i);
+                }
+                for (const flagName of advancedUpgraderFlagNames) {
+                    if (!_.some(Game.creeps, c =>
+                        c.memory.role == 'advancedUpgrader' && c.memory.upgradePosFlagName == flagName
+                    ) && this.room.name === Game.flags[flagName].room?.name) {
+                        name = this.CreateAdvancedUpgrader(flagName, maxEnergy);
+                        break;
+                    }
                 }
             }
         }
+
         //InterRoomMiner
 
 
@@ -332,15 +335,15 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         // /** @type {Object.<string, number>} */
 
         // print name to console if spawning was a success
-        if (name != undefined && _.isString(name)) {
-            // consle.log(tohis.name + " spawned new creep: " + name + " (" + Game.creeps[name].memory.role + ")");
-            for (let role of listOfRoles) {
-                console.log(role + ": " + numberOfCreeps[role]);
-            }
-            // for (let roomName in numberOfLongDistanceHarvesters) {
-            //     console.log("LongDistanceHarvester" + roomName + ": " + numberOfLongDistanceHarvesters[roomName]);
-            // }
-        }
+        // if (name != undefined && _.isString(name)) {
+        //     // consle.log(tohis.name + " spawned new creep: " + name + " (" + Game.creeps[name].memory.role + ")");
+        //     for (let role of listOfRoles) {
+        //         console.log(role + ": " + numberOfCreeps[role]);
+        //     }
+        //     // for (let roomName in numberOfLongDistanceHarvesters) {
+        //     //     console.log("LongDistanceHarvester" + roomName + ": " + numberOfLongDistanceHarvesters[roomName]);
+        //     // }
+        // }
     };
 
 StructureSpawn.prototype.CreateInterRoomMiner = function (sourceId, target, containerId) {
@@ -359,7 +362,7 @@ StructureSpawn.prototype.CreateInterRoomMiner = function (sourceId, target, cont
 
 StructureSpawn.prototype.CreateInterRoomLorry = function (containerId, target, home) {
     const name = 'InterRoomLorry' + Game.time.toString();
-    if (this.spawnCreep([CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE], name, {
+    if (this.spawnCreep([CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE], name, {
         memory: {
             role: 'interRoomLorry',
             containerId: containerId,
@@ -379,15 +382,13 @@ StructureSpawn.prototype.CreateMiner =
             const containers = source.pos.findInRange(FIND_STRUCTURES, 1, {
                 filter: s => s.structureType == STRUCTURE_CONTAINER
             })
-            if (containers.length > 0) {
-                const containerId = containers[0].id;
-                this.spawnCreep([WORK, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE], name, {
-                    memory: {
-                        role: 'miner',
-                        sourceId: sourceId,
-                        containerId: <Id<StructureContainer>>containerId
-                    }
-                });
+            if (this.spawnCreep([WORK, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE], name, {
+                memory: {
+                    role: 'miner',
+                    sourceId: sourceId,
+                    containerId: containers.length > 0 ? <Id<StructureContainer>>containers[0].id : undefined
+                }
+            }) === OK) {
                 return name;
             }
         }
