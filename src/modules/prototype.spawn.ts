@@ -1,6 +1,6 @@
 const listOfRoles = ['linkStorageCommunicator', 'lorry', 'harvester', 'upgrader', "transferer", 'repairer',
     "garbageCollector", "controllerAttacker", "claimer", 'builder', 'mineralHarvester', 'wallRepairer', 'rampartRepairer'
-    ];
+];
 const specialLorryRoles = ["toStorageLorry", 'fromStorageLorry'];
 const communicatorRole = {
     'linkStorageCommunicator': "linkStorageCommunicatorFlagNames",
@@ -16,7 +16,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         const minCreeps: Record<string, number> = {
             harvester: 0,
             upgrader: 0,
-            builder: this.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES) ? 2 : 0,
+            builder: this.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES) ? 1 : 0,
             repairer: 1,
             lorry: 0, //this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 0 : 0,
             reserver: 1,
@@ -97,15 +97,15 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                 // if the source has no miner
                 if (!_.some(creepsInRoom, c => c.memory.role == 'miner' && c.memory.sourceId == source.id)) {
                     // check whether the source has a container
-                    let containers: StructureContainer[] = source.pos.findInRange(FIND_STRUCTURES, 1, {
-                        filter: s => s.structureType == STRUCTURE_CONTAINER
-                    });
+                    // let containers: StructureContainer[] = source.pos.findInRange(FIND_STRUCTURES, 1, {
+                    //     filter: s => s.structureType == STRUCTURE_CONTAINER
+                    // });
                     // if there is a container next to the source
-                    if (containers.length > 0) {
-                        // spawn a miner
-                        name = this.CreateMiner(source.id);
-                        break;
-                    }
+                    // if (containers.length > 0) {
+                    // spawn a miner
+                    name = this.CreateMiner(source.id);
+                    break;
+                    // }
                 }
             }
         }
@@ -266,7 +266,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
 
         if (name == undefined && this.room.find(FIND_MY_CONSTRUCTION_SITES).length === 0) {
             // check for advanced upgraders
-            const advancedUpgraderFlagNames = ["ControllerRoadEndpoint"];
+            const advancedUpgraderFlagNames = [/*"ControllerRoadEndpoint"*/];
             for (let i = 1; i < 2; i++) {
                 advancedUpgraderFlagNames.push("UpgraderPosition" + i);
             }
@@ -333,15 +333,13 @@ StructureSpawn.prototype.CreateMiner =
             const containers = source.pos.findInRange(FIND_STRUCTURES, 1, {
                 filter: s => s.structureType == STRUCTURE_CONTAINER
             })
-            if (containers.length > 0) {
-                const containerId = containers[0].id;
-                this.spawnCreep([WORK, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE], name, {
-                    memory: {
-                        role: 'miner',
-                        sourceId: sourceId,
-                        containerId: <Id<StructureContainer>>containerId
-                    }
-                });
+            if (this.spawnCreep([WORK, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE], name, {
+                memory: {
+                    role: 'miner',
+                    sourceId: sourceId,
+                    containerId: containers.length > 0 ? <Id<StructureContainer>>containers[0].id : undefined
+                }
+            }) === OK) {
                 return name;
             }
         }
@@ -526,7 +524,7 @@ StructureSpawn.prototype.CreateOutpostCreep = function (target, energy, role) {
         return this.CreateHealer(target, energy);
 
     } else if (role === 'interRoomGarbageCollector') {
-        return this.CreateInterRoomGarbageCollector(target, this.room.name,1200);
+        return this.CreateInterRoomGarbageCollector(target, this.room.name, 1200);
     } else {
         if (role === 'reserver') {
             return this.CreateReserverOrControllerAttacker(target, role);
