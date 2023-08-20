@@ -147,7 +147,9 @@ Creep.prototype.WithdrawFromContainerOrStorage = function () {
         if (this.withdraw(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
             this.moveTo(source);
         }
+        return true;
     }
+    return false;
 }
 
 Creep.prototype.WithdrawFromContainer = function () {

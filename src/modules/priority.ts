@@ -1,14 +1,16 @@
 const priority: Record<string, number> = {
-    transferer: 10,
+    carrier: 10,
     miner: 10,
     containerLinkCommunicator: 10,
     storageLinkCommunicator: 10,
     toStorageLorry: 10,
-    builder: 4,
-    garbageCollector: 8,
-    repairer: 5,
+    worker: 6,
+    garbageCollector: 5,
     advancedUpgrader: 3,
-    fromStorageLorry: 2,
+    linkStorageCommunicator: 2,
+    interRoomMiner: 10,
+    interRoomWorker:8,
+
 }
 
 export default priority;

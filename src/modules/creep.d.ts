@@ -31,6 +31,8 @@ interface CreepMemory {
     notifyCountdown?: number;
     /**The type of notification, either be GLOBAL or ROOM*/
     notifyType?: string;
+    /**Work Task*/
+    task?:WorkTask
 }
 
 interface Creep {
@@ -43,7 +45,7 @@ interface Creep {
 
     MoveToHomeRoom(): void;
 
-    WithdrawFromContainerOrStorage(): void;
+    WithdrawFromContainerOrStorage(): boolean;
 
     WithdrawFromContainer(): boolean;
 
