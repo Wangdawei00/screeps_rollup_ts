@@ -9,8 +9,8 @@ const roleWorker = {
         if (creep.memory.working) {
             if (!creep.memory.task) {
                 const queue = creep.room.memory.workQueue;
-                if (queue && queue.length > 0) {
-                    creep.memory.task = queue.shift();
+                if (queue) {
+                    creep.memory.task = _.find(queue, task => !task.taken)
                 }
             }
             if (creep.memory.task) {
@@ -48,3 +48,5 @@ const roleWorker = {
         }
     }
 }
+
+export default roleWorker;

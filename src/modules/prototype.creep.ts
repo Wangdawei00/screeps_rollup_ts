@@ -30,6 +30,8 @@ import roleRampartRepairer from "@/modules/role.rampartRepairer";
 import roleDismantler from "@/modules/role.dismantler";
 import roleInterRoomGarbageCollector from "@/modules/role.interRoomGarbageCollector";
 import queueOperator from "@/modules/queueOperator";
+import roleWorker from "@/modules/role.worker";
+
 
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "harvester": roleHarvester,
@@ -63,6 +65,7 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     'rampartRepairer': roleRampartRepairer,
     'dismantler': roleDismantler,
     'interRoomGarbageCollector': roleInterRoomGarbageCollector,
+    'worker': roleWorker,
 };
 
 Creep.prototype.runRole = function () {
