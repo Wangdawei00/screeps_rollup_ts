@@ -53,10 +53,10 @@ const roleLongDistanceHarvester = {
                 }
                 if (creep.memory.sourceId) {
                     const source = Game.getObjectById(creep.memory.sourceId);
-                    console.log(source)
+                    // console.log(source)
                     if (source) {
                         const result = creep.harvest(source)
-                        console.log(result)
+                        // console.log(result)
                         if (result == ERR_NOT_IN_RANGE) {
                             // move towards the source
                             creep.moveTo(source);

@@ -4,22 +4,44 @@ import "./modules/prototype.room"
 import {errorMapper} from './modules/errorMapper'
 
 export const loop = errorMapper(function () {
-    const sourceContainerFlagNames = ["SourceContainer1", "SourceContainer2"];
-    const sinkContainerFlagNames = ["UpgraderPosition1"];
-    const idleFlagNames = ["Idle", 'Idle1',"Idle2",'Idle3'];
-    const storageLinkCommunicatorFlagNames = ["linkToStorage"]; // Link to Storage
-    const linkStorageCommunicatorFlagNames = ["StorageLinkFlag"]; // Storage to Link
-    const containerLinkCommunicatorFlagNames = ["ContainerToLink",'Container1']; // Container to Link
+    const FlagNames: Record<string, string[]> = {
+        "sourceContainerFlagNames": ["SourceContainer0", "SourceContainer2"],
+        "sinkContainerFlagNames": ["UpgraderPosition1"],
+        "idleFlagNames": ["Idle", 'Idle1', "Idle2", 'Idle3'],
+        "storageLinkCommunicatorFlagNames": ["linkToStorage"], // Link to Storage
+        "linkStorageCommunicatorFlagNames": ["StorageLinkFlag"], // Storage to Link
+        "containerLinkCommunicatorFlagNames": ["ContainerToLink", 'Container1'], // Container to Link
+    };
+    const changed: Record<string, boolean> = {
+        "sourceContainerFlagNames": false,
+        "sinkContainerFlagNames": false,
+        "idleFlagNames": false,
+        "storageLinkCommunicatorFlagNames": false,
+        "linkStorageCommunicatorFlagNames": false,
+        "containerLinkCommunicatorFlagNames": false,
+    }
+    for (const inputFlagNames in changed) {
+        // @ts-ignore
+        changed[inputFlagNames] = FlagNames[inputFlagNames].length !== 0 && (!Memory[inputFlagNames]
+            // @ts-ignore
+            || Memory[inputFlagNames].length !== FlagNames[inputFlagNames].length
+            // @ts-ignore
+            || !FlagNames[inputFlagNames].every((value, index) => value === Memory[inputFlagNames][index]));
+        if(changed[inputFlagNames]){
+            // @ts-ignore
+            Memory[inputFlagNames] = FlagNames[inputFlagNames];
+        }
+    }
     for (const roomName in Game.rooms) {
+        // console.log(roomName)
         const room = Game.rooms[roomName];
-        room.run(sourceContainerFlagNames, sinkContainerFlagNames, idleFlagNames, storageLinkCommunicatorFlagNames,
-            linkStorageCommunicatorFlagNames, containerLinkCommunicatorFlagNames);
+        room.run(FlagNames, changed);
     }
     let name;
     for (name in Memory.creeps) {
         if (!Game.creeps[name]) {
             delete Memory.creeps[name];
-            console.log('Clearing non-existing creep memory:', name);
+            // console.log('Clearing non-existing creep memory:', name);
         }
     }
     for (name in Game.creeps) {

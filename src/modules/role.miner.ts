@@ -13,7 +13,7 @@ const roleMiner = {
         }else if(creep.memory.sourceId !== undefined){
             const source = Game.getObjectById(creep.memory.sourceId);
             if (source) {
-                console.log(creep.pos.isNearTo(source))
+                // console.log(creep.pos.isNearTo(source))
                 if (!creep.pos.isNearTo(source)) {
                     creep.moveTo(source);
                 } else {

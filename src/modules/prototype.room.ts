@@ -1,25 +1,16 @@
-function UpdateContainerFlagNamesAndId(inputFlagName: string[], roomMemory: RoomMemory,
-                                       inputName: string, idName: string, roomName: string) {
-    // @ts-ignore
-    if (inputFlagName.length !== 0 && (!Memory[inputName] || Memory[inputName].length !== inputFlagName.length
-        // @ts-ignore
-        || !inputFlagName.every((value, index) => value === Memory[inputName][index]
-        ))) {
-        // @ts-ignore
-        Memory[inputName] = inputFlagName;
-        // @ts-ignore
-        roomMemory[idName] = [];
-        for (const flagName of inputFlagName) {
-            if (Game.flags[flagName].room?.name === roomName) {
-                const container = Game.flags[flagName].pos.findInRange(FIND_STRUCTURES, 1, {
-                    filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
-                });
-                if (container.length > 0) {
-                    // @ts-ignore
-                    roomMemory[idName].push(<Id<StructureContainer>>container[0].id);
-                }
-            }
+function UpdateContainerFlagNamesAndId(inputFlagName: string[], roomMemory: RoomMemory, idName: string, roomName: string) {
 
+     // @ts-ignore
+    roomMemory[idName] = [];
+    for (const flagName of inputFlagName) {
+        if (Game.flags[flagName].room?.name === roomName) {
+            const container = Game.flags[flagName].pos.findInRange(FIND_STRUCTURES, 1, {
+                filter: (structure) => structure.structureType === STRUCTURE_CONTAINER
+            });
+            if (container.length > 0) {
+                // @ts-ignore
+                roomMemory[idName].push(<Id<StructureContainer>>container[0].id);
+            }
         }
     }
 }
@@ -42,25 +33,28 @@ function UpdateFlagName(input: string[], roomMemory: RoomMemory, inputName: stri
     }
 }
 
-Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames, idleFlagNames,
-                               storageLinkCommunicatorFlagNames, linkStorageCommunicatorFlagNames, containerLinkCommunicatorFlagNames) {
+Room.prototype.run = function (flagNames, changed) {
 
     const containerConfig: Record<string, [string[], string]> = {
-        "sourceContainerFlagNames": [sourceContainerFlagNames, "sourceContainerIds"],
-        "sinkContainerFlagNames": [sinkContainerFlagNames, "sinkContainerIds"],
+        "sourceContainerFlagNames": [flagNames['sourceContainerFlagNames'], "sourceContainerIds"],
+        "sinkContainerFlagNames": [flagNames['sinkContainerFlagNames'], "sinkContainerIds"],
     }
     const flagConfig: Record<string, string[]> = {
-        "idleFlagNames": idleFlagNames,
-        "storageLinkCommunicatorFlagNames": storageLinkCommunicatorFlagNames,
-        "linkStorageCommunicatorFlagNames": linkStorageCommunicatorFlagNames,
-        "containerLinkCommunicatorFlagNames": containerLinkCommunicatorFlagNames,
+        "idleFlagNames": flagNames['idleFlagNames'],
+        "storageLinkCommunicatorFlagNames": flagNames['storageLinkCommunicatorFlagNames'],
+        "linkStorageCommunicatorFlagNames": flagNames['linkStorageCommunicatorFlagNames'],
+        "containerLinkCommunicatorFlagNames": flagNames['containerLinkCommunicatorFlagNames'],
     }
     for (const containerConfigKey in containerConfig) {
-        UpdateContainerFlagNamesAndId(containerConfig[containerConfigKey][0], this.memory, containerConfigKey,
-            containerConfig[containerConfigKey][1], this.name)
+        if (changed[containerConfigKey]) {
+            UpdateContainerFlagNamesAndId(containerConfig[containerConfigKey][0], this.memory,
+                containerConfig[containerConfigKey][1], this.name)
+        }
     }
     for (const flagConfigKey in flagConfig) {
-        UpdateFlagName(flagConfig[flagConfigKey], this.memory, flagConfigKey, this.name)
+        if (changed[flagConfigKey]) {
+            UpdateFlagName(flagConfig[flagConfigKey], this.memory, flagConfigKey, this.name)
+        }
     }
     const towers: StructureTower[] = this.find(FIND_MY_STRUCTURES, {
         filter: (structure) => structure.structureType === STRUCTURE_TOWER
@@ -76,18 +70,6 @@ Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames,
             if (closestDamagedCreep) {
                 tower.heal(closestDamagedCreep);
             }
-            // const closestDamagedStructure = tower.pos.findClosestByRange(FIND_STRUCTURES, {
-            //     filter: (structure) => structure.hits < structure.hitsMax && structure.structureType !== STRUCTURE_WALL
-            // });
-            // if (closestDamagedStructure) {
-            //     tower.repair(closestDamagedStructure);
-            // }
-            // const damagedStructures = tower.room.find(FIND_STRUCTURES, {
-            //     filter: (structure) => structure.hits < structure.hitsMax && structure.structureType !== STRUCTURE_WALL
-            // });
-            // damagedStructures.forEach((structure) => {
-            //     tower.repair(structure);
-            // });
         }
     }
     const spawns: StructureSpawn[] = this.find(FIND_MY_STRUCTURES, {
@@ -149,26 +131,4 @@ Room.prototype.run = function (sourceContainerFlagNames, sinkContainerFlagNames,
             }
         }
     }
-
-// if () {
-//     const storage = this.storage;
-//     if (storage) {
-//         const storageLink = storage.pos.findInRange(FIND_MY_STRUCTURES, 2, {
-//             filter: (structure) => {
-//                 return structure.structureType === STRUCTURE_LINK;
-//             }
-//         })
-//         if (storageLink.length > 0) {
-//             const target = this.controller?.pos.findInRange(FIND_STRUCTURES, 4, {
-//                 filter: (structure) => {
-//                     return structure.structureType === STRUCTURE_LINK;
-//                 }
-//             })
-//             if (target && target.length > 0) {
-//                 (<StructureLink>storageLink[0]).transferEnergy(<StructureLink>target[0]);
-//             }
-//         }
-//     }
-// }
-
 }

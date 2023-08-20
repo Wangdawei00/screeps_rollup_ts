@@ -112,8 +112,6 @@ Creep.prototype.MoveToTargetRoom = function () {
             const exitPoint = this.pos.findClosestByRange(exit);
             if (exitPoint) {
                 this.moveTo(exitPoint);
-            } else {
-                console.log('test')
             }
         }
     }
@@ -146,7 +144,9 @@ Creep.prototype.WithdrawFromContainerOrStorage = function () {
         if (this.withdraw(source, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
             this.moveTo(source);
         }
+        return true;
     }
+    return false;
 }
 
 Creep.prototype.WithdrawFromContainer = function () {
@@ -203,16 +203,16 @@ Creep.prototype.PickupGarbage = function () {
                 if (this.pickup(resource) === ERR_NOT_IN_RANGE) {
                     this.moveTo(resource);
                 }
-            }else{
+            } else {
                 const resource = this.pos.findClosestByPath(FIND_DROPPED_RESOURCES, {
                     filter: (r) => r.resourceType === RESOURCE_ENERGY && r.room?.name === this.room.name
                 })
-                if(resource){
+                if (resource) {
                     if (this.pickup(resource) === ERR_NOT_IN_RANGE) {
                         this.moveTo(resource);
                     }
-                }else{
-                    if(this.room.memory.idleFlagNames){
+                } else {
+                    if (this.room.memory.idleFlagNames) {
                         this.moveTo(Game.flags[this.room.memory.idleFlagNames[0]]);
                     }
                 }

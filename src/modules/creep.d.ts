@@ -37,7 +37,7 @@ interface Creep {
 
     MoveToHomeRoom(): void;
 
-    WithdrawFromContainerOrStorage(): void;
+    WithdrawFromContainerOrStorage(): boolean;
 
     WithdrawFromContainer(): boolean;
 
