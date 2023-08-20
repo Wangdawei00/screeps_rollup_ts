@@ -204,8 +204,17 @@ Creep.prototype.PickupGarbage = function () {
                     this.moveTo(resource);
                 }
             }else{
-                if(this.room.memory.idleFlagNames){
-                    this.moveTo(Game.flags[this.room.memory.idleFlagNames[0]]);
+                const resource = this.pos.findClosestByPath(FIND_DROPPED_RESOURCES, {
+                    filter: (r) => r.resourceType === RESOURCE_ENERGY && r.room?.name === this.room.name
+                })
+                if(resource){
+                    if (this.pickup(resource) === ERR_NOT_IN_RANGE) {
+                        this.moveTo(resource);
+                    }
+                }else{
+                    if(this.room.memory.idleFlagNames){
+                        this.moveTo(Game.flags[this.room.memory.idleFlagNames[0]]);
+                    }
                 }
             }
         }
