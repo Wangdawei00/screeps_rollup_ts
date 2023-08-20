@@ -76,7 +76,7 @@ Room.prototype.run = function (flagNames, changed) {
         filter: (structure) => structure.structureType === STRUCTURE_SPAWN
     });
     for (const spawn of spawns) {
-        spawn.SpawnCreepsIfNecessary();
+        spawn.SpawnCreep();
         if (spawn.spawning) {
             const spawningCreep = Game.creeps[spawn.spawning.name];
             spawn.room.visual.text(

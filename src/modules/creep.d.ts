@@ -12,7 +12,7 @@ interface CreepMemory {
     /**GarbageCollector and Lorry state*/
     transporting?: boolean;
     /**Miner and LongDistanceHarvester target source*/
-    sourceId?: Id<Source>|Id<Mineral>;
+    sourceId?: Id<Source> | Id<Mineral>;
     /**Miner and Lorry target container*/
     containerId?: Id<StructureContainer>;
     /**Advanced Upgrader target flag*/
@@ -25,6 +25,14 @@ interface CreepMemory {
     mineralType?: MineralConstant;
 
     targetFlagName?: string;
+    /**Whether the creep has notified the spawn to replace itself*/
+    notified?: boolean;
+    /**The tick remaining to notify the spawn*/
+    notifyCountdown?: number;
+    /**The type of notification, either be GLOBAL or ROOM*/
+    notifyType?: string;
+    /**Work Task*/
+    task?:WorkTask
 }
 
 interface Creep {
@@ -49,5 +57,7 @@ interface Creep {
 
     DepositToStorage(): void;
 
-    DepositToAnything():void;
+    DepositToAnything(): void;
+
+    NotifySpawn(): void;
 }

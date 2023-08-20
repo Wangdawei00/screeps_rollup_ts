@@ -15,4 +15,6 @@ interface RoomMemory {
     updateLink: boolean;
     sourceLinks: Array<Id<StructureLink>>;
     sinkLinks: Array<Id<StructureLink>>;
+    spawnQueue?: SpawnTask[];
+    workQueue?: WorkTask[];
 }

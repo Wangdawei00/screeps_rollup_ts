@@ -1,3 +1,5 @@
+import queueOperator from "@/modules/queueOperator";
+
 const listOfRoles = ['linkStorageCommunicator', 'lorry', 'harvester', 'upgrader', "transferer", 'repairer',
     "garbageCollector", "controllerAttacker", "claimer", 'builder', 'mineralHarvester', 'wallRepairer', 'rampartRepairer'
 ];
@@ -8,7 +10,51 @@ const communicatorRole = {
     'storageLinkCommunicator': "storageLinkCommunicatorFlagNames"
 }
 
-const outpostRoles = ["meleeAttacker", "rangedAttacker",/* "healer"*/ "reserver", "longDistanceBuilder", "longDistanceRepairer", 'interRoomGarbageCollector']//, "longDistanceUpgrader"];
+const outpostRoles = ["meleeAttacker", "rangedAttacker",/* "healer",*/ "reserver", "longDistanceBuilder", "longDistanceRepairer", 'interRoomGarbageCollector']//, "longDistanceUpgrader"];
+
+StructureSpawn.prototype.TakeTaskFromQueue = function (queue) {
+    const temp: SpawnTask[] = [];
+    while (true) {
+        const task = queueOperator.dequeue(queue);
+        if (task) {
+            const name = task.memory.role + Game.time.toString();
+            if (this.spawnCreep(task.config, name, {memory: task.memory}) === OK) {
+                queueOperator.enqueueGroup(queue, temp);
+                return name;
+            } else {
+                temp.push(task);
+            }
+        } else {
+            queueOperator.enqueueGroup(queue, temp);
+        }
+    }
+}
+
+StructureSpawn.prototype.TakeTask = function () {
+    if (this.room.memory.spawnQueue) {
+        const name = this.TakeTaskFromQueue(this.room.memory.spawnQueue);
+        if (name) {
+            return name;
+        }
+    }
+    if (Memory.spawnQueue) {
+        const name = this.TakeTaskFromQueue(Memory.spawnQueue);
+        if (name) {
+            return name;
+        }
+    }
+}
+
+StructureSpawn.prototype.SpawnCreep = function () {
+    if (!this.spawning) {
+        const name = this.TakeTask();
+        if (name) {
+            console.log(this.name + " spawned new creep: " + name + " (" + Game.creeps[name].memory.role + ")");
+            return;
+        }
+    }
+}
+
 StructureSpawn.prototype.SpawnCreepsIfNecessary =
     function () {
         // noinspection JSMismatchedCollectionQueryUpdate

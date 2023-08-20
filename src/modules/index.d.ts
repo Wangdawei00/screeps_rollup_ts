@@ -1,4 +1,5 @@
 interface Memory {
-    lastLongDistanceTargetRoomName: string
-    idleFlagNames: string[]
+    lastLongDistanceTargetRoomName: string;
+    idleFlagNames: string[];
+    spawnQueue?: SpawnTask[];
 }
