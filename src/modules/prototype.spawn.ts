@@ -29,7 +29,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
             claimer: 0,
             toStorageLorry: 1,
             fromStorageLorry: this.room.find(FIND_MY_CONSTRUCTION_SITES).length > 0 ? 0 : 1,
-            transferer: 2,
+            transferer: 1,
             longDistanceBuilder: 1,
             longDistanceRepairer: 1,
             interRoomLorry: 2,
@@ -120,7 +120,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                         return creep.memory.role === role && creep.memory.containerId === containerId ? 1 : 0;
                     });
                     if (num < minCreeps[role]) {
-                        name = this.CreateTransportWorker(600, role, containerId, this.room.name);
+                        name = this.CreateTransportWorker(1200, role, containerId, this.room.name);
                         break;
                     }
                 }
@@ -147,7 +147,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
             for (let role of listOfRoles) {
                 if (numberOfCreeps[role] < minCreeps[role]) {
                     if (transferWorkerRole.includes(role)) {
-                        name = this.CreateTransportWorker(600, role, null, this.room.name);
+                        name = this.CreateTransportWorker(1200, role, null, this.room.name);
                     } else if (role === 'claimer' && (!Game.rooms[claimRoom[0]] || !Game.rooms[claimRoom[0]].controller?.my)) {
                         name = this.CreateClaimer(claimRoom[0]);
                     } else if (role === 'linkStorageCommunicator') {
