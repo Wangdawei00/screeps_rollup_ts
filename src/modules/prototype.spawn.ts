@@ -263,22 +263,25 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         //         }
         //     }
         // }
-
-        if (name == undefined && this.room.find(FIND_MY_CONSTRUCTION_SITES).length === 0) {
-            // check for advanced upgraders
-            const advancedUpgraderFlagNames = [/*"ControllerRoadEndpoint"*/];
-            for (let i = 1; i < 2; i++) {
-                advancedUpgraderFlagNames.push("UpgraderPosition" + i);
-            }
-            for (const flagName of advancedUpgraderFlagNames) {
-                if (!_.some(Game.creeps, c =>
-                    c.memory.role == 'advancedUpgrader' && c.memory.upgradePosFlagName == flagName
-                ) && this.room.name === Game.flags[flagName].room?.name) {
-                    name = this.CreateAdvancedUpgrader(flagName, maxEnergy);
-                    break;
+        if (this.room.storage) {
+            if (name == undefined && this.room.find(FIND_MY_CONSTRUCTION_SITES).length === 0 &&
+                this.room.storage.store.getUsedCapacity(RESOURCE_ENERGY) >= 10000) {
+                // check for advanced upgraders
+                const advancedUpgraderFlagNames = ["ControllerRoadEndpoint"];
+                for (let i = 1; i < 3; i++) {
+                    advancedUpgraderFlagNames.push("UpgraderPosition" + i);
+                }
+                for (const flagName of advancedUpgraderFlagNames) {
+                    if (!_.some(Game.creeps, c =>
+                        c.memory.role == 'advancedUpgrader' && c.memory.upgradePosFlagName == flagName
+                    ) && this.room.name === Game.flags[flagName].room?.name) {
+                        name = this.CreateAdvancedUpgrader(flagName, maxEnergy);
+                        break;
+                    }
                 }
             }
         }
+
         //InterRoomMiner
 
 
