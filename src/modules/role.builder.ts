@@ -24,7 +24,9 @@ const roleBuilder = {
                 roleLorry.run(creep);
             }
         } else {
-            creep.WithdrawFromContainerOrStorage();
+            if(!creep.WithdrawFromContainerOrStorage()){
+                creep.PickupGarbage();
+            }
         }
     }
 };

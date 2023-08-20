@@ -200,7 +200,7 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
                     const num = _.sum(Game.creeps, (creep) => {
                         return creep.memory.role === invasionRole && creep.memory.target === invasionRoom ? 1 : 0;
                     });
-                    console.log(invasionRoom + invasionRole + num)
+                    // console.log(invasionRoom + invasionRole + num)
                     if (num < minCreeps[invasionRole]) {
                         if (invasionRole === 'longDistanceBuilder') {
                             if (Game.rooms[invasionRoom] && Game.rooms[invasionRoom].find(FIND_MY_CONSTRUCTION_SITES).length > 0) {
@@ -286,15 +286,15 @@ StructureSpawn.prototype.SpawnCreepsIfNecessary =
         // /** @type {Object.<string, number>} */
 
         // print name to console if spawning was a success
-        if (name != undefined && _.isString(name)) {
-            // consle.log(tohis.name + " spawned new creep: " + name + " (" + Game.creeps[name].memory.role + ")");
-            for (let role of listOfRoles) {
-                console.log(role + ": " + numberOfCreeps[role]);
-            }
-            // for (let roomName in numberOfLongDistanceHarvesters) {
-            //     console.log("LongDistanceHarvester" + roomName + ": " + numberOfLongDistanceHarvesters[roomName]);
-            // }
-        }
+        // if (name != undefined && _.isString(name)) {
+        //     // consle.log(tohis.name + " spawned new creep: " + name + " (" + Game.creeps[name].memory.role + ")");
+        //     for (let role of listOfRoles) {
+        //         console.log(role + ": " + numberOfCreeps[role]);
+        //     }
+        //     // for (let roomName in numberOfLongDistanceHarvesters) {
+        //     //     console.log("LongDistanceHarvester" + roomName + ": " + numberOfLongDistanceHarvesters[roomName]);
+        //     // }
+        // }
     };
 
 StructureSpawn.prototype.CreateInterRoomMiner = function (sourceId, target, containerId) {
@@ -313,7 +313,7 @@ StructureSpawn.prototype.CreateInterRoomMiner = function (sourceId, target, cont
 
 StructureSpawn.prototype.CreateInterRoomLorry = function (containerId, target, home) {
     const name = 'InterRoomLorry' + Game.time.toString();
-    if (this.spawnCreep([CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE], name, {
+    if (this.spawnCreep([CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE], name, {
         memory: {
             role: 'interRoomLorry',
             containerId: containerId,

@@ -15,7 +15,7 @@ const roleLongDistanceBuilder = {
             }
             if (creep.memory.building) {
                 const target = creep.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES)
-                console.log(target)
+                // console.log(target)
                 if (target) {
                     if (creep.build(target) === ERR_NOT_IN_RANGE) {
                         creep.moveTo(target);
