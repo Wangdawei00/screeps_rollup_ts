@@ -1,0 +1,68 @@
+interface spawnTask{
+    role: string
+    memory:
+
+}
+
+interface transportTask{
+    targetId
+    resourceType
+    targetResourceAmount
+}
+
+interface RoomMemory{
+    sourceContainers:Id<StructureContainer>[],
+    supplyQueue:Record<Id<StructureContainer>, transportTask>
+    demandQueue:Record<Id,transportTask>
+}
+
+spawnQueue:spawnTask[]
+
+supplyQueue: transportTask[]
+
+demandQueue :transportTask[]
+
+spawn more carrier(ENERGY): supplyQueue.length > numOfCarrier 
+
+supplyQueue enqueue condition: store.getUsedCapacity() >= carrier.store.getCapacity()(queueManager)
+demandQueue enqueue condition：store.getUsedCapacity < store.getCapacity()(queueManager)
+supplyQueue dequeue condition: after being withdrawn(creep)
+demandQueue dequeue condition: after being transferred(creep)
+
+interface queueManager{
+    updateSupplyQueue(room) : void{
+        const NUM = 1200
+        for (const containerId of room.memory.sourceContainers){
+            const container = Game.getObjectById(containerId);
+            if(container.store.getUsedCapacity >= NUM && !(containerId in supplyQueue)){
+                queueOperator.enqueue(room.memory.supplyQueue, {
+                    targetId: containerId,
+                    resourceType: RESOURCE_ENERGY,
+                    targetResourceAmount: NUM
+                })
+            }
+        }
+    }
+
+    updateDemandQueue(room){
+        const structures = room.find(FIND_MY_STRUCTURE, {
+            filter: (s)=>{
+                s.structureType === STURCTURE_SPAWN || STURCTURE_EXTENSION|| STURCTURE_TOWER||(STURCTURE_CONTAINER&&room.sink.containers(s.id))
+            }
+        });
+        for (const s of structures){
+            if(!(s.id in demandQueue) && s.store.getFreeCapacity() !== 0){
+                queueOperator.enqueue(room.memory.demandQueue, {
+                    targetId: s.id,
+                    resourceType: RESOURCE_ENERGY,
+                    targetResourceAmount: s.store.getFreeCapacity()
+                })
+            }
+        }
+    }
+}
+
+
+/*&& _.sum(demandQueue, (task)=>{
+    return task.targetResourceAmount
+}) > numOfCarrier * store.getCapacity()*/
