@@ -1,26 +1,23 @@
 const roleMiner = {
     run: function (creep: Creep) {
-        if (creep.memory.sourceId !== undefined && creep.memory.containerId !== undefined) {
-            const source = Game.getObjectById(creep.memory.sourceId);
-            const container = Game.getObjectById(creep.memory.containerId);
-            if (source && container) {
-                if (!creep.pos.isEqualTo(container)) {
-                    creep.moveTo(container);
-                } else {
-                    creep.harvest(source);
+        if (creep.memory.srcFlagName) {
+            const flag = Game.flags[creep.memory.srcFlagName];
+
+            if (flag) {
+                if (!creep.pos.isEqualTo(flag)) {//If creep does not reach flag
+                    creep.moveTo(flag);
+                } else {//If it reaches the flag, it will start harvesting
+                    const source = creep.pos.findClosestByPath(FIND_SOURCES);
+                    if (source) creep.harvest(source);
+                    else console.error("There should be a source nearby");
                 }
+            } else {
+                console.error("There should be a flag named " + creep.memory.srcFlagName)
             }
-        }else if(creep.memory.sourceId !== undefined){
-            const source = Game.getObjectById(creep.memory.sourceId);
-            if (source) {
-                // console.log(creep.pos.isNearTo(source))
-                if (!creep.pos.isNearTo(source)) {
-                    creep.moveTo(source);
-                } else {
-                    creep.harvest(source);
-                }
-            }
+        }else{
+            console.error("There should be a srcFlagName in creep's memory!");
         }
+
     }
 }
 export default roleMiner;
