@@ -11,7 +11,7 @@ interface StructureSpawn {
     /**
      * Create a miner
      * */
-    CreateMiner(destFlagName: string, body: BodyPartConstant[]): string | undefined;
+    CreateMiner(srcFlagName: string): string | undefined;
 
     /**
      * Create a Builder

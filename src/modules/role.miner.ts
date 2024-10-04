@@ -1,8 +1,10 @@
+/**
+ * MemoryUsage: srcFlagName, role
+ * */
 const roleMiner = {
     run: function (creep: Creep) {
         if (creep.memory.srcFlagName) {
             const flag = Game.flags[creep.memory.srcFlagName];
-
             if (flag) {
                 if (!creep.pos.isEqualTo(flag)) {//If creep does not reach flag
                     creep.moveTo(flag);

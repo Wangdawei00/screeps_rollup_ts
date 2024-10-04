@@ -1,5 +1,6 @@
 interface CreepMemory {
     role: string;
+    body: BodyPartConstant[];
     // repairing?: boolean;
     /**Harvester state*/
     harvesting?: boolean;
@@ -24,6 +25,8 @@ interface CreepMemory {
     /**temp target for a creep*/
     storedTargetID?: Id<Structure>;
 
+    /**Whether this creep's memory has been put in the stack*/
+    respawnInformed?: boolean;
     // /**Miner and Lorry target container*/
     // containerId?: Id<StructureContainer>;
     // /**Advanced Upgrader target flag*/

@@ -10,4 +10,6 @@ interface Memory {
     /**Flag name to Harvester name*/
     harvesterFlagIndex: Record<string, string>
 
+    stack: CreepMemory[];
+
 }
