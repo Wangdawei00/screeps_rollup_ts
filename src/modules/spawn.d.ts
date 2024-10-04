@@ -1,46 +1,35 @@
 interface StructureSpawn {
+    /**
+     * First spawn p_harvester (manually)
+     * Then Spawn all miners
+     * Then spawn builders
+     * Then Spawn trucks
+     *
+     * */
     SpawnCreepsIfNecessary(): void;
 
-    CreateMiner(sourceId: Id<Source>): string | undefined;
+    /**
+     * Create a miner
+     * */
+    CreateMiner(destFlagName: string, body: BodyPartConstant[]): string | undefined;
 
     /**
-     * Including lorry, transferer, garbageCollector,toStorageLorry, fromStorageLorry
+     * Create a Builder
      * */
-    CreateTransportWorker(capacity: number, role: string, containerId: Id<StructureContainer> | null, homeRoomName: string): string;
+    CreateP_Builder(srcFlagName: string): string | undefined;
 
-    CreateCustomCreep(energy: number, roleName: string): string;
+    /**
+     * Create an Upgrader
+     * */
+    CreateP_Upgrader(srcFlagName:string, destFlagName: string): string | undefined;
 
-    CreateAdvancedUpgrader(flagName: string, energy: number): string | undefined;
+    /**
+     * Create a p_harvester
+     * */
+    CreateP_Harvester(srcFlagName: string): string | undefined;
 
-    CreateInterRoomMiner(sourceId: Id<Source>, target: string, containerId?: Id<StructureContainer>): string | undefined;
-
-    CreateInterRoomLorry(containerId: Id<StructureContainer>, target: string, home: string): string | undefined;
-
-    CreateReserverOrControllerAttacker(flagName: string, role: string): string | undefined;
-
-    CreateLongDistanceWorker(target: string, home: string, energy: number, role: string): string | undefined;
-
-    CreateMeleeAttacker(target: string, energy: number): string | undefined;
-
-    CreateRangedAttacker(target: string, energy: number): string | undefined;
-
-    CreateLinkStorageCommunicator(): string | undefined;
-
-    CreateOutpostCreep(target: string, energy: number, role: string): string | undefined;
-
-    CreateHealer(target: string, energy: number): string | undefined;
-
-    CreateClaimer(target: string): string | undefined;
-
-    CreateMineralHarvester(mineralType: MineralConstant, target: Id<Mineral>, energy: number): string | undefined;
-
-    CreateCommunicator(role: string, flagName: string): string | undefined;
-
-    CreateDismantler(energy: number, targetFlag: string): string | undefined;
-
-    CreateInterRoomGarbageCollector(targetRoom: string, homeRoom: string, energy: number): string | undefined;
-}
-
-interface SpawnMemory {
-    minCreeps: Record<string, number>
+    // /**
+    //  * Spawn harvester if necessary
+    //  * */
+    // SpawnP_HarvesterIfNecessary(): string | undefined
 }
