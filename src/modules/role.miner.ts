@@ -1,5 +1,5 @@
 /**
- * MemoryUsage: srcFlagName, role
+ * MemoryUsage: srcFlagName, role, body
  * */
 const roleMiner = {
     run: function (creep: Creep) {

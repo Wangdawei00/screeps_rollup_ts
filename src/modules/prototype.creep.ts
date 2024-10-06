@@ -7,6 +7,7 @@ import roleRepairer from "@/modules/role.repairer";
 import roleTrain from "@/modules/role.train";
 import roleTruck from "@/modules/role.truck";
 import roleUpgrader from "@/modules/role.upgrader";
+import roleReserver from "@/modules/role.reserver";
 
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "p_harvester": roleP_harverster,
@@ -17,20 +18,40 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     "repairer": roleRepairer,
     "train": roleTrain,
     "truck": roleTruck,
-    "upgrader": roleUpgrader
+    "upgrader": roleUpgrader,
+    'reserver': roleReserver,
 }
 
 
 Creep.prototype.runRole = function () {
     // console.log(this.memory.role);
-    const tickToRespawn = 30;
+    const tickToRespawn = this.memory.body.length * 3 + 50;
     roles[this.memory.role].run(this);
-    if (!Memory.stack) {
-        Memory.stack = []
-    }
+
     if (this.ticksToLive && this.ticksToLive < tickToRespawn && !this.memory.respawnInformed) {
         Memory.stack.push(this.memory);
         this.memory.respawnInformed = true;
+    }
+
+}
+
+/**Must have a srcFlag*/
+Creep.prototype.gotoIdleFlag = function () {
+    if (this.memory.srcFlagName) {
+        const room = Game.flags[this.memory.srcFlagName].room;
+        if (room) {
+            const flags = room.find(FIND_FLAGS, {
+                filter: f => f.name.startsWith("Idle")
+            })
+            if (flags.length !== 1) {
+                console.error("There is no flag")
+            } else {
+                this.moveTo(flags[0]);
+            }
+        }
+
+    } else {
+        console.error("askjfa")
     }
 
 }

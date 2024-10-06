@@ -1,5 +1,5 @@
 /**
- * Memory usage: srcFlagName, role
+ * Memory usage: srcFlagName, role, body
  * */
 
 const roleBuilder = {
@@ -20,14 +20,26 @@ const roleBuilder = {
                     creep.moveTo(target);
                 }
             } else {// no construction site
-                console.log("No construction site! hooray!")
+                creep.say("hooray!")
+                // creep.moveTo(Game.flags["Idle"]);
+                creep.gotoIdleFlag();
             }
         } else {
             if (creep.memory.srcFlagName) {// Should have this attribute.
                 const srcFlag = Game.flags[creep.memory.srcFlagName];
                 if (creep.pos.isEqualTo(srcFlag)) {
-                    const source = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES)
-                    if (source) creep.pickup(source); else console.log("No resources available for the builder to pickup")
+                    // const source = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES)
+                    // if (source) creep.pickup(source); else console.log("No resources available for the builder to pickup")
+                    const container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+                        filter: s => (s.structureType === STRUCTURE_CONTAINER ||
+                                s.structureType === STRUCTURE_STORAGE) &&
+                            s.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY)
+                    })
+                    if (container) {
+                        if (creep.withdraw(container, RESOURCE_ENERGY) !== OK) {
+                            creep.say("I cannot find the container")
+                        }
+                    }
                 } else {
                     creep.moveTo(srcFlag);
                 }

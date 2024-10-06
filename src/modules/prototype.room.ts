@@ -2,6 +2,9 @@ Room.prototype.run = function () {
     const spawns: StructureSpawn[] = this.find(FIND_STRUCTURES, {
         filter: (structure) => structure.structureType === STRUCTURE_SPAWN
     });
+    const towers: StructureTower[] = this.find(FIND_STRUCTURES, {
+        filter: s => s.structureType === STRUCTURE_TOWER
+    })
     for (const spawn of spawns) {
         spawn.SpawnCreepsIfNecessary();
         if (spawn.spawning) {
@@ -12,5 +15,8 @@ Room.prototype.run = function () {
                 spawn.pos.y,
                 {align: 'left', opacity: 0.8});
         }
+    }
+    for (const tower of towers) {
+        tower.run();
     }
 }
