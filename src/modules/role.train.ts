@@ -14,22 +14,23 @@ const roleTrain = {
             if (creep.memory.destFlagName) {
                 const target = Game.flags[creep.memory.destFlagName];
                 if (target) {
-                    if (!creep.pos.isEqualTo(target)) {
+                    if (!creep.pos.isNearTo(target)) {
                         creep.moveTo(target);
                     } else {
-                        const container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                            filter: object => object.structureType === STRUCTURE_CONTAINER
+                        const containers = creep.pos.findInRange(FIND_STRUCTURES, 1, {
+                            filter: object => object.structureType === STRUCTURE_CONTAINER ||
+                                object.structureType === STRUCTURE_STORAGE
                         })
+                        const container = containers.pop()
                         if (container) {
                             if (creep.transfer(container, RESOURCE_ENERGY) !== OK) {
-                                creep.drop(RESOURCE_ENERGY);
+                                creep.say("container full")
+                                // creep.drop(RESOURCE_ENERGY);
                             }
-                        }else{
-                            creep.drop(RESOURCE_ENERGY);
                         }
                     }
                 } else {
-                    creep.moveTo(Game.flags["Idle"]);
+                    console.error("Check the train's memory, the flag cannot be found")
                 }
             } else {
                 console.error("Check the trains' memory, it does not have destFlagName")
@@ -37,22 +38,54 @@ const roleTrain = {
 
         } else {// pick up resource
             if (creep.memory.srcFlagName) {
-                const flag = Game.flags[creep.memory.srcFlagName];
-                if (flag) {
-                    if (creep.pos.isEqualTo(flag)) {
-                        const resource = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES); //TODO: subject to change after container was built
-                        if (resource) {
-                            creep.pickup(resource);
+                const srcFlag = Game.flags[creep.memory.srcFlagName]
+                const resources = srcFlag.pos.findInRange(FIND_DROPPED_RESOURCES, 1
+                    // filter: r=> r.amount > 250
+                );
+                const containers: StructureContainer[] = srcFlag.pos.findInRange(FIND_STRUCTURES, 1, {
+                    filter: s => s.structureType === STRUCTURE_CONTAINER ||
+                        s.structureType === STRUCTURE_STORAGE &&
+                        s.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getFreeCapacity()
+                })
+                // if (resources.length === 0 && containers.length === 0) {
+                //     creep.moveTo(Game.flags['Idle']);
+                // } else {
+                // const resource = resources.pop();
+                // if (resource) {
+                if (srcFlag) {
+                    if (resources.length > 0 || containers.length > 0) {
+                        if (creep.pos.isEqualTo(srcFlag)) {
+                            const container = containers.pop();
+                            if (container) {
+                                if (creep.withdraw(container, RESOURCE_ENERGY) !== OK) {
+                                    console.log("Cannot withdraw from container")
+                                }
+                            } else {
+                                const resource = resources.pop(); //TODO: subject to change after container was built
+                                if (resource) {
+                                    creep.pickup(resource);
+                                } else {
+                                    creep.say("No resource available");
+                                }
+                            }
                         } else {
-                            console.log("No resource available");
+                            creep.moveTo(srcFlag)
                         }
                     } else {
-                        creep.moveTo(flag)
+                        creep.gotoIdleFlag()
                     }
+
                 } else {
                     console.error("There is no flag found, check the truck's memory")
                 }
+                // } else {
+                //     console.error("This should not happen!")
+                // }
+
+                // }
             }
+
+
         }
     }
 }

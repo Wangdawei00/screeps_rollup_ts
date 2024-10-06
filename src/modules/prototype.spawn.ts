@@ -1,10 +1,23 @@
 StructureSpawn.prototype.SpawnCreepsIfNecessary = function () {
+    if (!Memory.stack) {
+        Memory.stack = []
+    }
+    console.log("Memory.stack.length = " + Memory.stack.length);
     if (Memory.stack.length > 0) {
         const memory = Memory.stack[Memory.stack.length - 1];
+        memory.respawnInformed = false;
         const role = memory.role;
-        if (this.spawnCreep(memory.body, role + Game.time.toString(), {
+        if (memory.body === undefined) {
+            console.log("No body")
+            Memory.stack.pop();
+            return;
+        }
+        // console.log(memory.body)
+        const result = this.spawnCreep(memory.body, role + Game.time.toString(), {
             memory: memory
-        }) === OK){
+        })
+        console.log("Spawn Result: " + result);
+        if (result === OK) {
             Memory.stack.pop();
         }
     }

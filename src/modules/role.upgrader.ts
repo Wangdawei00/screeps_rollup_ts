@@ -1,5 +1,6 @@
 /**
  * the upgrader moves to dest flag, stand there and upgrade the controller
+ * Memory usage: destFlagName, role, body
  * */
 const roleUpgrader = {
     run: (creep: Creep) => {
@@ -13,11 +14,22 @@ const roleUpgrader = {
                     creep.memory.harvesting = true;
                 }
                 if (creep.memory.harvesting) {
-                    const resource = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES)
-                    if (resource) {
-                        creep.pickup(resource);
+                    const resource = creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1)
+                    if (resource.length !== 0) {
+                        creep.pickup(resource[0]);
                     } else {
-                        console.log("No resource available for the upgrader");
+                        creep.say("No resource")
+                        // console.log("No resource available for the upgrader");
+                        const container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+                            filter: structure => structure.structureType === STRUCTURE_CONTAINER
+                        })
+                        if (container) {
+                            if (creep.withdraw(container, RESOURCE_ENERGY) !== OK) {
+                                console.log("No container nearby")
+                            }
+                        } else {
+                            console.log("No container");
+                        }
                     }
                 } else {
                     if (creep.room.controller) {

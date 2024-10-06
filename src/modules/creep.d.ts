@@ -43,4 +43,6 @@ interface CreepMemory {
 
 interface Creep {
     runRole(): void;
+
+    gotoIdleFlag(): void;
 }

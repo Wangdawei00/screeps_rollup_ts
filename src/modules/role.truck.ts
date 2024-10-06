@@ -1,6 +1,8 @@
+import * as stream from "stream";
+
 /**
  * This truck is from Energy source to all kinds of structure.
- * Memory usage: srcFlagName, role
+ * Memory usage: srcFlagName, role, body
  * */
 const roleTruck = {
     run: function (creep: Creep) {
@@ -24,18 +26,25 @@ const roleTruck = {
                     creep.moveTo(target);
                 }
             } else {
-                creep.moveTo(Game.flags["Idle"]);
+                creep.gotoIdleFlag();
             }
         } else {
             if (creep.memory.srcFlagName) {
                 const flag = Game.flags[creep.memory.srcFlagName];
                 if (flag) {
                     if (creep.pos.isEqualTo(flag)) {
-                        const resource = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES);
-                        if (resource) {
-                            creep.pickup(resource);
-                        } else {
-                            console.log("No resource available");
+                        const storage = creep.room.storage;
+                        if (!storage || creep.withdraw(storage, RESOURCE_ENERGY) !== OK) {
+                            const container = creep.pos.findClosestByRange(FIND_STRUCTURES, {
+                                filter: s => s.structureType === STRUCTURE_CONTAINER
+                            })
+                            if (container) {
+                                if (creep.withdraw(container, RESOURCE_ENERGY) !== OK) {
+                                    console.log("Cannot withdraw from container")
+                                }
+                            } else {
+                                creep.say("no container");
+                            }
                         }
                     } else {
                         creep.moveTo(flag)
