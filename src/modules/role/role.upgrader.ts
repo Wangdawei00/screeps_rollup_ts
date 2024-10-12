@@ -1,6 +1,6 @@
 /**
  * the upgrader moves to dest flag, stand there and upgrade the controller
- * Memory usage: destFlagName, role, body
+ * Memory usage: destFlagName, role, body, room
  * */
 const roleUpgrader = {
     run: (creep: Creep) => {

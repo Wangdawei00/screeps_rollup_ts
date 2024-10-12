@@ -1,5 +1,5 @@
 /**
- * MemoryUsage: srcFlagName, role, body
+ * MemoryUsage: srcFlagName, role, body, room
  * */
 const roleMiner = {
     run: function (creep: Creep) {
@@ -11,12 +11,19 @@ const roleMiner = {
                 } else {//If it reaches the flag, it will start harvesting
                     const source = creep.pos.findClosestByPath(FIND_SOURCES);
                     if (source) creep.harvest(source);
-                    else console.error("There should be a source nearby");
+                    else {
+                        const mineral = creep.pos.findClosestByPath(FIND_MINERALS);
+                        if (mineral) {
+                            creep.harvest(mineral)
+                        } else {
+                            console.log("Should have a mineral nearby")
+                        }
+                    }
                 }
             } else {
                 console.error("There should be a flag named " + creep.memory.srcFlagName)
             }
-        }else{
+        } else {
             console.error("There should be a srcFlagName in creep's memory!");
         }
 

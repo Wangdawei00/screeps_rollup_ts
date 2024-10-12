@@ -1,17 +1,28 @@
 /**truck*/
-Memory.stack.push({
+Game.rooms['W17N46'].memory.queue.push({
     role: "truck",
-    body: [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
-    srcFlagName: "TruckFlag1"
+    body: [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE],
+    /*[CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE,
+        MOVE, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, MOVE, CARRY, MOVE],*/
+    srcFlagName: "NewTruck2",
+    room: "W18N48",
+})
+Game.rooms['W17N46'].memory.queue.splice(0, 0, {
+    role: "truck",
+    body: [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],/*[CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE,
+        MOVE, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, MOVE, CARRY, MOVE],*/
+    srcFlagName: "StorageOut3",
+    room: "W17N46",
 })
 // Game.spawns['Spawn1'].spawnCreep([CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE], "truck" + Game.time.toString(), {
 //     memory:
 // })
 /**miner*/
-Memory.stack.push({
+Game.rooms['W18N48'].memory.queue.push({
     role: "miner",
     body: [WORK, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE, MOVE],
-    srcFlagName: "InterRoomMiner1"
+    srcFlagName: "Miner3",
+    room: "W18N48",
 })
 // Game.spawns['Spawn1'].spawnCreep([WORK, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE, MOVE], "miner" + Game.time.toString(), {
 //     memory: {
@@ -21,51 +32,112 @@ Memory.stack.push({
 //     }
 // })
 /** train*/
-Memory.stack.push({
+//[CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE,
+//  CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE, CARRY, MOVE]
+Game.rooms['W18N48'].memory.queue.push({
     role: "train",
-    body: [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
-        CARRY, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
-    srcFlagName: "StorageOut1",
-    destFlagName: "P_UpgraderDest2"
+    body: [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE],/*[CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY,
+        CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE,
+        CARRY, CARRY, MOVE],*/
+    srcFlagName: "InterRoomTrain5",
+    destFlagName: "StorageIn2",
+    room: "W18N48",
+})
+Game.rooms['W18N48'].memory.queue.push({
+    role: "train",
+    body: [CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE],/*[CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY,
+        CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE, CARRY, CARRY, MOVE,
+        CARRY, CARRY, MOVE],*/
+    srcFlagName: "StorageTrainOut1",
+    destFlagName: "Upgrader1",
+    room: "W18N48",
 })
 // Game.spawns['Spawn1'].spawnCreep([CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE,
 //     MOVE, MOVE, MOVE, MOVE], "train" + Game.time.toString(), {
 //     memory:
 // })
 /** builder*/
-Memory.stack.push({
+Game.rooms['W18N48'].memory.queue.push({
     role: "builder",
-    body: [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE],
-    srcFlagName: "BuilderPos1"
+    body: [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE,],
+    room: "W18N48",
+    srcFlagName: "InterRoomTrain5",
 })
 // Game.spawns['Spawn1'].spawnCreep([WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE], "builder" + Game.time.toString(), {
 // //     memory:
 // })
 /**repairer*/
-Memory.stack.push({
+Game.rooms['W17N46'].memory.queue.push({
     role: "repairer",
-    body: [WORK, CARRY, MOVE, WORK, CARRY, MOVE]
+    body: [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE],
+    room: "W17N46",
+    IdleFlagName: "Idle3",
 })
 // Game.spawns['Spawn1'].spawnCreep([WORK, CARRY, MOVE, WORK, CARRY, MOVE], "repairer" + Game.time.toString(), {
 //     memory: {}
 // })
 
 /**upgrader*/
-Memory.stack.push({
+Game.rooms['W17N46'].memory.queue.push({
     role: "upgrader",
-    body: [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, MOVE, MOVE, MOVE, MOVE, MOVE, CARRY],
-    destFlagName: "P_UpgraderDest1"
+    body: [WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, WORK, MOVE, MOVE,
+        MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY],
+    room: "W17N46",
+    destFlagName: "UpgraderHome3",
 })
 // Game.spawns['Spawn1'].spawnCreep([WORK, CARRY, WORK, WORK, MOVE, WORK, MOVE, WORK, WORK, MOVE], "upgrader" + Game.time.toString(), {
 //     memory: {}
 // })
 
 /**reserver*/
-Memory.stack.push({
+Game.rooms['W18N48'].memory.queue.push({
     role: "reserver",
-    body: [MOVE, CLAIM],
-    destFlagName: "externalController1",
+    body: [MOVE, CLAIM, CLAIM, MOVE],
+    destFlagName: "externalController3",
+    room: "W18N48",
 })
 // Game.spawns['Spawn1'].spawnCreep([MOVE, CLAIM], 'reserver' + Game.time.toString(), {
 //     memory: {}
 // })
+/**Garbage Collector*/
+Game.rooms['W18N48'].memory.queue.push({
+    role: "garbageCollector",
+    body: [CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY, CARRY,
+        MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,],
+    IdleFlagName: "Idle4",
+    room: "W18N48",
+})
+
+/**melee*/
+Game.rooms['W18N48'].memory.queue.push({
+    role: "melee",
+    body: [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE,
+        MOVE, MOVE, MOVE, MOVE, MOVE, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK],
+    destFlagName: "Idle5",
+    room: "W18N48",
+})
+
+/**transferer*/
+Game.rooms['W17N46'].memory.queue.push({
+    role: "transferer",
+    body: [CARRY, MOVE],
+    destFlagName: "TruckFlag1",
+    toOrFromLink: true,
+    room: "W17N46",
+})
+
+Game.rooms['W17N46'].memory.queue.push({
+    role: "repairer",
+    body: [WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE, WORK, CARRY, MOVE],
+    room: "W18N48",
+    IdleFlagName: "Idle4",
+})
+
+
+/**Claimer*/
+Game.rooms['W17N46'].memory.queue.push({
+    role: "claimer",
+    body: [MOVE, CLAIM],
+    room: "W17N46",
+    destFlagName: "myController1",
+})

@@ -1,24 +1,47 @@
 StructureSpawn.prototype.SpawnCreepsIfNecessary = function () {
-    if (!Memory.stack) {
-        Memory.stack = []
+    // if (!Memory.stack) {
+    //     Memory.stack = []
+    // }
+    // console.log("Memory.stack.length = " + Memory.stack.length);
+    // if (Memory.stack.length > 0) {
+    //     const memory = Memory.stack[0];
+    //     memory.respawnInformed = false;
+    //     const role = memory.role;
+    //     if (memory.body === undefined) {
+    //         console.log("No body")
+    //         Memory.stack.shift();
+    //         return;
+    //     }
+    //     // console.log(memory.body)
+    //     const result = this.spawnCreep(memory.body, role + Game.time.toString(), {
+    //         memory: memory
+    //     })
+    //     console.log("Spawn Result: " + result);
+    //     if (result === OK) {
+    //         Memory.stack.shift();
+    //     }
+    // }
+    const room = this.room;
+    if (!room.memory.queue) {
+        room.memory.queue = []
     }
-    console.log("Memory.stack.length = " + Memory.stack.length);
-    if (Memory.stack.length > 0) {
-        const memory = Memory.stack[Memory.stack.length - 1];
+    const queue = room.memory.queue;
+    console.log("Room " + room.name + "'s queue length: " + queue.length)
+    if (queue.length > 0) {
+        const memory = queue[0];
         memory.respawnInformed = false;
-        const role = memory.role;
+        const role = memory.role
         if (memory.body === undefined) {
             console.log("No body")
-            Memory.stack.pop();
+            queue.shift()
             return;
         }
-        // console.log(memory.body)
         const result = this.spawnCreep(memory.body, role + Game.time.toString(), {
-            memory: memory
+            memory: memory,
         })
-        console.log("Spawn Result: " + result);
+        console.log("Spawn Result: " + result)
         if (result === OK) {
-            Memory.stack.pop();
+            queue.shift();
         }
     }
 }

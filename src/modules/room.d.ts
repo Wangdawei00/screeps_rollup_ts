@@ -1,3 +1,0 @@
-interface Room{
-    run(): void;
-}
