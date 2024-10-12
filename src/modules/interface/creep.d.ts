@@ -1,4 +1,5 @@
 interface CreepMemory {
+    room: string;
     role: string;
     body: BodyPartConstant[];
     // repairing?: boolean;
@@ -12,18 +13,19 @@ interface CreepMemory {
 
     /**Source flag name (Energy source)*/
     srcFlagName?: string;
-    /**Miner and LongDistanceHarvester target source*/
-    sourceId?: Id<Source> | Id<Mineral> | null;
+
+    IdleFlagName?: string;
+    // /**Miner and LongDistanceHarvester target source*/
+    // sourceId?: Id<Source> | Id<Mineral> | null;
     // /**LongDistanceHarvester and repairer state*/
     // working?: boolean;
     // /**(Advanced) Upgrader state*/
     // upgrading?: boolean;
     /**GarbageCollector and Lorry state*/
     transporting?: boolean;
-    longDistTransporting?: boolean
 
-    /**temp target for a creep*/
-    storedTargetID?: Id<Structure>;
+    // /**temp target for a creep*/
+    // storedTargetID?: Id<Structure>;
 
     /**Whether this creep's memory has been put in the stack*/
     respawnInformed?: boolean;
@@ -39,10 +41,19 @@ interface CreepMemory {
     // mineralType?: MineralConstant;
     //
     // targetFlagName?: string;
+    /**transferer whether to link or from link, true means to link, false means from link*/
+    toOrFromLink?: boolean
+
+    /**How many small claimer has been spawned before this one*/
+    reserveCnter?: number
 }
 
 interface Creep {
     runRole(): void;
 
+    /**Must have a srcFlagName or IdleFlagName*/
     gotoIdleFlag(): void;
+
+    /**Must have an IdleFlagName*/
+    pickupGarbage(): void;
 }

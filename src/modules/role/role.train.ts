@@ -1,6 +1,6 @@
 /**
  * train moves energy from A to B
- * Memory usage: srcFlagName, destFlagName, role
+ * Memory usage: srcFlagName, destFlagName, role, room
  * */
 const roleTrain = {
     run: (creep: Creep) => {
@@ -11,6 +11,16 @@ const roleTrain = {
             creep.memory.transporting = true;
         }
         if (creep.memory.transporting) {
+            // const structure = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+            //     filter: s => (s.structureType === STRUCTURE_SPAWN ||
+            //             s.structureType === STRUCTURE_TOWER || s.structureType === STRUCTURE_EXTENSION)
+            //         && s.store.getFreeCapacity(RESOURCE_ENERGY) > 0
+            // })
+            // if (structure) {
+            //     if (creep.transfer(structure, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+            //         creep.moveTo(structure);
+            //     }
+            // } else {
             if (creep.memory.destFlagName) {
                 const target = Game.flags[creep.memory.destFlagName];
                 if (target) {
@@ -19,7 +29,7 @@ const roleTrain = {
                     } else {
                         const containers = creep.pos.findInRange(FIND_STRUCTURES, 1, {
                             filter: object => object.structureType === STRUCTURE_CONTAINER ||
-                                object.structureType === STRUCTURE_STORAGE
+                                object.structureType === STRUCTURE_STORAGE || object.structureType === STRUCTURE_LINK
                         })
                         const container = containers.pop()
                         if (container) {
@@ -35,46 +45,49 @@ const roleTrain = {
             } else {
                 console.error("Check the trains' memory, it does not have destFlagName")
             }
-
+            // }
         } else {// pick up resource
             if (creep.memory.srcFlagName) {
                 const srcFlag = Game.flags[creep.memory.srcFlagName]
-                const resources = srcFlag.pos.findInRange(FIND_DROPPED_RESOURCES, 1
-                    // filter: r=> r.amount > 250
-                );
-                const containers: StructureContainer[] = srcFlag.pos.findInRange(FIND_STRUCTURES, 1, {
-                    filter: s => s.structureType === STRUCTURE_CONTAINER ||
-                        s.structureType === STRUCTURE_STORAGE &&
-                        s.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getFreeCapacity()
-                })
+
                 // if (resources.length === 0 && containers.length === 0) {
                 //     creep.moveTo(Game.flags['Idle']);
                 // } else {
                 // const resource = resources.pop();
                 // if (resource) {
                 if (srcFlag) {
-                    if (resources.length > 0 || containers.length > 0) {
-                        if (creep.pos.isEqualTo(srcFlag)) {
+                    if (srcFlag.room && srcFlag.room.name === creep.room.name) {
+                        const resources = srcFlag.pos.findInRange(FIND_DROPPED_RESOURCES, 1, {
+                            filter: r => r.amount >= creep.store.getFreeCapacity(RESOURCE_ENERGY)
+                        });
+                        const containers: StructureContainer[] = srcFlag.pos.findInRange(FIND_STRUCTURES, 1, {
+                            filter: s => (s.structureType === STRUCTURE_CONTAINER ||
+                                    s.structureType === STRUCTURE_STORAGE) &&
+                                s.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getFreeCapacity(RESOURCE_ENERGY)
+                        })
+                        if (resources.length > 0 || containers.length > 0) {
                             const container = containers.pop();
-                            if (container) {
-                                if (creep.withdraw(container, RESOURCE_ENERGY) !== OK) {
-                                    console.log("Cannot withdraw from container")
+                            const resource = resources.pop();
+                            if (container || resource) {
+                                if (container) {
+                                    if (creep.withdraw(container, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) {
+                                        creep.moveTo(container)
+                                        console.log("Cannot withdraw from container")
+                                    }
+                                } else if (resource) {
+                                    if (creep.pickup(resource) === ERR_NOT_IN_RANGE) {
+                                        creep.moveTo(resource);
+                                    }
                                 }
-                            } else {
-                                const resource = resources.pop(); //TODO: subject to change after container was built
-                                if (resource) {
-                                    creep.pickup(resource);
-                                } else {
-                                    creep.say("No resource available");
-                                }
-                            }
+                            } /*else {
+                                creep.gotoIdleFlag();
+                            }*/
                         } else {
-                            creep.moveTo(srcFlag)
+                            creep.gotoIdleFlag()
                         }
                     } else {
-                        creep.gotoIdleFlag()
+                        creep.moveTo(srcFlag);
                     }
-
                 } else {
                     console.error("There is no flag found, check the truck's memory")
                 }

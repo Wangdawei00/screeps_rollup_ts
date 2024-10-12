@@ -1,8 +1,6 @@
-import * as stream from "stream";
-
 /**
  * This truck is from Energy source to all kinds of structure.
- * Memory usage: srcFlagName, role, body
+ * Memory usage: srcFlagName, role, body, room
  * */
 const roleTruck = {
     run: function (creep: Creep) {
@@ -17,7 +15,8 @@ const roleTruck = {
                 filter: structure => {
                     return (structure.structureType === STRUCTURE_EXTENSION
                             || structure.structureType === STRUCTURE_TOWER
-                            || structure.structureType == STRUCTURE_SPAWN) &&
+                            || structure.structureType == STRUCTURE_SPAWN
+                            || structure.structureType === STRUCTURE_LAB) &&
                         structure.store.getFreeCapacity(RESOURCE_ENERGY) > 0
                 }
             })
