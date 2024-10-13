@@ -1,0 +1,5 @@
+This is a repo of the screeps game.
+
+Usage: You need to manually spawn the creeps. Once they are spawned, they will be automatically renewed a certain number of ticks before they die.
+
+The queue is in each rooms memory. See ./src/myconsole.ts for more information.
