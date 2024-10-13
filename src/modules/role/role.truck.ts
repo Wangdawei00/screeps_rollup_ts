@@ -49,7 +49,7 @@ const roleTruck = {
                         creep.moveTo(flag)
                     }
                 } else {
-                    console.error("There is no flag found, check the truck's memory")
+                    console.log("There is no flag found, check the truck's memory")
                 }
             }
         }

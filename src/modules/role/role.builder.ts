@@ -44,7 +44,7 @@ const roleBuilder = {
                     creep.moveTo(srcFlag);
                 }
             } else {
-                console.error("There is something wrong with builder's memory or code! Check it out.")
+                console.log("There is something wrong with builder's memory or code! Check it out.")
             }
         }
     }

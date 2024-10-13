@@ -20,13 +20,13 @@ const roleP_harverster = {
                     if (source) {
                         creep.harvest(source);
                     } else {
-                        console.error("There should be a source nearby. Check harvester code and room.")
+                        console.log("There should be a source nearby. Check harvester code and room.")
                     }
                 } else {
                     creep.moveTo(flag);
                 }
             } else {
-                console.error("There is something wrong with harvester's memory. add destFlagName");
+                console.log("There is something wrong with harvester's memory. add destFlagName");
             }
 
         } else {

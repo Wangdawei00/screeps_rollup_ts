@@ -14,6 +14,9 @@ interface CreepMemory {
     /**Source flag name (Energy source)*/
     srcFlagName?: string;
 
+    /**the maximum hit for the wall*/
+    wallMaxHits?: number;
+
     IdleFlagName?: string;
     // /**Miner and LongDistanceHarvester target source*/
     // sourceId?: Id<Source> | Id<Mineral> | null;
