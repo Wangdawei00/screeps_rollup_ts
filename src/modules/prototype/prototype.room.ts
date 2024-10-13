@@ -22,7 +22,21 @@ Room.prototype.run = function () {
     for (const tower of towers) {
         tower.run();
     }
-    for (const link of links) {
-        link.run()
+    // for (const link of links) {
+    //     link.run()
+    // }
+    if (!this.memory.LinkPairs) {
+        this.memory.LinkPairs = []
+    }
+    for (const pair of this.memory.LinkPairs) {
+        const sourceLink = Game.getObjectById(pair[0])
+        const targetLink = Game.getObjectById(pair[1])
+        if (sourceLink && targetLink) {
+            if (sourceLink.store.getFreeCapacity(RESOURCE_ENERGY) === 0) {
+                sourceLink.transferEnergy(targetLink);
+            }
+        }else{
+            console.log("No source link or target link")
+        }
     }
 }

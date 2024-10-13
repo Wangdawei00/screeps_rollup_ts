@@ -34,17 +34,17 @@ const roleUpgrader = {
                 } else {
                     if (creep.room.controller) {
                         if (creep.upgradeController(creep.room.controller) !== OK) {
-                            console.error("The upgrader's position is not correct.")
+                            console.log("The upgrader's position is not correct.")
                         }
                     } else {
-                        console.error("There should be a controller in this room!")
+                        console.log("There should be a controller in this room!")
                     }
                 }
             } else {
                 creep.moveTo(destFlag);
             }
         } else {
-            console.error("This upgrader does not have a destflag name in its memory. Add it Now!")
+            console.log("This upgrader does not have a destflag name in its memory. Add it Now!")
         }
 
     }

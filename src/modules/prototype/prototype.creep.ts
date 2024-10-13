@@ -12,6 +12,7 @@ import roleGarbageCollector from "@/modules/role/role.garbageCollector";
 import roleMelee from "@/modules/role/role.melee";
 import roleTransferer from "@/modules/role/role.transferer";
 import roleClaimer from "@/modules/role/role.claimer";
+import roleWallRepairer from "@/modules/role/role.wallRepairer";
 
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "p_harvester": roleP_harverster,
@@ -28,6 +29,7 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     "melee": roleMelee,
     "transferer": roleTransferer,
     "claimer": roleClaimer,
+    "wallRepairer": roleWallRepairer,
 }
 
 
@@ -76,13 +78,13 @@ Creep.prototype.gotoIdleFlag = function () {
                     filter: f => f.name.startsWith("Idle")
                 })
                 if (flags.length !== 1) {
-                    console.error("There is no flag")
+                    console.log("There is no flag")
                 } else {
                     this.moveTo(flags[0]);
                 }
             }
         } else {
-            console.error("asfjd")
+            console.log("asfjd")
         }
     }
 

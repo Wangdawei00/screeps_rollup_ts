@@ -29,21 +29,29 @@ const roleTrain = {
                     } else {
                         const containers = creep.pos.findInRange(FIND_STRUCTURES, 1, {
                             filter: object => object.structureType === STRUCTURE_CONTAINER ||
-                                object.structureType === STRUCTURE_STORAGE || object.structureType === STRUCTURE_LINK
+                                object.structureType === STRUCTURE_STORAGE
+                        })
+                        const links = creep.pos.findInRange(FIND_STRUCTURES, 1, {
+                            filter: s => s.structureType === STRUCTURE_LINK
                         })
                         const container = containers.pop()
+                        const link = links.pop()
                         if (container) {
                             if (creep.transfer(container, RESOURCE_ENERGY) !== OK) {
                                 creep.say("container full")
                                 // creep.drop(RESOURCE_ENERGY);
                             }
+                        } else if (link) {
+                            if (creep.transfer(link, RESOURCE_ENERGY) !== OK) {
+                                creep.say("link full")
+                            }
                         }
                     }
                 } else {
-                    console.error("Check the train's memory, the flag cannot be found")
+                    console.log("Check the train's memory, the flag cannot be found")
                 }
             } else {
-                console.error("Check the trains' memory, it does not have destFlagName")
+                console.log("Check the trains' memory, it does not have destFlagName")
             }
             // }
         } else {// pick up resource
@@ -89,7 +97,7 @@ const roleTrain = {
                         creep.moveTo(srcFlag);
                     }
                 } else {
-                    console.error("There is no flag found, check the truck's memory")
+                    console.log("There is no flag found, check the truck's memory")
                 }
                 // } else {
                 //     console.error("This should not happen!")

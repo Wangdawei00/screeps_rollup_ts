@@ -10,8 +10,7 @@ const roleMiner = {
                     creep.moveTo(flag);
                 } else {//If it reaches the flag, it will start harvesting
                     const source = creep.pos.findClosestByPath(FIND_SOURCES);
-                    if (source) creep.harvest(source);
-                    else {
+                    if (source && creep.harvest(source) === ERR_NOT_IN_RANGE) {
                         const mineral = creep.pos.findClosestByPath(FIND_MINERALS);
                         if (mineral) {
                             creep.harvest(mineral)
@@ -21,10 +20,10 @@ const roleMiner = {
                     }
                 }
             } else {
-                console.error("There should be a flag named " + creep.memory.srcFlagName)
+                console.log("There should be a flag named " + creep.memory.srcFlagName)
             }
         } else {
-            console.error("There should be a srcFlagName in creep's memory!");
+            console.log("There should be a srcFlagName in creep's memory!");
         }
 
     }
