@@ -28,3 +28,7 @@ export const loop = errorMapper(function () {
         creep.runRole();
     }
 });
+
+// export const testFn = function (num1: number, num2: number): number {
+//     return num1 + num2;
+// }

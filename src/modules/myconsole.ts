@@ -117,12 +117,12 @@ Game.rooms['W18N48'].memory.queue.push({
 })
 
 /**transferer*/
-Game.rooms['W18N48'].memory.queue.push({
+Game.rooms['W17N46'].memory.queue.push({
     role: "transferer",
     body: [CARRY, MOVE],
-    destFlagName: "TransfererFromLink1",
-    toOrFromLink: false,
-    room: "W18N48",
+    destFlagName: "TruckFlag1",
+    toOrFromLink: true,
+    room: "W17N46",
 })
 
 Game.rooms['W18N48'].memory.queue.push({
