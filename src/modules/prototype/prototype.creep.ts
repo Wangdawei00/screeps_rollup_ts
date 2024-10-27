@@ -13,6 +13,12 @@ import roleMelee from "@/modules/role/role.melee";
 import roleTransferer from "@/modules/role/role.transferer";
 import roleClaimer from "@/modules/role/role.claimer";
 import roleWallRepairer from "@/modules/role/role.wallRepairer";
+import roleDismantler from "@/modules/role/role.dismantler";
+import roleHealer from "@/modules/role/role.healer";
+import roleArcher from "@/modules/role/role.archer";
+import roleInterRoomGarbageCollector from "@/modules/role/role.interRoomGarbageCollector";
+import roleControllerAttacker from "@/modules/role/role.controllerAttacker";
+import roleS2sTrain from "@/modules/role/role.s2sTrain";
 
 const roles: Record<string, { run: (c: Creep) => void }> = {
     "p_harvester": roleP_harverster,
@@ -30,6 +36,12 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     "transferer": roleTransferer,
     "claimer": roleClaimer,
     "wallRepairer": roleWallRepairer,
+    "dismantler": roleDismantler,
+    "healer": roleHealer,
+    "archer": roleArcher,
+    "interRoomGarbageCollector": roleInterRoomGarbageCollector,
+    "controllerAttacker": roleControllerAttacker,
+    "s2sTrain": roleS2sTrain,
 }
 
 
@@ -41,7 +53,11 @@ Creep.prototype.runRole = function () {
 
     if (this.ticksToLive && this.ticksToLive < tickToRespawn && !this.memory.respawnInformed) {
         const room = Game.rooms[this.memory.room];
-        room.memory.queue.push(this.memory);
+        if (this.memory.role === 'truck') {
+            room.memory.queue.splice(0, 0, this.memory)
+        } else {
+            room.memory.queue.push(this.memory);
+        }
         if (this.memory.role === 'reserver') {
             if (this.memory.body.length !== 2) {
                 this.memory.body = [CLAIM, MOVE]
@@ -49,7 +65,7 @@ Creep.prototype.runRole = function () {
             } else {
                 if (this.memory.reserveCnter !== undefined) {
                     this.memory.reserveCnter++;
-                    if (this.memory.reserveCnter < 3) {
+                    if (this.memory.reserveCnter < 5) {
                         this.memory.body = [CLAIM, MOVE]
                     } else {
                         this.memory.body = [CLAIM, MOVE, CLAIM, MOVE]
@@ -61,6 +77,7 @@ Creep.prototype.runRole = function () {
             }
         }
         this.memory.respawnInformed = true;
+        this.memory.upgraded = false;
     }
 
 }
@@ -84,7 +101,7 @@ Creep.prototype.gotoIdleFlag = function () {
                 }
             }
         } else {
-            console.log("asfjd")
+            console.log("No Idle Flags found, Check the code or the memory of creep " + this.name)
         }
     }
 

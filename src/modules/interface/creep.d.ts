@@ -2,6 +2,7 @@ interface CreepMemory {
     room: string;
     role: string;
     body: BodyPartConstant[];
+    upgraded?: boolean;
     // repairing?: boolean;
     /**Harvester state*/
     harvesting?: boolean;
@@ -13,6 +14,7 @@ interface CreepMemory {
 
     /**Source flag name (Energy source)*/
     srcFlagName?: string;
+    mineralType?: ResourceConstant;
 
     /**the maximum hit for the wall*/
     wallMaxHits?: number;

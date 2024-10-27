@@ -31,25 +31,23 @@ const roleTruck = {
             if (creep.memory.srcFlagName) {
                 const flag = Game.flags[creep.memory.srcFlagName];
                 if (flag) {
-                    if (creep.pos.isEqualTo(flag)) {
-                        const storage = creep.room.storage;
-                        if (!storage || creep.withdraw(storage, RESOURCE_ENERGY) !== OK) {
-                            const container = creep.pos.findClosestByRange(FIND_STRUCTURES, {
-                                filter: s => s.structureType === STRUCTURE_CONTAINER
-                            })
-                            if (container) {
-                                if (creep.withdraw(container, RESOURCE_ENERGY) !== OK) {
-                                    console.log("Cannot withdraw from container")
-                                }
-                            } else {
-                                creep.say("no container");
-                            }
+                    if (creep.pos.isNearTo(flag) || creep.pos.isEqualTo(flag)) {
+                        const containers = flag.pos.findInRange(FIND_STRUCTURES, 0, {
+                            filter: s => s.structureType === STRUCTURE_STORAGE ||
+                                s.structureType === STRUCTURE_CONTAINER || s.structureType === STRUCTURE_LINK
+                        })
+                        const container = containers.pop()
+                        if (container) {
+                            creep.withdraw(container, RESOURCE_ENERGY);
+                        } else {
+                            console.log("There is no container or link or storage at flag " + creep.memory.srcFlagName
+                                + ". Please check " + creep.name + "'s memory.")
                         }
                     } else {
                         creep.moveTo(flag)
                     }
                 } else {
-                    console.log("There is no flag found, check the truck's memory")
+                    console.log("There is no flag found, check " + creep.name + "'s memory")
                 }
             }
         }

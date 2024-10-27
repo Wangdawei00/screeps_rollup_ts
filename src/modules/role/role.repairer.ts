@@ -29,7 +29,7 @@ const roleRepairer = {
                     } else {
                         const container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
                             filter: s => (s.structureType === STRUCTURE_CONTAINER ||
-                                    s.structureType === STRUCTURE_STORAGE) &&
+                                    s.structureType === STRUCTURE_STORAGE||s.structureType === STRUCTURE_LINK) &&
                                 s.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY)
                         })
                         if (container) {
@@ -50,6 +50,8 @@ const roleRepairer = {
                         }
                     }
                 }
+            } else {
+                creep.moveTo(Game.flags[creep.memory.IdleFlagName]);
             }
         }
 
