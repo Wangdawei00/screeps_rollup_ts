@@ -10,13 +10,14 @@ const roleReserver = {
                 if (creep.room.controller) {
                     creep.reserveController(creep.room.controller);
                 } else {
-                    console.log("There is no controller in this room. Check it out")
+                    console.log("There is no controller in Room" + creep.room.name + ". Check it out. "
+                        + creep.name + " is in this room.")
                 }
             } else {
                 creep.moveTo(flag)
             }
         } else {
-            console.log("There should be a destFlagName in reserver's memory")
+            console.log("There should be a destFlagName in " + creep.name + "'s memory")
         }
     }
 }

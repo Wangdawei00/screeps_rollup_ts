@@ -8,5 +8,9 @@ module.exports = {
         '^.+\\.tsx?$': 'ts-jest'
     },
     moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths || {}, { prefix: '<rootDir>/' }),
-    moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node']
+    moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+    setupFilesAfterEnv : [
+        '<rootDir>/test/setup.ts'
+    ],
+    testEnvironment: "screeps-jest"
 }

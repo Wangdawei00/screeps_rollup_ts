@@ -23,28 +23,36 @@ const roleBuilder = {
                 creep.say("hooray!")
                 // creep.moveTo(Game.flags["Idle"]);
                 creep.gotoIdleFlag();
-                creep.memory.respawnInformed = true
+                if (creep.memory.srcFlagName) {
+                    if (creep.room.name === Game.flags[creep.memory.srcFlagName].room?.name) {
+                        const sites = creep.room.find(FIND_MY_CONSTRUCTION_SITES);
+                        if (sites.length === 0) {
+                            creep.memory.respawnInformed = true
+                        }
+                    }
+                }
             }
         } else {
             if (creep.memory.srcFlagName) {// Should have this attribute.
                 const srcFlag = Game.flags[creep.memory.srcFlagName];
-                if (creep.pos.isEqualTo(srcFlag)) {
-
-                    const container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
+                if (creep.pos.isEqualTo(srcFlag) || creep.pos.isNearTo(srcFlag)) {
+                    const containers = srcFlag.pos.findInRange(FIND_STRUCTURES, 0, {
                         filter: s => (s.structureType === STRUCTURE_CONTAINER ||
                                 s.structureType === STRUCTURE_STORAGE || s.structureType === STRUCTURE_LINK) &&
-                            s.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getCapacity(RESOURCE_ENERGY)
+                            s.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getFreeCapacity(RESOURCE_ENERGY)
                     })
-                    const source = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES)
+                    const container = containers.pop()
+                    const resource = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES)
                     if (container && creep.withdraw(container, RESOURCE_ENERGY) !== OK) {
                         creep.say("I cannot find the container")
+                        console.log(creep.name + " cannot find the container. Check the code or memory")
                     }
-                    if (source) creep.pickup(source); else console.log("No resources available for the builder to pickup")
+                    if (resource) creep.pickup(resource);// else console.log("No resources available for the builder to pickup")
                 } else {
                     creep.moveTo(srcFlag);
                 }
             } else {
-                console.log("There is something wrong with builder's memory or code! Check it out.")
+                console.log("There is something wrong with " + creep.name + "'s memory or code! Check it out.")
             }
         }
     }

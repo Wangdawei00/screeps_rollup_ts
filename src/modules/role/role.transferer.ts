@@ -30,7 +30,7 @@ const roleTransferer = {
                         }
                     }
                 } else {
-                    console.log("There is no link or structure!")
+                    console.log("There is no link or structure! Check " + creep.name + "'s memory")
                 }
             }
         }
