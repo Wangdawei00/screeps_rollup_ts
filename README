@@ -1,8 +1,0 @@
-This is a repo of the screeps game. use "npm run local" to push the code to the local folder where Screeps script is located. The location is specified in .secret.json
-
-Usage: You need to manually spawn the creeps. Once they are spawned, they will be automatically renewed a certain number of ticks before they die.
-
-The queue is in each rooms memory. See ./src/myconsole.ts for more information.
-
-
-add jest unit testing
