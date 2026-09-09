@@ -1,4 +1,7 @@
 StructureTower.prototype.run = function () {
+    if (this.store.getUsedCapacity(RESOURCE_ENERGY) <= 10) {
+        return;
+    }
     const room = this.room;
 
     const myCreeps = room.find(FIND_MY_CREEPS, {
