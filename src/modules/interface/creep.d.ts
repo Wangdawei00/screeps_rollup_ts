@@ -51,6 +51,9 @@ interface CreepMemory {
 
     /**How many small claimer has been spawned before this one*/
     reserveCnter?: number
+
+    /**miner cache source (or mineral ID)*/
+    cache_miner_source_id?: Id<Source> | Id<Mineral>;
 }
 
 interface Creep {
