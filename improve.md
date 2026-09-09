@@ -47,6 +47,6 @@ The project has a clear overall structure: roles are separated, prototypes centr
    - The current `build` script uses `rollup -cw`, so it starts watch mode and does not exit.
    - Use `rollup -c` for a one-time build and provide a separate `watch` script using `rollup -cw`.
 
-- [ ] 8. **Remove obsolete commented code**
+- [x] 8. **Remove obsolete commented code**
    - Large commented sections in `prototype.spawn.ts` and `role.train.ts` obscure the active implementation.
    - Remove obsolete code and rely on Git history when an older implementation is needed.
