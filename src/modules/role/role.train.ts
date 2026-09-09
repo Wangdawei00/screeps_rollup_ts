@@ -21,32 +21,18 @@ const roleTrain = {
         const srcFlag = Game.flags[creep.memory.srcFlagName];
         if (creep.memory.cache_duration > creep.memory.cache_max_duration) {
             // Deal with dest container MUST HAVE
-            const dest_containers = destFlag.pos.findInRange(FIND_STRUCTURES, 0, {
-                filter: object => object.structureType === STRUCTURE_CONTAINER ||
-                    object.structureType === STRUCTURE_STORAGE
-            });
-            const dest_links = resourceConstant === RESOURCE_ENERGY ? destFlag.pos.findInRange(FIND_STRUCTURES, 0, {
-                filter: s => s.structureType === STRUCTURE_LINK
-            }) : undefined;
-            const dest_container = dest_containers.pop();
-            const dest_link = dest_links?.pop();
-            if (dest_container) {
-                creep.memory.cache_dest_container_id = dest_container.id as Id<StructureContainer> | Id<StructureStorage>;
-            } else if (dest_link) {
-                creep.memory.cache_dest_container_id = dest_link.id as Id<StructureLink>;
+            const container_id = creep.findDestContainer(resourceConstant);
+            if (container_id) {
+                creep.memory.cache_dest_container_id = container_id;
             } else {
-                console.log("ERROR! The destFlag " + destFlag.name + " does not have a container or link");
+                console.log("ERROR! The destFlag " + creep.memory.destFlagName + " does not have a container or link");
                 return;
             }
 
             // Deal with src container OPTIONALLY HAVE
-            const src_containers = srcFlag.pos.findInRange(FIND_STRUCTURES, 0, {
-                filter: object => object.structureType === STRUCTURE_CONTAINER ||
-                    object.structureType === STRUCTURE_STORAGE
-            });
-            const src_container = src_containers.pop()
-            if (src_container) {
-                creep.memory.cache_src_container_id = src_container.id as Id<StructureContainer> | Id<StructureStorage>;
+            const src_container_id = creep.findSrcContainer();
+            if (src_container_id) {
+                creep.memory.cache_src_container_id = src_container_id;
             } else {
                 console.log("Warning! The srcFlag " + srcFlag.name + " does not have a container");
                 creep.memory.cache_src_container_id = undefined;
