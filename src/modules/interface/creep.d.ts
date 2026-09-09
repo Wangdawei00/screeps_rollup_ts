@@ -61,7 +61,13 @@ interface CreepMemory {
 
     cache_src_container_id?: Id<StructureContainer> | Id<StructureStorage>
 
-    cache_dest_container_id?: Id<StructureContainer> | Id<StructureStorage> | Id<StructureLink>
+    cache_dest_container_id?: Id<StructureContainer>
+        | Id<StructureStorage>
+        | Id<StructureLink>
+        | Id<StructureLab>
+        | Id<StructureSpawn>
+        | Id<StructureExtension>
+        | Id<StructureTower>
 }
 
 interface Creep {
