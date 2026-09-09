@@ -7,6 +7,7 @@
     "push-watch": "rollup -cw --environment DEST:main  --bundleConfigAsCjs",
     "local": "rollup -cw --environment DEST:local --bundleConfigAsCjs",
     "push": "rollup -c --environment DEST:main --bundleConfigAsCjs",
+    "build": "rollup -c --bundleConfigAsCjs",
     "test": "jest",
     "test-c": "jest --coverage"
   },
