@@ -43,7 +43,7 @@ The project has a clear overall structure: roles are separated, prototypes centr
    - Add the intended setup file or remove the configuration entry so the test suite can start.
    - Add focused tests for role state transitions, spawn-queue error handling, and invalid memory references.
 
-- [ ] 7. **Separate build and watch commands**
+- [x] 7. **Separate build and watch commands**
    - The current `build` script uses `rollup -cw`, so it starts watch mode and does not exit.
    - Use `rollup -c` for a one-time build and provide a separate `watch` script using `rollup -cw`.
 
