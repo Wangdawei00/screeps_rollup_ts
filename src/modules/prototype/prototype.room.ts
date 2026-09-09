@@ -1,13 +1,33 @@
 Room.prototype.run = function () {
-    const spawns: StructureSpawn[] = this.find(FIND_STRUCTURES, {
-        filter: (structure) => structure.structureType === STRUCTURE_SPAWN
-    });
-    const towers: StructureTower[] = this.find(FIND_STRUCTURES, {
-        filter: s => s.structureType === STRUCTURE_TOWER
-    })
-    const labs: StructureLab[] = this.find(FIND_STRUCTURES, {
-        filter: s => s.structureType === STRUCTURE_LAB
-    })
+    this.memory.cache_max_duration = 500;
+    if (!this.memory.cache_duration) {
+        this.memory.cache_duration = 501;
+    }
+    let spawns: StructureSpawn[];
+    let towers: StructureTower[];
+    let labs: StructureLab[];
+
+    if (this.memory.cache_duration > this.memory.cache_max_duration) {
+        this.memory.cache_duration = 0;
+        const temp_spawns: StructureSpawn[] = this.find(FIND_STRUCTURES, {
+            filter: (structure) => structure.structureType === STRUCTURE_SPAWN
+        });
+        const temp_towers: StructureTower[] = this.find(FIND_STRUCTURES, {
+            filter: s => s.structureType === STRUCTURE_TOWER
+        })
+        const temp_labs: StructureLab[] = this.find(FIND_STRUCTURES, {
+            filter: s => s.structureType === STRUCTURE_LAB
+        })
+        this.memory.cache_spawn_ids = temp_spawns.map(s => s.id);
+        this.memory.cache_tower_ids = temp_towers.map(s => s.id);
+        this.memory.cache_lab_ids = temp_labs.map(s => s.id);
+    } else {
+        this.memory.cache_duration++;
+    }
+
+    spawns = this.memory.cache_spawn_ids.map(id => Game.getObjectById(id)) as StructureSpawn[];
+    towers = this.memory.cache_tower_ids.map(id => Game.getObjectById(id)) as StructureTower[];
+    labs = this.memory.cache_lab_ids.map(id => Game.getObjectById(id)) as StructureLab[];
     for (const spawn of spawns) {
         spawn.SpawnCreepsIfNecessary();
         if (spawn.spawning) {
@@ -23,9 +43,6 @@ Room.prototype.run = function () {
     for (const tower of towers) {
         tower.run();
     }
-    // for (const link of links) {
-    //     link.run()
-    // }
     if (!this.memory.LinkPairs) {
         this.memory.LinkPairs = []
     }
@@ -64,6 +81,5 @@ Room.prototype.run = function () {
                 }
             }
         }
-
     }
 }
