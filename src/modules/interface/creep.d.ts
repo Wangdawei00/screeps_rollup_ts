@@ -54,6 +54,14 @@ interface CreepMemory {
 
     /**miner cache source (or mineral ID)*/
     cache_miner_source_id?: Id<Source> | Id<Mineral>;
+
+    cache_duration?: number
+
+    cache_max_duration?: number
+
+    cache_src_container_id?: Id<StructureContainer> | Id<StructureStorage>
+
+    cache_dest_container_id?: Id<StructureContainer> | Id<StructureStorage> | Id<StructureLink>
 }
 
 interface Creep {
