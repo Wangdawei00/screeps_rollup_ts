@@ -4,9 +4,9 @@
   "description": "",
   "main": "main.js",
   "scripts": {
-    "push": "rollup -cw --environment DEST:main  --bundleConfigAsCjs",
+    "push-watch": "rollup -cw --environment DEST:main  --bundleConfigAsCjs",
     "local": "rollup -cw --environment DEST:local --bundleConfigAsCjs",
-    "build": "rollup -cw --bundleConfigAsCjs",
+    "push": "rollup -c --environment DEST:main --bundleConfigAsCjs",
     "test": "jest",
     "test-c": "jest --coverage"
   },
