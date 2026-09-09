@@ -27,7 +27,14 @@ The project has a clear overall structure: roles are separated, prototypes centr
    - Type the role registry with the same union so `roles[this.memory.role]` is checked by TypeScript.
 
 - [ ] 5. **Reduce CPU usage**
-   - Cache frequently used structure IDs in room memory instead of repeatedly searching the room.
+   - Cache stable structure IDs in `RoomMemory`, then resolve them with `Game.getObjectById()` instead of running room searches every tick:
+     - Spawn, tower, link, and lab IDs currently rediscovered by `Room.run()`.
+     - Storage, container, and link IDs used as fixed energy sources or destinations by builders, repairers, trucks, trains, transferers, and upgraders.
+     - Source and mineral IDs assigned to miners and primitive workers.
+     - Frequently used controller-adjacent containers and room idle/working positions.
+   - Store room-wide infrastructure in a typed room cache. Store role-specific targets, such as a miner's source or a truck's supply container, in `CreepMemory` when each creep has a fixed assignment.
+   - Do not cache short-lived objects such as dropped resources, tombstones, ruins, hostile creeps, injured creeps, or construction sites for long periods; search for these when needed or refresh them frequently.
+   - Rebuild a cached entry when `Game.getObjectById()` returns `null`, and refresh the full room cache after construction or destruction changes the room's structures. Avoid caching complete game objects in `Memory`; persist only IDs, names, positions, and other serializable values.
    - Reduce repeated `findClosestByPath` calls and use suitable `moveTo` path-reuse options.
    - Skip link and lab operations when cooldown, capacity, or missing resources make the action impossible.
 
