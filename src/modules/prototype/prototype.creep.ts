@@ -137,3 +137,45 @@ Creep.prototype.pickupGarbage = function () {
         }
     }
 }
+
+Creep.prototype.findSrcContainer = function () {
+    if (!this.memory.srcFlagName) {
+        console.log("Check " + this.name + "'s memory, it does not have srcFlagName")
+        return;
+    }
+    const srcFlag = Game.flags[this.memory.srcFlagName];
+    const src_containers = srcFlag.pos.findInRange(FIND_STRUCTURES, 0, {
+        filter: object => object.structureType === STRUCTURE_CONTAINER ||
+            object.structureType === STRUCTURE_STORAGE
+    });
+    const src_container = src_containers.pop() as StructureContainer | StructureStorage
+    if (src_container) {
+        return src_container.id
+    } else {
+        return undefined
+    }
+}
+
+Creep.prototype.findDestContainer = function (resourceConstant = RESOURCE_ENERGY) {
+    if (!this.memory.destFlagName) {
+        console.log("Check " + this.name + "'s memory, it does not have destFlagName")
+        return;
+    }
+    const destFlag = Game.flags[this.memory.destFlagName];
+    const dest_containers = destFlag.pos.findInRange(FIND_STRUCTURES, 0, {
+        filter: object => object.structureType === STRUCTURE_CONTAINER ||
+            object.structureType === STRUCTURE_STORAGE
+    });
+    const dest_links = resourceConstant === RESOURCE_ENERGY ? destFlag.pos.findInRange(FIND_STRUCTURES, 0, {
+        filter: s => s.structureType === STRUCTURE_LINK
+    }) : undefined;
+    const dest_container = dest_containers.pop() as StructureContainer | StructureStorage;
+    const dest_link = dest_links?.pop() as StructureLink;
+    if (dest_container) {
+        return dest_container.id
+    } else if (dest_link) {
+        return dest_link.id
+    } else {
+        return undefined;
+    }
+}

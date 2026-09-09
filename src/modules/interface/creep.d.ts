@@ -47,17 +47,17 @@ interface CreepMemory {
     //
     // targetFlagName?: string;
     /**transferer whether to link or from link, true means to link, false means from link*/
-    toOrFromLink?: boolean
+    toOrFromLink?: boolean;
 
     /**How many small claimer has been spawned before this one*/
-    reserveCnter?: number
+    reserveCnter?: number;
 
     /**miner cache source (or mineral ID)*/
     cache_miner_source_id?: Id<Source> | Id<Mineral>;
 
-    cache_duration?: number
+    cache_duration?: number;
 
-    cache_max_duration?: number
+    cache_max_duration?: number;
 
     cache_src_container_id?: Id<StructureContainer> | Id<StructureStorage>
 
@@ -72,4 +72,10 @@ interface Creep {
 
     /**Must have an IdleFlagName*/
     pickupGarbage(): void;
+
+    /**Must have a srcFlagName*/
+    findSrcContainer(): Id<StructureContainer> | Id<StructureStorage> | undefined;
+
+    /**Must have a destFlagName*/
+    findDestContainer(resourceConstant: ResourceConstant): Id<StructureContainer> | Id<StructureStorage> | Id<StructureLink> | undefined;
 }
