@@ -68,6 +68,8 @@ interface CreepMemory {
         | Id<StructureSpawn>
         | Id<StructureExtension>
         | Id<StructureTower>
+
+    cache_dest_construction_site_id?: Id<ConstructionSite>
 }
 
 interface Creep {

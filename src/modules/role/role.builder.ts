@@ -8,14 +8,31 @@ const roleBuilder = {
         if (creep.memory.building && creep.store[RESOURCE_ENERGY] === 0) {
             creep.memory.building = false;
             creep.say('🔄 harvest');
+            creep.memory.cache_dest_construction_site_id = undefined;
         }
         if (!creep.memory.building && creep.store[RESOURCE_ENERGY] == creep.store.getCapacity(RESOURCE_ENERGY)) {
             creep.memory.building = true;
             creep.say('🚧 build');
         }
+
+        if (creep.memory.cache_dest_construction_site_id) {
+            const target = Game.getObjectById(creep.memory.cache_dest_construction_site_id);
+            if (!target) {
+                creep.memory.cache_dest_construction_site_id = undefined;
+            }
+        }
+
         if (creep.memory.building) {
-            const target = creep.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES)
-            if (target) {
+            if (!creep.memory.cache_dest_construction_site_id){
+                const target = creep.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES)
+                if (target) creep.memory.cache_dest_construction_site_id = target.id;
+            }
+            if (creep.memory.cache_dest_construction_site_id) {
+                const target = Game.getObjectById(creep.memory.cache_dest_construction_site_id);
+                if (!target) {
+                    creep.memory.cache_dest_construction_site_id = undefined;
+                    return;
+                }
                 if (creep.build(target) === ERR_NOT_IN_RANGE) {
                     creep.moveTo(target);
                 }
