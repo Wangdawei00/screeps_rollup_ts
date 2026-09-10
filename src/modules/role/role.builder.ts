@@ -14,7 +14,25 @@ const roleBuilder = {
             creep.memory.building = true;
             creep.say('🚧 build');
         }
-
+        creep.memory.cache_duration ??= 51;
+        creep.memory.cache_max_duration ??= 50;
+        if (!creep.memory.srcFlagName) {
+            console.log("Check " + creep.name + "'s memory, it does not have srcFlagName")
+            return;
+        }
+        const srcFlag = Game.flags[creep.memory.srcFlagName];
+        if (creep.memory.cache_max_duration < creep.memory.cache_duration) {
+            const src_container_id = creep.findSrcContainer()
+            if (src_container_id) {
+                creep.memory.cache_src_container_id = src_container_id;
+            } else {
+                console.log("Warning! The srcFlag " + srcFlag.name + " does not have a container");
+                creep.memory.cache_src_container_id = undefined;
+            }
+            creep.memory.cache_duration = 0;
+        } else {
+            creep.memory.cache_duration++;
+        }
         if (creep.memory.cache_dest_construction_site_id) {
             const target = Game.getObjectById(creep.memory.cache_dest_construction_site_id);
             if (!target) {
@@ -23,7 +41,7 @@ const roleBuilder = {
         }
 
         if (creep.memory.building) {
-            if (!creep.memory.cache_dest_construction_site_id){
+            if (!creep.memory.cache_dest_construction_site_id) {
                 const target = creep.pos.findClosestByPath(FIND_MY_CONSTRUCTION_SITES)
                 if (target) creep.memory.cache_dest_construction_site_id = target.id;
             }
@@ -38,7 +56,6 @@ const roleBuilder = {
                 }
             } else {// no construction site
                 creep.say("hooray!")
-                // creep.moveTo(Game.flags["Idle"]);
                 creep.gotoIdleFlag();
                 if (creep.memory.srcFlagName) {
                     if (creep.room.name === Game.flags[creep.memory.srcFlagName].room?.name) {
@@ -50,26 +67,27 @@ const roleBuilder = {
                 }
             }
         } else {
-            if (creep.memory.srcFlagName) {// Should have this attribute.
-                const srcFlag = Game.flags[creep.memory.srcFlagName];
-                if (creep.pos.isEqualTo(srcFlag) || creep.pos.isNearTo(srcFlag)) {
-                    const containers = srcFlag.pos.findInRange(FIND_STRUCTURES, 0, {
-                        filter: s => (s.structureType === STRUCTURE_CONTAINER ||
-                                s.structureType === STRUCTURE_STORAGE || s.structureType === STRUCTURE_LINK) &&
-                            s.store.getUsedCapacity(RESOURCE_ENERGY) > creep.store.getFreeCapacity(RESOURCE_ENERGY)
-                    })
-                    const container = containers.pop()
-                    const resource = creep.pos.findClosestByPath(FIND_DROPPED_RESOURCES)
-                    if (container && creep.withdraw(container, RESOURCE_ENERGY) !== OK) {
-                        creep.say("I cannot find the container")
-                        console.log(creep.name + " cannot find the container. Check the code or memory")
+            if (creep.pos.isEqualTo(srcFlag) || creep.pos.isNearTo(srcFlag)) {
+                const container = creep.memory.cache_src_container_id ? Game.getObjectById(creep.memory.cache_src_container_id) : undefined;
+                const resources = srcFlag.pos.findInRange(FIND_DROPPED_RESOURCES, 0, {
+                    filter: r => r.resourceType === RESOURCE_ENERGY
+                })
+                const resource = resources.pop();
+                if (resource) {
+                    creep.pickup(resource);
+                    return;
+                }
+                if (container) {
+                    if (container.store.getUsedCapacity(RESOURCE_ENERGY) >= creep.store.getFreeCapacity()) {
+                        creep.withdraw(container, RESOURCE_ENERGY);
                     }
-                    if (resource) creep.pickup(resource);// else console.log("No resources available for the builder to pickup")
                 } else {
-                    creep.moveTo(srcFlag);
+                    creep.memory.cache_duration = creep.memory.cache_max_duration + 1;
+                    creep.say("I cannot find the container")
+                    console.log(creep.name + " cannot find the container. Check the code or memory")
                 }
             } else {
-                console.log("There is something wrong with " + creep.name + "'s memory or code! Check it out.")
+                creep.moveTo(srcFlag);
             }
         }
     }
