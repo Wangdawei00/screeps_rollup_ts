@@ -11,7 +11,7 @@ const roleMiner = {
                 } else {//If it reaches the flag, it will start harvesting
                     if (!creep.memory.cache_miner_source_id) {
                         const sources = creep.pos.findInRange(FIND_SOURCES, 1);
-                        if (sources.length == 0) {
+                        if (sources.length === 0) {
                             // This is a mineral harvester
                             const minerals = creep.pos.findInRange(FIND_MINERALS, 1);
                             if (minerals.length > 0) {
@@ -28,7 +28,9 @@ const roleMiner = {
                     if (creep.memory.cache_miner_source_id) {
                         const resource = Game.getObjectById(creep.memory.cache_miner_source_id);
                         if (resource) {
-                            creep.harvest(resource)
+                            if(creep.harvest(resource) !== OK) {
+                                creep.memory.cache_miner_source_id = undefined
+                            }
                         }
                         if (resource instanceof Mineral) {
                             resource.mineralAmount === 0 ? creep.memory.respawnInformed = true : null;

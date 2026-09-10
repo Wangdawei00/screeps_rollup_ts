@@ -18,17 +18,25 @@ const roleUpgrader = {
                     if (resource.length !== 0) {
                         creep.pickup(resource[0]);
                     } else {
-                        creep.say("No resource")
-                        // console.log("No resource available for the upgrader");
-                        const container = creep.pos.findClosestByPath(FIND_STRUCTURES, {
-                            filter: structure => structure.structureType === STRUCTURE_CONTAINER
-                        })
-                        if (container) {
-                            if (creep.withdraw(container, RESOURCE_ENERGY) !== OK) {
-                                console.log("No container nearby")
+                        if (!creep.memory.cache_src_container_id) {
+                            const containers = creep.pos.findInRange(FIND_STRUCTURES, 1, {
+                                filter: structure => structure.structureType === STRUCTURE_CONTAINER
+                            })
+                            const container = containers.pop() as StructureContainer;
+                            if (container) {
+                                creep.memory.cache_src_container_id = container.id
                             }
-                        } else {
-                            console.log("No container");
+                        }
+                        if (creep.memory.cache_src_container_id) {
+                            const container = Game.getObjectById(creep.memory.cache_src_container_id);
+                            if (container) {
+                                if (creep.withdraw(container, RESOURCE_ENERGY) !== OK) {
+                                    console.log("Error! The upgrader's position is not correct.")
+                                }
+                            } else {
+                                creep.memory.cache_src_container_id = undefined;
+                                console.log("Error! The upgrader's container is not found. Check the upgrader's position and the container's position.")
+                            }
                         }
                     }
                 } else {
