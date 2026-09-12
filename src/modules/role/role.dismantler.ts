@@ -23,7 +23,9 @@ const roleDismantler = {
                 if (creep.memory.cache_dest_structure_id) {
                     const target = Game.getObjectById(creep.memory.cache_dest_structure_id)
                     if (target) {
-                        creep.dismantle(target)
+                        if (creep.dismantle(target) !== OK) {
+                            creep.memory.cache_dest_structure_id = undefined
+                        }
                     } else {
                         creep.memory.cache_dest_structure_id = undefined
                     }
