@@ -81,7 +81,7 @@ interface Creep {
     /**Must have an IdleFlagName*/
     pickupGarbage(): void;
 
-    /**Must have a srcFlagName*/
+    /**Must have a srcFlagName. Will return undefined if srcFlagName does not exist or srcFlag cannot be found*/
     findSrcContainer(): Id<StructureContainer> | Id<StructureStorage> | undefined;
 
     /**Must have a destFlagName*/
