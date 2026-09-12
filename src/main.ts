@@ -8,8 +8,6 @@ import "./modules/prototype/prototype.link"
 export const loop = errorMapper(function () {
     let name;
     for (let roomName in Game.rooms) {
-        // console.log(roomName)
-        // console.log(Game.rooms[roomName]);
         Game.rooms[roomName].run();
     }
     for (name in Memory.creeps) {
@@ -28,7 +26,3 @@ export const loop = errorMapper(function () {
         creep.runRole();
     }
 });
-
-// export const testFn = function (num1: number, num2: number): number {
-//     return num1 + num2;
-// }
