@@ -70,6 +70,8 @@ interface CreepMemory {
         | Id<StructureTower>
 
     cache_dest_construction_site_id?: Id<ConstructionSite>
+
+    cache_dest_structure_id?: Id<Structure>
 }
 
 interface Creep {
