@@ -14,7 +14,10 @@ const roleUpgrader = {
                     creep.memory.harvesting = true;
                 }
                 if (creep.memory.harvesting) {
-                    const resource = creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1)
+                    const resource = creep.pos.findInRange(FIND_DROPPED_RESOURCES, 1, {
+                        filter: r =>
+                            r.resourceType === RESOURCE_ENERGY && r.amount >= creep.store.getFreeCapacity()
+                    })
                     if (resource.length !== 0) {
                         creep.pickup(resource[0]);
                     } else {
