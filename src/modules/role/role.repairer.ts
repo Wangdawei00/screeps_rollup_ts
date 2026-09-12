@@ -4,10 +4,17 @@
 const roleRepairer = {
     run: function (creep: Creep) {
         if (creep.memory.IdleFlagName) {
-            const room = Game.flags[creep.memory.IdleFlagName].room;
+            const IdleFlag = Game.flags[creep.memory.IdleFlagName];
+            if (!IdleFlag) {
+                console.log("ERROR! " + creep.name +
+                    " has IdleFlagName in memory but the flag"
+                    + creep.memory.IdleFlagName + " does not exist. Please check.")
+                return
+            }
+            const room = IdleFlag.room;
             if (room) {
                 if (creep.room.name !== room.name) {
-                    creep.moveTo(Game.flags[creep.memory.IdleFlagName]);
+                    creep.moveTo(IdleFlag);
                 } else {
                     if (!creep.memory.harvesting && creep.store[RESOURCE_ENERGY] === 0) {
                         creep.memory.harvesting = true;
