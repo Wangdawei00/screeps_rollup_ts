@@ -75,6 +75,15 @@ const roleTruck = {
             const srcFlag = Game.flags[creep.memory.srcFlagName];
             if (srcFlag) {
                 if (creep.pos.isNearTo(srcFlag) || creep.pos.isEqualTo(srcFlag)) {
+                    const resources = srcFlag.pos.findInRange(FIND_DROPPED_RESOURCES, 0, {
+                        filter: r =>
+                            r.resourceType === RESOURCE_ENERGY && r.amount >= creep.store.getFreeCapacity(RESOURCE_ENERGY)
+                    })
+                    const resource = resources.pop()
+                    if (resource) {
+                        creep.pickup(resource);
+                        return;
+                    }
                     const container = Game.getObjectById(creep.memory.cache_src_container_id!)
                     if (!container || (container && creep.withdraw(container, RESOURCE_ENERGY) !== OK)) {
                         creep.memory.cache_src_container_id = undefined;
