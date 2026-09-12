@@ -144,6 +144,10 @@ Creep.prototype.findSrcContainer = function () {
         return;
     }
     const srcFlag = Game.flags[this.memory.srcFlagName];
+    if (!srcFlag){
+        console.log("Check " + this.name + "'s memory, the srcFlagName is not found in Game.flags")
+        return;
+    }
     const src_containers = srcFlag.pos.findInRange(FIND_STRUCTURES, 0, {
         filter: object => object.structureType === STRUCTURE_CONTAINER ||
             object.structureType === STRUCTURE_STORAGE
