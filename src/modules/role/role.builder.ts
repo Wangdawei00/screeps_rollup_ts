@@ -56,23 +56,23 @@ const roleBuilder = {
             }
         } else {
             const srcFlag = Game.flags[creep.memory.srcFlagName];
-            if (creep.memory.cache_max_duration < creep.memory.cache_duration) {
-                const src_container_id = creep.findSrcContainer()
-                if (src_container_id) {
-                    creep.memory.cache_src_container_id = src_container_id;
-                } else {
-                    console.log("Warning! The srcFlag " + creep.memory.srcFlagName + " does not have a container");
-                    creep.memory.cache_src_container_id = undefined;
-                }
-                creep.memory.cache_duration = 0;
-            } else {
-                creep.memory.cache_duration++;
-            }
             if (!srcFlag) {
                 console.log("ERROR! Check " + creep.name + "'s memory, " + creep.memory.srcFlagName + " does not exist")
                 return;
             }
             if (creep.pos.isEqualTo(srcFlag) || creep.pos.isNearTo(srcFlag)) {
+                if (creep.memory.cache_max_duration < creep.memory.cache_duration) {
+                    const src_container_id = creep.findSrcContainer()
+                    if (src_container_id) {
+                        creep.memory.cache_src_container_id = src_container_id;
+                    } else {
+                        console.log("Warning! The srcFlag " + creep.memory.srcFlagName + " does not have a container");
+                        creep.memory.cache_src_container_id = undefined;
+                    }
+                    creep.memory.cache_duration = 0;
+                } else {
+                    creep.memory.cache_duration++;
+                }
                 const container = creep.memory.cache_src_container_id ? Game.getObjectById(creep.memory.cache_src_container_id) : undefined;
                 const resources = srcFlag.pos.findInRange(FIND_DROPPED_RESOURCES, 0, {
                     filter: r =>
