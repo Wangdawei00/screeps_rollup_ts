@@ -6,14 +6,17 @@ StructureTower.prototype.run = function () {
 
     const myCreeps = room.find(FIND_MY_CREEPS, {
         filter: c => c.hits < c.hitsMax
-    })
-    if (myCreeps.length > 0) {
-        const creep = myCreeps[0];
-        this.heal(creep);
-    }
-    const creeps = room.find(FIND_HOSTILE_CREEPS)
+    });
+    const creeps = room.find(FIND_HOSTILE_CREEPS);
     if (creeps.length > 0) {
         const creep = creeps[0];
         this.attack(creep);
+        return;
     }
+    if (myCreeps.length > 0) {
+        const creep = myCreeps[0];
+        this.heal(creep);
+        return;
+    }
+
 }
