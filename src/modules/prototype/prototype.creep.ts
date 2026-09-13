@@ -9,13 +9,11 @@ import roleTruck from "@/modules/role/role.truck";
 import roleUpgrader from "@/modules/role/role.upgrader";
 import roleReserver from "@/modules/role/role.reserver";
 import roleGarbageCollector from "@/modules/role/role.garbageCollector";
-import roleMelee from "@/modules/role/role.melee";
+import roleCombatant from "@/modules/role/role.combatant";
 import roleTransferer from "@/modules/role/role.transferer";
 import roleClaimer from "@/modules/role/role.claimer";
 import roleWallRepairer from "@/modules/role/role.wallRepairer";
 import roleDismantler from "@/modules/role/role.dismantler";
-import roleHealer from "@/modules/role/role.healer";
-import roleRanger from "@/modules/role/role.ranger";
 import roleInterRoomGarbageCollector from "@/modules/role/role.interRoomGarbageCollector";
 import roleControllerAttacker from "@/modules/role/role.controllerAttacker";
 import roleS2sTrain from "@/modules/role/role.s2sTrain";
@@ -32,13 +30,11 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     "upgrader": roleUpgrader,
     'reserver': roleReserver,
     "garbageCollector": roleGarbageCollector,
-    "melee": roleMelee,
+    "combatant": roleCombatant,
     "transferer": roleTransferer,
     "claimer": roleClaimer,
     "wallRepairer": roleWallRepairer,
     "dismantler": roleDismantler,
-    "healer": roleHealer,
-    "ranger": roleRanger,
     "interRoomGarbageCollector": roleInterRoomGarbageCollector,
     "controllerAttacker": roleControllerAttacker,
     "s2sTrain": roleS2sTrain,
