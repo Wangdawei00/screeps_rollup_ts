@@ -4,6 +4,7 @@ import "./modules/prototype/prototype.room"
 import "./modules/prototype/prototype.spawn"
 import "./modules/prototype/prototype.tower"
 import "./modules/prototype/prototype.link"
+import {runCombatOperation} from "@/modules/combat/combat.operation";
 
 export const loop = errorMapper(function () {
     let name;
@@ -21,6 +22,7 @@ export const loop = errorMapper(function () {
             console.log('Clearing non-existing creep memory:', name);
         }
     }
+    runCombatOperation()
     for (name in Game.creeps) {
         const creep = Game.creeps[name];
         creep.runRole();
