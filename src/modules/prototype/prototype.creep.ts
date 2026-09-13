@@ -15,7 +15,7 @@ import roleClaimer from "@/modules/role/role.claimer";
 import roleWallRepairer from "@/modules/role/role.wallRepairer";
 import roleDismantler from "@/modules/role/role.dismantler";
 import roleHealer from "@/modules/role/role.healer";
-import roleArcher from "@/modules/role/role.archer";
+import roleRanger from "@/modules/role/role.ranger";
 import roleInterRoomGarbageCollector from "@/modules/role/role.interRoomGarbageCollector";
 import roleControllerAttacker from "@/modules/role/role.controllerAttacker";
 import roleS2sTrain from "@/modules/role/role.s2sTrain";
@@ -38,7 +38,7 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     "wallRepairer": roleWallRepairer,
     "dismantler": roleDismantler,
     "healer": roleHealer,
-    "archer": roleArcher,
+    "ranger": roleRanger,
     "interRoomGarbageCollector": roleInterRoomGarbageCollector,
     "controllerAttacker": roleControllerAttacker,
     "s2sTrain": roleS2sTrain,

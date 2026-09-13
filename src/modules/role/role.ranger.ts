@@ -2,7 +2,7 @@
  * Memory usage: destFlagName, role, body, room
  * */
 
-const roleArcher = {
+const roleRanger = {
     run: (creep: Creep) => {
         if (creep.memory.destFlagName) {
             const flag = Game.flags[creep.memory.destFlagName];
@@ -17,4 +17,4 @@ const roleArcher = {
     }
 }
 
-export default roleArcher;
+export default roleRanger;
