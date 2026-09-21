@@ -9,6 +9,7 @@
  * @see https://github.com/screepers/screeps-typescript-starter/blob/master/src/utils/ErrorMapper.ts
  */
 
+import _ from "lodash"
 import {SourceMapConsumer} from 'source-map'
 
 // 缓存 SourceMap
@@ -16,7 +17,7 @@ let consumer: SourceMapConsumer | null = null
 
 // 第一次报错时创建 sourceMap
 const getConsumer = function () {
-    if (consumer == null) consumer = new SourceMapConsumer(require("main.js.map"))
+    if (consumer === null) consumer = new SourceMapConsumer(require("main.js.map"))
     return consumer
 }
 
