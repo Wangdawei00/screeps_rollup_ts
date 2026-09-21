@@ -1,715 +1,765 @@
-# Autonomous Screeps Architecture
+# Autonomous Screeps Implementation Guide
 
-The current codebase automates **execution**, but not **decision-making**. Creeps perform configured jobs, while flags,
-manually prepared bodies, `myconsole.ts`, `LinkPairs`, `LabList`, and queue entries decide what the colony should do.
-To become fully autonomous, those instructions must be replaced by managers that continuously
-**observe, plan, reconcile, and execute**.
+This document describes only the new autonomous architecture under `src/kernel`, `src/config`, `src/domain`,
+`src/colony`, `src/planning`, `src/roles`, `src/empire`, and `src/interface`. The code under `src/modules` is outside
+the scope of this plan and should not influence new interfaces or manager behavior.
 
-## Current Automation Gaps
+The target design separates decisions from execution:
 
-| Area | Current behavior | Autonomous replacement |
+- The kernel controls tick phases and failure isolation.
+- Colony and empire managers decide desired state.
+- Planners calculate reusable solutions.
+- Spawn and structure managers reconcile desired state with the game.
+- Roles execute typed assignments without deciding population or strategy.
+
+## Current New-Code Status
+
+The following new-architecture pieces are already represented in code and do not need their existing declarations
+copied again:
+
+| File | Already present | Still required |
 |---|---|---|
-| Population | Manual entries in `myconsole.ts`; dead creeps requeue themselves | A population planner calculates required creep slots every tick |
-| Bodies | Explicit `body` arrays in memory | Body builders scale against available and capacity energy |
-| Sources and destinations | `srcFlagName`, `destFlagName`, `IdleFlagName` | Discover sources, structures, controllers, and work positions by ID |
-| Construction | Construction sites must already exist | RCL-aware layout planner creates sites |
-| Logistics | Dedicated flag-to-flag roles | A prioritized transport-job system |
-| Links and labs | Manual `LinkPairs` and `LabList` | Infer structure purpose and production plans |
-| Expansion | Manual reserver and claimer flags | Intel, remote scoring, and expansion state machines |
-| Recovery | Assumes queues, rooms, and valid memory exist | Bootstrap mode that can recover from zero creeps |
-| Strategy | Distributed through creep configuration | Room and empire policy with measurable objectives |
+| `main.ts` | Thin error-mapped `runKernel` entrypoint | Nothing unless import paths change |
+| `config/policy.ts` | Base policy interface and values | Export the interface; restore wall targets; validate values |
+| `domain/types.ts` | `CreepRole`, `SpawnRequest` shell, assignment union | Export types and add all missing domain contracts |
+| `interface/memory.d.ts` | Draft global, creep, and colony memory shapes | Define referenced memory records and use serialized positions |
+| `colony/roomModel.ts` | Draft `RoomModel` fields | Export it and implement the model builder |
+| `planning/layoutPlanner.ts` | Draft `PlannedStructure` | Export it and implement deterministic planning |
+| `kernel/kernel.ts` | Empty `runKernel` function | Implement all tick phases |
+| `kernel/memory.ts` | Dependency import only | Implement the complete memory lifecycle |
 
-## Recommended Architecture
+All other new-architecture manager, planner, role, and empire files are empty. File existence is not considered
+implementation.
 
-Individual creeps should not decide colony strategy. Decisions should live in managers, while roles remain small
-executors. Managers decide desired state, planners calculate solutions, and roles and structure runners only execute
-assignments:
+There is currently no `kernel/scheduler.ts`. Add it when implementing scheduled processes.
 
-```text
-src/
-  main.ts
-  kernel/
-    kernel.ts
-    scheduler.ts
-    memory.ts
-  config/
-    policy.ts
-  domain/
-    types.ts
-  colony/
-    colonyManager.ts
-    roomModel.ts
-    populationPlanner.ts
-    spawnManager.ts
-    defenseManager.ts
-    constructionManager.ts
-    logisticsManager.ts
-    structureManager.ts
-  empire/
-    intelManager.ts
-    remoteManager.ts
-    expansionManager.ts
-    marketManager.ts
-  planning/
-    bodyBuilder.ts
-    layoutPlanner.ts
-    sourcePlanner.ts
-  roles/
-    index.ts
-    harvester.ts
-    miner.ts
-    transporter.ts
-    worker.ts
-    upgrader.ts
-    reserver.ts
-    defender.ts
-  interface/
-    memory.d.ts
-```
+Rename `src/colony/logisticManager.ts` to `src/colony/logisticsManager.ts` before adding imports so the filename
+matches the manager and this guide.
 
-The main loop should become approximately:
+## Canonical Type Placement
 
-```ts
-export function runKernel(): void {
-    migrateMemory();
-    cleanupMemory();
-    collectIntel();
+Do not declare shared interfaces inside manager files or rely on ambient globals for domain contracts. Use the
+following ownership rules.
 
-    const colonies = getOwnedRooms().map(buildRoomModel);
+### `src/domain/types.ts`
 
-    for (const colony of colonies) {
-        runColonyManager(colony);
-    }
+Put runtime-independent contracts shared by managers, planners, and roles here. Export every declaration.
 
-    runEmpireStrategy(colonies);
+| Type | Required fields or variants |
+|---|---|
+| `CreepRole` | Existing autonomous role names |
+| `ColonyStage` | `bootstrap`, `developing`, `stable`, `recovering`, `underAttack` |
+| `RemoteStage` | `unknown`, `scouting`, `candidate`, `reserving`, `mining`, `suspended` |
+| `ExpansionStage` | `idle`, `scouting`, `selected`, `claiming`, `spawnSite`, `bootstrapping`, `complete` |
+| `SerializedPosition` | `x`, `y`, `roomName`; never persist `RoomPosition` |
+| `CreepAssignment` | Existing union, changing `workPosition` to `SerializedPosition` |
+| `CreepDemand` | `key`, `role`, `homeRoom`, `priority`, `body`, optional assignment and travel estimate |
+| `SpawnRequest` | Existing demand plus `createdAt` and `attempts` |
+| `LogisticsEndpoint` | Discriminated union for stores and dropped resources |
+| `LogisticsJob` | ID, room, resource, amount, pickup, delivery, priority, lease, expiration |
+| `SourcePlan` | Source ID, work/container positions, path, path length, expected income, carry requirement |
+| `PlannedStructure` | Serialized position, type, minimum RCL, priority |
+| `ThreatAssessment` | hostile heal, attack, ranged, dismantle strength; boosted values; target priority |
+| `DefensePlan` | attack target, heal target, repair target, safe-mode decision, defender demands |
+| `StructurePlan` | link transfers and tower actions; later lab, terminal, and factory actions |
+| `ProcessPriority` | `critical`, `normal`, `low` |
+| `ScheduledProcess` | name, priority, interval, optional CPU condition, `run` callback |
 
-    for (const colony of colonies) {
-        runSpawnManager(colony);
-    }
+Use `import type` where a file only consumes these contracts. Keep interfaces based on live game objects, such as
+`RoomModel`, beside their per-tick builders rather than in this file.
 
-    runCreeps();
-}
-```
+### `src/interface/memory.d.ts`
 
-Use process-level error boundaries so one malformed creep or stale structure ID does not prevent every other room
-from running. Errors should identify the process and the relevant room, creep, or structure.
+Put only Screeps global memory augmentation here. This file may import domain types with type-only imports and must
+end with `export {}` so declarations are module-scoped augmentations.
 
-## File Responsibilities
+Define these records here:
 
-### Entrypoint and Kernel
+| Memory type | Purpose |
+|---|---|
+| `EmpireMemory` | Expansion campaign, global settings/version metadata, and optional market state |
+| `ColonyMemory` | Stage, serialized anchor, source plans, spawn queue, logistics jobs, construction, defense |
+| `SourcePlanMemory` | Persisted form of a source plan using IDs and serialized coordinates |
+| `ConstructionMemory` | Last RCL, layout revision, planned sites, blocked coordinates with retry metadata |
+| `DefenseMemory` | Last threat tick, hostile history, safe-mode cooldown metadata |
+| `RoomIntelMemory` | Last seen, ownership/reservation, sources, mineral, controller, threat, route data |
+| `ExpansionMemory` | Stage, candidates, selected room, origin room, state-change tick, failure reason |
+| `MarketMemory` | Last analysis tick and pending terminal preparation goals |
 
-#### `main.ts`
+Extend `CreepMemory` with runtime state only: role, home room, demand key, assignment, working state, and optional job
+ID. Do not add bodies, planning policy, complete jobs, or live game objects.
 
-This file should only import required global type augmentation, install the error mapper, and export the Screeps loop:
+Use optional fields only where migration or normal absence requires them. Managers should initialize records before
+use rather than spreading undefined checks throughout the code.
 
-```ts
-import {runKernel} from "@/kernel/kernel";
-import {errorMapper} from "@/modules/errorMapper";
+### File-local types
 
-export const loop = errorMapper(runKernel);
-```
+Keep these close to their implementation because they contain live objects or implementation details:
 
-It should not clean memory, dispatch roles, inspect rooms, or enqueue creeps directly.
+- `RoomModel` and `buildRoomModel` in `colony/roomModel.ts`.
+- Body-builder option types in `planning/bodyBuilder.ts`.
+- Layout stamps and coordinate transforms in `planning/layoutPlanner.ts`.
+- Spawn result classification in `colony/spawnManager.ts`.
+- Runtime validators and role runner signatures in `roles/index.ts`.
 
-#### `kernel/kernel.ts`
+## Runtime Invariants
 
-This is the composition root. It owns tick phase ordering, builds each room model once, and passes models to colony
-and empire managers. It should not contain the implementation of planning, spawning, or role behavior.
+Every implementation below should preserve these rules:
 
-#### `kernel/scheduler.ts`
+1. Persistent memory stores IDs, primitives, arrays, and serialized coordinates, never game objects.
+2. Every demand has a stable key. Living, spawning, and queued creeps with that key satisfy the same slot.
+3. Only `spawnManager` calls `spawnCreep`.
+4. Only `constructionManager` calls `createConstructionSite`.
+5. Role files do not enqueue replacements or choose population counts.
+6. A missing object or invalid assignment affects one process or creep, not the whole tick.
+7. Permanent spawn errors are removed or quarantined; transient errors remain retryable.
+8. Emergency income and defense can bypass noncritical work.
+9. Managers produce plans; executors perform plans.
+10. Work must continue in a room with no flags and recover after losing all creeps.
 
-Provide a lightweight scheduler for named processes with a priority and interval:
+## File-by-File Implementation
 
-```ts
-interface Process {
-    name: string;
-    priority: "critical" | "normal" | "low";
-    interval: number;
-    run(): void;
-}
-```
+### `src/main.ts`
 
-Defense, bootstrap, spawning, and creep execution are critical and run every tick. Construction reconciliation can
-run every few ticks, remote scoring every hundred ticks, and market analysis only with a healthy CPU bucket. Do not
-turn this into a complicated operating-system abstraction.
+Keep the existing file minimal. It should import global declarations indirectly through the TypeScript build,
+import `runKernel`, install the error mapper, and export the Screeps loop. Do not add cleanup, room scans, role
+dispatch, console commands, or prototype installation.
 
-#### `kernel/memory.ts`
+**Complete when:** the file remains a composition entrypoint and all behavior starts in `runKernel`.
 
-Own all persistent-memory lifecycle concerns:
+### `src/kernel/kernel.ts`
 
-- Define `CURRENT_MEMORY_VERSION` and sequential migrations.
-- Initialize missing empire and colony records.
-- Delete memory for dead creeps without requeueing their old configuration.
-- Expire logistics leases and obsolete jobs.
-- Validate persisted IDs and spawn requests.
-- Quarantine or remove permanently invalid requests.
+Implement the tick composition root.
 
-Never store complete game objects or `RoomPosition` instances. Store IDs and serialized coordinates.
+1. Run memory migration and initialization before reading colony records.
+2. Remove dead creep memory, expire leases/jobs, and validate queued requests.
+3. Collect intel for visible rooms on its configured schedule.
+4. Find visible rooms with an owned controller and build exactly one `RoomModel` per room.
+5. Run each colony manager with its model.
+6. Run empire-level remote, expansion, and market processes after local colony planning.
+7. Run spawn managers after population and empire demand has been reconciled.
+8. Run role executors last so assignments and logistics jobs are current.
 
-### Shared Configuration and Domain Types
+Wrap each named process with a contextual error boundary. Include process name and room/creep identifier in errors.
+Do not catch the entire tick with one local catch; the outer error mapper already covers catastrophic failures.
 
-#### `config/policy.ts`
+Avoid repeated room scans in this file. Managers receive models and return or persist plans.
 
-Replace `myconsole.ts` as the normal way to influence behavior. Policy should express strategy and safety limits,
-not individual creeps:
+**Complete when:** one broken colony or creep does not prevent other colonies and creeps from running, and phase order
+is deterministic.
 
-```ts
-interface EmpirePolicy {
-    minimumTowerEnergy: number;
-    storageEnergyReserve: number;
-    upgradeEnergySurplus: number;
-    wallTargetHitsByRcl: Partial<Record<number, number>>;
-    maxRemoteDistance: number;
-    expansionEnabled: boolean;
-    marketEnabled: boolean;
-    debug: boolean;
-}
-```
+### `src/kernel/scheduler.ts`
 
-#### `domain/types.ts`
+Create a small scheduler, not a process operating system.
 
-Define contracts shared by managers, planners, memory, and roles:
+- Accept named processes with priority, interval, and a callback.
+- A process is due when `Game.time % interval === 0`; interval must be at least one.
+- Run `critical` before `normal`, and `normal` before `low`.
+- Permit an optional predicate for CPU-sensitive work such as market analysis.
+- Catch and report errors per process while allowing later processes to run.
+- Detect duplicate process names during registration.
 
-```ts
-type CreepRole =
-    | "harvester"
-    | "miner"
-    | "transporter"
-    | "worker"
-    | "upgrader"
-    | "reserver"
-    | "defender";
+Suggested schedules:
 
-interface SpawnRequest extends CreepDemand {
-    createdAt: number;
-    attempts: number;
-}
-```
+| Process | Priority | Interval/condition |
+|---|---|---|
+| Memory cleanup, bootstrap, defense, spawning, creeps | Critical | Every tick |
+| Construction reconciliation | Normal | Every 5 ticks or after RCL change |
+| Intel for visible rooms | Normal | Every tick, cheap incremental update |
+| Remote scoring | Low | Every 100 ticks |
+| Expansion evaluation | Low | Every 250 ticks |
+| Market analysis | Low | Every 100 ticks and only with a healthy CPU bucket |
 
-Use a discriminated union instead of an untyped assignment string:
+**Complete when:** scheduling is deterministic, testable, and no skipped low-priority process can block critical work.
 
-```ts
-type CreepAssignment =
-    | {
-          type: "source";
-          sourceId: Id<Source>;
-          containerId?: Id<StructureContainer>;
-          workPosition: RoomPosition;
-      }
-    | {
-          type: "logistics";
-          jobId?: string;
-      }
-    | {
-          type: "controller";
-          controllerId: Id<StructureController>;
-          energySourceId?: Id<AnyStoreStructure>;
-      }
-    | {
-          type: "remote";
-          targetRoom: string;
-      }
-    | {
-          type: "defense";
-          targetRoom: string;
-      };
-```
+### `src/kernel/memory.ts`
 
-### Colony Layer
+Own the complete persistent-memory lifecycle.
 
-#### `colony/colonyManager.ts`
+- Define and export `CURRENT_MEMORY_VERSION`.
+- Implement sequential migrations keyed by the previous version; never jump directly from an arbitrary old version.
+- Initialize `Memory.colonies`, `Memory.intel`, and `Memory.empire`.
+- Create a complete `ColonyMemory` record for every visible owned room.
+- Remove `Memory.creeps[name]` when no matching `Game.creeps[name]` exists.
+- Expire logistics jobs by `expiresAt` and release leases whose creep is dead or `leaseUntil` passed.
+- Validate spawn requests: role, nonempty valid body, body length at most 50, affordable theoretical cost, home room,
+  stable key, and assignment shape.
+- Move permanently invalid requests into a bounded quarantine record with reason and tick, or log and remove them.
+- Remove duplicate queued requests with the same demand key.
+- Serialize/deserialize position helpers should live here only if they are memory-specific; otherwise put pure helpers
+  in `domain/types.ts`.
 
-Coordinate one owned room. Determine its stage, then run defense, construction, logistics, population reconciliation,
-and owned structures. It should not move creeps or call `spawnCreep` directly.
+Migrations must be idempotent at the version boundary: update the schema version only after a migration succeeds.
+Do not silently replace malformed colony data with an empty success-shaped record; log the room and invalid field.
 
-Suggested stage meanings:
+**Complete when:** an empty `Memory` object becomes valid in one tick and stale jobs/requests cannot permanently block
+the colony.
 
-- `bootstrap`: there is no reliable source-to-spawn income pipeline.
-- `developing`: income works, but storage or important RCL structures are missing.
-- `stable`: income is reliable and reserves satisfy policy.
-- `recovering`: essential creeps were lost or available energy is critically low.
-- `underAttack`: a meaningful hostile threat is present.
+### `src/config/policy.ts`
 
-#### `colony/roomModel.ts`
+Retain the existing strategic values and make `EmpirePolicy` a named export.
 
-Build one immutable, per-tick snapshot of a visible owned room:
+Add:
 
-```ts
-interface RoomModel {
-    room: Room;
-    name: string;
-    stage: ColonyStage;
-    controller: StructureController;
-    spawns: StructureSpawn[];
-    extensions: StructureExtension[];
-    towers: StructureTower[];
-    links: StructureLink[];
-    containers: StructureContainer[];
-    labs: StructureLab[];
-    sources: Source[];
-    constructionSites: ConstructionSite[];
-    hostiles: Creep[];
-    creepsByRole: Map<CreepRole, Creep[]>;
-    energyAvailable: number;
-    energyCapacity: number;
-    storageEnergy: number;
-}
-```
+- `wallTargetHitsByRcl`
+- per-tick construction site limit
+- global construction site safety margin
+- logistics lease duration
+- replacement travel buffer
+- minimum CPU bucket for low-priority work
+- expansion energy threshold
+- remote suspension duration
 
-This centralizes room searches instead of making each manager repeatedly call `room.find`. Stable planned IDs can be
-stored in memory, but visible objects should be resolved and stale IDs filtered while building the model.
+Keep this file declarative. It must not inspect `Game`, mutate memory, or encode individual room names, creep bodies,
+source IDs, or jobs. Add a startup validator for impossible values such as negative reserves or invalid RCL keys.
 
-#### `colony/populationPlanner.ts`
+**Complete when:** operators can adjust goals and safety limits without configuring an individual creep.
 
-Derive `CreepDemand[]` from the room model, compare each demand key against living, spawning, and queued creeps, then
-enqueue only missing slots. Remove obsolete requests that have not started. Never copy a dead creep's entire memory
-back into the queue.
+### `src/domain/types.ts`
 
-Use stable keys such as:
+Finish and export the types listed in **Canonical Type Placement**.
 
-```text
-W49N44:bootstrap:harvester:0
-W49N44:source:<sourceId>:miner
-W49N44:source:<sourceId>:transporter:0
-W49N44:worker:0
-W49N44:controller:upgrader:0
-W49N44:defender:0
-```
+Use discriminated unions wherever execution differs by target kind. In particular:
 
-A creep near death should stop satisfying its slot when its remaining life is less than its spawn time plus estimated
-travel time. The planner will then request the replacement without creep-controlled respawn flags.
+- A source assignment contains a source ID and serialized work position.
+- A logistics assignment refers to a job rather than copying endpoints.
+- A controller assignment contains the controller and optional energy structure ID.
+- Remote and defense assignments carry room names.
+- Logistics pickup distinguishes store-like objects from dropped resources.
 
-#### `colony/spawnManager.ts`
+Add runtime role constants, such as a readonly role array, so validators do not duplicate string lists. Avoid
+declaring global interfaces in this file.
 
-Consume typed `SpawnRequest`s and control all spawns in a colony:
+**Complete when:** new managers can compile without undeclared ambient types and invalid assignment combinations are
+rejected by TypeScript.
 
-- Sort by priority and creation time.
-- Let multiple idle spawns consume separate requests in one tick.
-- Generate unique names from role, room, and tick.
+### `src/colony/roomModel.ts`
+
+Export `RoomModel` and implement `buildRoomModel(room)`.
+
+- Require an owned controller; reject or return no model for other rooms.
+- Perform one structure scan and partition results into spawns, extensions, towers, links, containers, labs, and
+  relevant later-game structures.
+- Scan sources, owned construction sites, hostile creeps, dropped resources, tombstones, and ruins once.
+- Group owned creeps by validated autonomous role and home room.
+- Resolve storage energy and room energy values.
+- Resolve persisted source/container IDs and filter stale IDs without mutating planning state during model creation.
+- Calculate the initial colony stage from income readiness, critical creep coverage, reserves, and threat.
+
+Treat the model as immutable by convention. Include derived indexes needed by multiple managers to prevent repeated
+`room.find` calls.
+
+**Complete when:** all local managers can operate from the model without repeating broad room searches.
+
+### `src/colony/colonyManager.ts`
+
+Coordinate one owned room without moving creeps or spawning directly.
+
+Run local phases in this order:
+
+1. Determine and persist the colony stage.
+2. Assess defense and persist a defense plan.
+3. Reconcile source and layout plans when invalidated.
+4. Generate construction intentions.
+5. Generate and reconcile logistics jobs.
+6. Calculate desired population and reconcile spawn requests.
+7. Execute owned structure plans.
+
+Stage rules should be explicit:
+
+- `underAttack`: meaningful hostile combat strength is present.
+- `recovering`: essential income roles are missing after having an established pipeline, or available energy is
+  critically low.
+- `bootstrap`: no reliable source-to-spawn pipeline exists.
+- `developing`: income works but required RCL structures or reserves are incomplete.
+- `stable`: source income is reliable and policy reserves are met.
+
+Threat and recovery override normal development. Persist stage changes with a tick for diagnostics.
+
+**Complete when:** this is the only local orchestration layer and its output is desired state, not direct creep
+behavior.
+
+### `src/colony/populationPlanner.ts`
+
+Implement desired-state population reconciliation.
+
+Generate stable `CreepDemand` keys for:
+
+- emergency harvesters
+- one miner per planned accessible source
+- transporter slots based on required carry parts
+- workers when build or repair backlog exists
+- controller upgraders based on downgrade risk and energy surplus
+- defenders from the defense plan
+- later, reservers and remote workers supplied by the remote manager
+
+For every demand, count:
+
+1. Living creeps whose `demandKey` matches and whose remaining lifetime exceeds spawn time plus travel estimate.
+2. Creeps currently spawning with that key.
+3. Valid queued requests with that key.
+
+Enqueue only the deficit. Remove requests for demand keys that are no longer desired unless already spawning.
+Emergency harvesters must use currently available room energy and be requested when no creep can restore spawn
+energy. Stable roles may use capacity-based bodies.
+
+Transport demand should convert total required carry parts into a bounded number of practical transporter bodies,
+not blindly create one creep per source.
+
+**Complete when:** population converges after deaths and changing room conditions without any creep requeueing itself.
+
+### `src/colony/spawnManager.ts`
+
+Implement the only `spawnCreep` caller.
+
+- Sort requests by descending priority, then ascending creation tick.
+- Iterate all idle spawns and allow each to consume a different request in the same tick.
+- Revalidate requests immediately before spawning.
+- Generate collision-resistant names from role, home room, game tick, and a short sequence.
+- Put only role, home room, demand key, assignment, and initial state in creep memory.
 - Remove successful requests.
-- Keep transient failures such as `ERR_BUSY` and `ERR_NOT_ENOUGH_ENERGY`.
-- Quarantine permanent failures such as invalid bodies or arguments.
-- Allow emergency affordable requests to bypass expensive noncritical requests.
+- Retain transient failures: `ERR_BUSY`, `ERR_NOT_ENOUGH_ENERGY`, and temporary RCL/capacity conditions.
+- Quarantine permanent failures: invalid body, invalid arguments, impossible name/assignment, or body over 50 parts.
+- Increment attempts and record last error for diagnostics.
+- Let affordable critical bootstrap or defender requests bypass an unaffordable noncritical request.
 
-The spawn queue should contain `SpawnRequest`, not `CreepMemory`. Only runtime role and assignment fields should be
-placed in new creep memory.
+Do not let one spawn mutate a queue while another iterates stale indexes. Select a request, remove it atomically on
+success, then continue.
 
-#### `colony/defenseManager.ts`
+**Complete when:** multiple spawns work concurrently and no malformed front request can deadlock the queue.
 
-Calculate hostile strength from active and boosted body parts, update the colony stage, select consistent tower
-targets, generate defender demand, and activate safe mode under explicit breach conditions. Towers may heal when
-there is no attack target and repair only when there is no threat and their energy exceeds policy reserves.
+### `src/colony/defenseManager.ts`
 
-#### `colony/constructionManager.ts`
+Produce a `ThreatAssessment` and `DefensePlan`.
 
-Reconcile the persisted layout with structures and construction sites:
+- Calculate effective hostile attack, ranged attack, healing, dismantle, and toughness from active body parts.
+- Account for boosts using Screeps boost multipliers.
+- Prioritize hostiles by danger to critical structures and ability to heal.
+- Select one consistent tower attack target so tower damage is concentrated.
+- Select injured friendly creeps for healing only when no attack target has priority.
+- Permit repairs only with no active threat and tower energy above policy reserve.
+- Generate defender demands sized to observed threat rather than a permanent defender count.
+- Activate safe mode only under explicit conditions: critical spawn/storage breach risk, available safe mode, no active
+  safe mode, and insufficient immediate defense.
 
-- Detect RCL changes.
-- Request the allowed layout from `layoutPlanner`.
-- Request source containers and roads from `sourcePlanner`.
-- Create only missing sites.
-- Respect global and per-tick construction-site limits.
-- Prioritize spawn recovery, source containers, extensions, towers, storage, and roads.
-- Record blocked coordinates rather than retrying invalid sites forever.
-- Never destroy conflicting structures automatically.
+Persist compact threat history for recovery/suspension decisions, not live creep objects.
 
-This manager decides what should be built. Worker creeps only choose among existing build tasks.
+**Complete when:** towers and defenders respond to measured danger and peaceful repair cannot consume defensive
+reserves.
 
-#### `colony/logisticsManager.ts`
+### `src/colony/constructionManager.ts`
 
-Generate, merge, prioritize, lease, resize, and expire logistics jobs. It should also calculate transporter demand from
-transport throughput and backlog. A transporter claims a job; it does not independently decide colony priorities.
+Reconcile layout intent against the visible room.
 
-Suggested priorities:
+- Trigger planning on first initialization, RCL change, anchor change, layout revision change, or invalidated source
+  plan.
+- Combine allowed layout structures with source containers and essential roads.
+- Compare each planned coordinate with existing structures and construction sites.
+- Create only missing sites whose minimum RCL is met.
+- Sort by recovery spawn, source containers, extensions, towers, storage, roads, then later structures.
+- Enforce the configured room-per-tick limit and preserve space under the global 100-site limit.
+- Record invalid coordinates with reason, attempt count, and retry tick.
+- Retry transient failures; stop retrying permanent terrain or conflict failures until the plan changes.
+- Never destroy a conflicting structure automatically.
 
-| Priority | Jobs |
+Return diagnostics such as created, already satisfied, blocked, and deferred counts.
+
+**Complete when:** a new room advances through early RCL construction without manually placed sites.
+
+### `src/colony/logisticsManager.ts`
+
+Implement a persistent, reconciled job board.
+
+Generate desired jobs from the current model:
+
+| Priority | Job |
 |---:|---|
-| 100 | Spawn and extension energy during bootstrap |
+| 100 | Spawn and extension energy during bootstrap/recovery |
 | 90 | Towers during an attack |
 | 80 | Spawn and extension energy normally |
-| 70 | Controller link or container |
+| 70 | Controller container or link |
 | 60 | Labs, factory, and power spawn |
 | 50 | Dropped resources, tombstones, and ruins |
 | 40 | Storage and terminal balancing |
-| 20 | Market and nonessential mineral transfers |
+| 20 | Market and other nonessential transfers |
 
-#### `colony/structureManager.ts`
+Use deterministic job IDs derived from resource, pickup, and delivery so reconciliation updates an existing job
+instead of duplicating it. Clamp amounts to source availability and destination capacity. Merge compatible jobs when
+doing so does not obscure priority.
 
-Execute structure plans currently spread across `prototype.room.ts`, `prototype.link.ts`, and `prototype.tower.ts`:
+Implement:
 
-- Tower attacks, healing, and repairs selected by `defenseManager`.
-- Link transfers based on inferred source, controller, and storage link roles.
-- Later, lab reactions, terminal transfers, factory production, and observer actions.
+- claim with a lease
+- lease renewal while making progress
+- release on invalid target, death, or timeout
+- resize as stores change
+- completion when the desired deficit is satisfied
+- expiration for opportunistic pickup jobs
 
-Replace `LinkPairs` with an inferred link plan and replace `LabList` with production goals. Structure execution should
-consume those plans rather than decide empire strategy.
+Calculate hauling demand from unresolved throughput, source path round trips, existing carry capacity, and backlog
+age.
 
-### Planning Layer
+**Complete when:** transporters can keep local energy targets supplied without fixed source/destination configuration.
 
-#### `planning/bodyBuilder.ts`
+### `src/colony/structureManager.ts`
 
-Contain pure body-generation functions. They must not inspect global memory or enqueue creeps:
+Execute plans already selected by defense and colony logic.
 
-```ts
-buildBootstrapHarvesterBody(energyAvailable: number): BodyPartConstant[];
-buildMinerBody(energyBudget: number, sourceIncome: number): BodyPartConstant[];
-buildTransporterBody(energyBudget: number, carryParts: number, roads: boolean): BodyPartConstant[];
-buildWorkerBody(energyBudget: number): BodyPartConstant[];
-buildUpgraderBody(energyBudget: number, availableEnergy: number): BodyPartConstant[];
-buildReserverBody(energyBudget: number, reservationNeed: number): BodyPartConstant[];
-buildDefenderBody(energyBudget: number, threat: ThreatAssessment): BodyPartConstant[];
-```
+- Run tower attack/heal/repair actions from `DefensePlan`.
+- Infer source links from proximity to source plans, controller links from controller proximity, and storage links
+  from storage proximity.
+- Transfer source-link energy toward controller/storage demand while respecting cooldown and target capacity.
+- Avoid link loops by assigning one role per link and producing directed actions.
+- Validate every persisted ID before use and report stale plan entries.
 
-Every result must cost no more than its budget, contain no more than 50 parts, have an appropriate movement ratio,
-and contain at least one useful role-specific part. Five `WORK` parts consume the full regeneration of an ordinary
-source, so larger local energy-miner bodies normally waste energy.
+Later additions should follow the same pattern:
 
-#### `planning/sourcePlanner.ts`
+- labs execute a reaction goal selected by an empire production planner
+- terminals execute balancing/market preparation goals
+- factories execute selected recipes
+- observers execute an intel scan schedule
 
-Discover and persist accessible source tiles, preferred miner positions, container positions, paths to the colony,
-path lengths, expected income, and required hauling capacity. A useful approximation is:
+Do not choose market strategy or lab compounds here.
 
-```ts
-const requiredCarryParts = Math.ceil(
-    sourceEnergyPerTick * roundTripTicks / CARRY_CAPACITY
-);
-```
+**Complete when:** structures execute explicit plans and link behavior requires no manually paired IDs.
 
-Recalculate only when the colony anchor changes, a planned tile becomes blocked, or relevant structures change.
+### `src/planning/bodyBuilder.ts`
 
-#### `planning/layoutPlanner.ts`
+Implement pure body-generation functions for bootstrap harvesters, miners, transporters, workers, upgraders,
+reservers, and defenders.
 
-Choose or validate a deterministic anchor and return planned coordinates:
+Every builder must:
 
-```ts
-interface PlannedStructure {
-    x: number;
-    y: number;
-    structureType: BuildableStructureConstant;
-    minimumRcl: number;
-    priority: number;
-}
-```
+- accept all inputs as arguments
+- never read `Game` or `Memory`
+- return a body costing no more than the budget
+- return no more than 50 parts
+- contain at least one useful role part
+- provide enough movement for its expected terrain/load
+- return body parts in a deliberate damage order
 
-It should reject terrain walls and invalid coordinates, account for existing structures, reserve source and
-controller paths, and persist a compact plan. It returns intent and never calls `createConstructionSite` itself.
+Specific rules:
 
-### Empire Layer
+- Bootstrap harvester: repeat balanced `WORK`, `CARRY`, `MOVE` units using available energy.
+- Miner: cap normal source harvesting at five unboosted `WORK` parts and add movement for the path.
+- Transporter: size to requested carry parts; use road and off-road movement ratios.
+- Worker: balanced work/carry/move with a useful 300-energy minimum.
+- Upgrader: scale work only when energy supply supports it and preserve carry/movement.
+- Reserver: scale `CLAIM`/`MOVE` pairs to reservation need and controller limits.
+- Defender: derive attack/heal/tough/move composition from `ThreatAssessment` and available boosts.
 
-These managers should be added when their feature is implemented rather than existing as empty abstractions.
+Add a shared body-cost helper and invariant checks. Unit-test boundary budgets, especially 200/300 energy, capacity
+ceilings, and 50-part truncation.
 
-#### `empire/intelManager.ts`
+**Complete when:** every generated body satisfies cost and size invariants across a broad budget range.
 
-Store last-seen tick, ownership, reservation, source and mineral count, controller position, hostile strength, route
-distance, and Keeper/highway status for visible rooms. Old observations must be explicitly treated as stale.
+### `src/planning/sourcePlanner.ts`
 
-#### `empire/remoteManager.ts`
+Discover and persist the local source economy.
 
-Score remote profitability using path distance, reservation cost, hauling demand, and danger. Advance remote rooms
-through their state machine, generate reserver/miner/transporter/defender demand, and suspend rooms after repeated losses
-or occupation.
+For each source:
 
-#### `empire/expansionManager.ts`
+- enumerate adjacent walkable tiles
+- score miner positions by path access, construction conflicts, and adjacency
+- choose a container coordinate
+- path from the container to the colony anchor or primary delivery point
+- persist the serialized path and length
+- calculate expected income, accounting for source capacity and reservation where relevant
+- calculate required carry parts from income per tick and round-trip duration
+- resolve any existing container or source link by ID
 
-Own persistent expansion campaigns:
+Recalculate only when the anchor/layout revision changes, the source tile becomes blocked, the path is invalid, or
+relevant structures change. Keep planning deterministic so unchanged rooms do not churn memory.
 
-```text
-idle -> scouting -> selected -> claiming -> spawnSite -> bootstrapping -> complete
-```
+Handle inaccessible sources explicitly and exclude them from miner demand while recording the reason.
 
-Check free GCL, existing-colony health, stored energy, target source count, layout viability, route safety, and
-whether another campaign is already active. Hand the room to the normal colony manager after its spawn and basic
-income are established.
+**Complete when:** population and construction managers can consume source plans without flags or repeated pathfinding.
 
-#### `empire/marketManager.ts`
+### `src/planning/layoutPlanner.ts`
 
-Implement this last. Maintain terminal energy reserves, evaluate transaction energy cost, select resources to retain
-or trade, and create logistics jobs to prepare terminals. Disable market activity during bootstrap and recovery.
+Keep the existing `PlannedStructure` concept but persist serialized coordinates rather than `RoomPosition`.
 
-### Role Executors
+Implement a deterministic early-RCL stamp:
 
-#### `roles/index.ts`
+- choose an anchor near the controller and sources while leaving upgrade and source paths open
+- transform relative stamp coordinates into room coordinates
+- reject borders, terrain walls, source/controller exclusion zones, and occupied incompatible tiles
+- include spawns, extensions, towers, storage, roads, and later terminal/lab positions by minimum RCL
+- reserve road corridors to sources and the controller
+- produce stable priorities consumed by the construction manager
+- assign a layout revision so future changes can trigger safe replanning
 
-Provide the typed role registry and `runCreeps` dispatch. Validate persisted role and assignment data at runtime.
-Unknown roles should produce a contextual error without aborting the rest of the tick. This file does not manage
-respawning.
+Prefer validating several candidate anchors over building an optimization-heavy solver. Existing compatible
+structures should score positively; conflicts should disqualify or penalize candidates. Never destroy structures.
 
-#### `roles/harvester.ts`
+**Complete when:** the same room and revision always produce the same valid plan and planning does not run every tick.
 
-Emergency bootstrap executor. Harvest an assigned or discoverable source and deliver directly to spawns, extensions,
-and towers. It should exist only while the normal miner-container-transporter pipeline is unavailable. This replaces
-`role.p_harverster.ts`.
+### `src/roles/index.ts`
 
-#### `roles/miner.ts`
+Create the typed role registry and `runCreeps`.
 
-Move to an assigned work position, harvest the assigned source, and transfer into its container or link when possible.
-Fall back to dropping energy if planned infrastructure is incomplete. Mineral extraction should eventually use a
-separate assignment because its lifecycle differs from energy mining.
+- Export runtime validators for roles and assignment discriminants.
+- Map every `CreepRole` to exactly one executor.
+- Validate role, home room, demand key, and required assignment fields before dispatch.
+- Run each creep inside its own contextual error boundary.
+- Report unknown roles and invalid memory once at a controlled cadence.
+- Do not enqueue replacements or alter bodies.
 
-#### `roles/transporter.ts`
+If a job or object becomes invalid, the executor should release its job/assignment where appropriate and allow its
+manager to reconcile on the next tick.
 
-Replace `truck`, `train`, `transferer`, `garbageCollector`, `interRoomGarbageCollector`, and `s2sTrain`. Validate or
-claim one job, execute its pickup and delivery, handle partial loads and deliveries, then complete or release it.
+**Complete when:** one malformed creep cannot abort other creep execution.
 
-#### `roles/worker.ts`
+### `src/roles/harvester.ts`
 
-Replace primitive/advanced builders, ordinary repairers, and wall repairers. Obtain energy and execute an assigned
-build or repair task. Repair critical roads and containers before cosmetic damage, and repair walls or ramparts only
-to policy targets. Population planning determines whether workers should exist.
+Implement the emergency income executor.
 
-#### `roles/upgrader.ts`
+- Use the assigned source when valid; otherwise choose a reachable local source as a bootstrap fallback.
+- Harvest until carrying energy, then fill spawns and extensions, followed by towers below reserve.
+- If all immediate consumers are full, deliver to a container/storage or upgrade the controller as a last-resort
+  anti-idle action.
+- Re-evaluate invalid targets rather than caching stale IDs indefinitely.
 
-Move to the controller work area, withdraw from the assigned controller container or link, and upgrade. It should
-recover from missing infrastructure but never decide how many upgraders the colony needs.
+Do not create logistics jobs or decide whether another harvester is needed.
 
-#### `roles/reserver.ts`
+**Complete when:** one affordable harvester can restart a room from zero creeps and empty spawn energy.
 
-Travel to `targetRoom` and reserve its controller. It should report inaccessible or hostile rooms through intel and
-must not mutate its own future body or respawn count.
+### `src/roles/miner.ts`
 
-#### `roles/defender.ts`
+Implement fixed-source harvesting.
 
-Travel to the assigned room, prioritize dangerous combat creeps, protect critical structures, and heal when its body
-allows it. Specialized offensive dismantlers, controller attackers, and coordinated squads should remain separate
-campaign executors rather than part of the autonomous economic core.
+- Require a source assignment and deserialize the work position.
+- Move to the work tile without standing on the source/container conflict tile incorrectly.
+- Harvest the assigned source.
+- Transfer to an adjacent container/link when possible.
+- If infrastructure is incomplete, drop energy on the planned container tile so transporters can collect it.
+- Report missing/inaccessible sources through controlled diagnostics.
 
-### Memory Interface
+Do not select another colony's source, mutate its future body, or enqueue a replacement.
 
-#### `interface/memory.d.ts`
+**Complete when:** a miner maintains continuous local source extraction before and after its container is built.
 
-Replace the flag-oriented memory definitions with typed persistent state:
+### `src/roles/transporter.ts`
 
-```ts
-interface Memory {
-    schemaVersion: number;
-    colonies: Record<string, ColonyMemory>;
-    intel: Record<string, RoomIntelMemory>;
-    empire: EmpireMemory;
-}
-
-interface CreepMemory {
-    role: CreepRole;
-    homeRoom: string;
-    demandKey: string;
-    assignment?: CreepAssignment;
-    state?: "pickup" | "deliver" | "working";
-    jobId?: string;
-}
-
-interface ColonyMemory {
-    stage: ColonyStage;
-    anchor?: RoomPosition;
-    lastRcl?: number;
-    sourcePlans: Record<string, SourcePlanMemory>;
-    spawnQueue: SpawnRequest[];
-    logisticsJobs: Record<string, LogisticsJob>;
-    construction: ConstructionMemory;
-    defense: DefenseMemory;
-}
-```
-
-In the final schema, do not retain `body` in living creep memory, `respawnInformed`, flag names, generic per-creep
-cache timers, `LinkPairs`, or `LabList`. These fields can remain optional only during a staged migration.
+Execute logistics jobs as a state machine.
 
-## Desired-State Population
-
-Replace the current "creep dies, copy its memory back into the queue" mechanism in `main.ts` and
-`prototype.creep.ts`. It preserves configuration forever and cannot adjust to changing conditions.
-
-Instead, calculate desired creep **slots**:
-
-```ts
-interface CreepDemand {
-    key: string;              // For example, "W49N44:source:<sourceId>:miner"
-    role: CreepRole;
-    homeRoom: string;
-    priority: number;
-    body: BodyPartConstant[];
-    assignment?: CreepAssignment;
-}
-```
-
-For each owned room, derive demand from game state:
-
-- One miner per accessible source.
-- Enough hauling capacity for source income and path distance.
-- Emergency harvesters if no functioning income chain exists.
-- Builders only when construction work exists.
-- Repairers based on the repair backlog, not a permanent count.
-- Upgraders based on available energy surplus and controller downgrade risk.
-- Defenders based on observed hostile strength.
-- Reservers based on reservation ticks and remote profitability.
-
-Compare demand with living creeps and queued requests, then enqueue only missing slots. This eliminates duplicate
-respawns and lets the colony change composition automatically.
-
-Bodies should be generated by functions such as:
-
-```ts
-buildMinerBody(energyCapacity, sourceCapacity);
-buildTransporterBody(energyAvailable, requiredCarryParts);
-buildWorkerBody(energyAvailable);
-buildDefenderBody(energyCapacity, hostileThreat);
-```
+1. Validate the current leased job or claim the highest-priority compatible unleased job.
+2. In pickup state, move to the endpoint and withdraw/pick up the requested resource.
+3. In delivery state, move to the destination and transfer what it carries.
+4. Update remaining amount, renew the lease after progress, and complete/release the job.
 
-Use `room.energyAvailable` during bootstrap and emergencies, and `room.energyCapacityAvailable` during stable
-operation.
-
-## Remove Flags from the Economic Core
-
-Flags are currently fundamental to nearly every role. Replace them gradually with IDs and assignments:
-
-- Miner memory: `sourceId`, `containerId`, and `workPosition`.
-- Transporter memory: no fixed source flag; claim a logistics job.
-- Upgrader memory: `controllerId` and an inferred controller container or link.
-- Builder memory: dynamically selected construction-site ID.
-- Reserver memory: `targetRoom`, not a flag.
-- Idle positions: calculated around the spawn or storage rather than flagged.
-
-Flags can remain as optional manual overrides, such as `disableRemote`, `rally`, or `forceAttack`. The economy must
-continue functioning if every flag is removed.
-
-## Introduce a Logistics Job Board
-
-The `truck`, `train`, `transferer`, `garbageCollector`, and `s2sTrain` roles overlap significantly. Replace most of
-them with a generic transporter that consumes jobs:
-
-```ts
-interface LogisticsJob {
-    id: string;
-    roomName: string;
-    resourceType: ResourceConstant;
-    amount: number;
-    pickup:
-        | { type: "store"; id: Id<AnyStoreStructure | Tombstone | Ruin> }
-        | { type: "dropped"; id: Id<Resource> };
-    deliveryId: Id<AnyStoreStructure>;
-    priority: number;
-    assignedCreep?: string;
-    leaseUntil?: number;
-    expiresAt: number;
-}
-```
-
-The pickup is a discriminated union because dropped resources, tombstones, and ruins are not all
-`AnyStoreStructure`s.
-
-The room manager should generate jobs in this order:
-
-1. Spawn and extensions.
-2. Towers during threats.
-3. Controller containers and links.
-4. Labs and power structures.
-5. Storage balancing.
-6. Dropped resources, tombstones, and ruins.
-7. Terminal and market transfers.
-
-This system adapts automatically as structures fill, disappear, or are constructed.
-
-## Add Construction and Room Planning
-
-There is currently no `createConstructionSite` logic. Autonomous growth requires:
-
-- Detecting controller-level changes.
-- Choosing and persisting an anchor.
-- Planning spawns, extensions, roads, towers, storage, terminals, and labs.
-- Computing miner positions and source containers.
-- Building roads from actual traffic or planned paths.
-- Respecting the five-site-per-tick and global construction-site limits.
-- Replanning safely when terrain or existing structures conflict.
-
-Start with a simple deterministic bunker or stamp layout rather than an optimization-heavy planner. Store planned
-coordinates in room memory so CPU is not spent recomputing them every tick.
-
-## Add Room and Empire State Machines
-
-Each colony should have a state such as:
-
-```ts
-type ColonyStage =
-    | "bootstrap"
-    | "developing"
-    | "stable"
-    | "recovering"
-    | "underAttack";
-```
-
-Remote rooms should separately progress through:
-
-```text
-unknown -> scouting -> candidate -> reserving -> mining -> suspended
-```
-
-Expansion should only occur when policy thresholds are met: available GCL, sufficient stored energy, healthy
-existing rooms, route safety, source count, and distance. Expansion itself should be a persistent state machine:
-scout, choose room, claim, bootstrap a spawn, establish the economy, and then hand the room over to the normal colony
-manager.
-
-## Preserve Configuration as Policy
-
-Fully autonomous should not mean no configuration. Replace per-creep configuration with strategic policy:
-
-```ts
-const policy = {
-    minimumTowerEnergy: 500,
-    storageEnergyReserve: 100_000,
-    maxRemoteDistance: 2,
-    upgradeEnergySurplus: 50_000,
-    expansionEnabled: true,
-    marketEnabled: true,
-};
-```
-
-The code decides **how** to satisfy these goals. Configuration only expresses preferences and safety limits.
-
-## Migration from the Current Code
-
-| Current code | New owner |
-|---|---|
-| `main.ts` dead-creep requeue | Removed; `populationPlanner.ts` detects missing slots |
-| `prototype.creep.ts` role registry | `roles/index.ts` |
-| `prototype.creep.ts` flag/container helpers | Typed assignments and logistics jobs |
-| `prototype.spawn.ts` | `colony/spawnManager.ts` |
-| `prototype.room.ts` orchestration | `kernel.ts`, `colonyManager.ts`, and `structureManager.ts` |
-| `prototype.tower.ts` | `defenseManager.ts` and `structureManager.ts` |
-| `prototype.link.ts` and `LinkPairs` | Inferred link plans in `structureManager.ts` |
-| `myconsole.ts` queue entries | `policy.ts` plus optional manual override commands |
-| Primitive harvester/builder/upgrader | Bootstrap behavior in the consolidated roles |
-| Builder/repairer/wall-repairer roles | `worker.ts` |
-| Truck/train/transfer roles | `transporter.ts` |
-| Reserver destination flag | A `targetRoom` assignment |
-| Combat destination flags | Defense assignments or optional campaign overrides |
-
-## Implementation Order
-
-1. **Harden the existing runtime.** Validate role dispatch, missing home rooms, stale cached IDs, and queue entries.
-   Permanent spawn errors currently block the queue indefinitely. Add memory schema versions and migrations.
-2. **Build autonomous bootstrap and population planning.** Support RCL 1-3 from zero creeps without flags. This is
-   the foundational milestone.
-3. **Replace source flags with source assignments.** Add miner-position discovery, dynamic bodies,
-   hauling-capacity calculation, and slot-based spawning.
-4. **Implement the logistics board.** Consolidate fixed transport roles into generic hauling.
-5. **Add construction planning.** Automate containers, extensions, roads, towers, storage, and later structures.
-6. **Add defense and recovery states.** Add threat assessment, tower priorities, defender demand, safe-mode
-   activation, and economy recovery.
-7. **Add remotes and expansion.** Add persistent intel, route scoring, reservation, remote profitability, and
-   claiming.
-8. **Automate links, labs, terminals, and the market last.** These systems should consume colony goals rather than
-   hard-coded pairs.
+Handle partial source availability, destination capacity changes, mixed cargo, dropped resource disappearance, and
+creep death through lease expiration. A transporter should unload incompatible cargo through a generated balancing
+job or a safe storage fallback, not silently discard it.
+
+Do not independently rank colony destinations; job priority belongs to the logistics manager.
+
+**Complete when:** multiple transporters cannot claim the same exclusive amount and stale leases recover automatically.
+
+### `src/roles/worker.ts`
+
+Implement build and repair execution.
+
+- Acquire energy through a suitable local logistics source or an assigned energy structure.
+- Prefer critical construction selected by construction priority.
+- Repair containers and roads that threaten income flow before ordinary damage.
+- Repair ramparts/walls only up to the policy target for the current RCL.
+- Fall back to controller upgrading when no build/repair task remains, without changing population demand.
+- Revalidate target IDs as sites finish or structures disappear.
+
+Keep target selection deterministic enough to reduce creep contention. Population planning decides whether workers
+exist.
+
+**Complete when:** workers build planned sites and maintain critical infrastructure without permanent dedicated
+builder/repairer counts.
+
+### `src/roles/upgrader.ts`
+
+Implement controller upgrading.
+
+- Require a controller assignment.
+- Prefer the assigned controller link/container as an energy source.
+- Fall back to nearby storage or room energy sources when planned infrastructure is missing.
+- Maintain an efficient controller working range and upgrade while energy is available.
+- Surface invalid ownership or inaccessible-controller conditions.
+
+Do not decide upgrader quantity or upgrade budget.
+
+**Complete when:** upgrading survives controller-container/link construction changes without flag-based positioning.
+
+### `src/roles/reserver.ts`
+
+Implement remote controller reservation.
+
+- Require a remote assignment containing `targetRoom`.
+- Travel by room route and move to the target controller.
+- Reserve when neutral or already reserved by the player.
+- Attack hostile reservations only if remote policy explicitly permits it.
+- Record inaccessible, owned, or dangerous target observations through the intel manager's update API.
+
+Do not change its body, count reservation attempts in creep memory, or request its own replacement.
+
+**Complete when:** reservation behavior is driven entirely by remote demand and target-room assignment.
+
+### `src/roles/defender.ts`
+
+Implement local/remote defensive execution.
+
+- Travel to the assigned defense room.
+- Prioritize hostile healers, high-damage attackers, and threats near critical structures using the defense plan.
+- Use ranged mass attack only when its calculated value exceeds focused attack and friendly constraints permit it.
+- Heal self or nearby friendly units when equipped.
+- Hold near a defensible rally position when no target is currently visible.
+
+Do not implement offensive campaigns, dismantling squads, or controller attacks in this economic defender.
+
+**Complete when:** defenders respond to assessed threats and safely idle/recycle after their demand disappears.
+
+### `src/empire/intelManager.ts`
+
+Maintain persistent room observations.
+
+For every visible room record:
+
+- last-seen tick
+- owner and reservation username/ticks
+- controller position and level
+- source IDs/count and mineral type
+- hostile combat strength
+- keeper/highway classification
+- route distance from relevant colonies
+
+Expose a helper that marks intel stale based on age. Consumers must distinguish unknown, current, and stale data.
+Keep updates incremental and avoid route recalculation for every room every tick.
+
+**Complete when:** remote and expansion managers can make decisions without requiring current vision while still
+accounting for stale information.
+
+### `src/empire/remoteManager.ts`
+
+Implement the remote-room state machine:
+
+`unknown -> scouting -> candidate -> reserving -> mining -> suspended`
+
+- Discover rooms within policy distance.
+- Score sources against route length, hauling cost, reservation cost, danger, and expected income.
+- Request scouting when intel is absent/stale.
+- Select candidates only when the origin colony is healthy.
+- Generate reserver, miner, transporter, and defender demands with stable remote keys.
+- Suspend a remote after occupation, excessive threat, repeated losses, or negative profitability.
+- Retry after the configured suspension period and fresh intel.
+
+Keep remote demand separate from local bootstrap demand but submit both through the same spawn queue contract.
+
+**Complete when:** profitable remotes enter and leave service automatically as risk and colony health change.
+
+### `src/empire/expansionManager.ts`
+
+Implement one persistent expansion campaign at a time:
+
+`idle -> scouting -> selected -> claiming -> spawnSite -> bootstrapping -> complete`
+
+Before selection require:
+
+- free GCL
+- healthy existing colonies
+- sufficient stored energy
+- fresh route and threat intel
+- acceptable distance
+- adequate source count
+- a viable layout anchor
+
+Persist the selected target and state-change tick. Generate scout/claimer/support demands through origin colonies.
+After claiming, place the first spawn site through construction planning. Once the room has a spawn and reliable
+income, initialize normal colony memory and mark the campaign complete.
+
+Every state needs timeout and failure transitions so a lost claimer or invalid site cannot stall the campaign.
+
+**Complete when:** a campaign can resume after a global reset and hands a functioning room to `colonyManager`.
+
+### `src/empire/marketManager.ts`
+
+Implement only after local logistics and terminal balancing are stable.
+
+- Skip bootstrap, recovering, and threatened colonies.
+- Maintain terminal energy reserves.
+- Calculate transaction energy cost before comparing orders.
+- Define retain, surplus, and shortage thresholds per resource.
+- Create logistics jobs to prepare terminal inventory.
+- Select deals only after net price and transfer cost meet policy.
+- Rate-limit order scanning and cache short-lived analysis results.
+
+Keep direct market calls here; transporters only satisfy terminal preparation jobs.
+
+**Complete when:** market activity cannot starve colony energy or bypass logistics accounting.
+
+### `src/interface/memory.d.ts`
+
+Finish the declarations listed in **Canonical Type Placement** and correct the current persisted position fields.
+
+Add global augmentation for `Memory` and `CreepMemory`; use explicit records rather than index signatures where keys
+have known meanings. Keep all fields JSON-serializable. Ensure declarations match the initialization performed by
+`kernel/memory.ts`.
+
+Do not duplicate domain interfaces in this file. Import them as types.
+
+**Complete when:** strict TypeScript reports missing initialization or invalid memory shapes instead of relying on
+undeclared globals.
+
+## Implementation Sequence
+
+Implement in vertical slices so each step leaves a runnable loop:
+
+1. Domain exports, memory declarations, migrations, scheduler, room model, and contextual process errors.
+2. Pure body builders, source planning, bootstrap harvester, population reconciliation, and spawning.
+3. Miner and transporter roles with local energy logistics.
+4. Deterministic layout and early-RCL construction with workers and upgraders.
+5. Threat assessment, tower plans, defenders, safe mode, and recovery transitions.
+6. Link inference and remaining owned-structure execution.
+7. Intel, remote state machine, and reservers.
+8. Expansion campaigns.
+9. Labs, terminals, factories, and market automation.
+
+Do not begin remotes or market behavior until the local room can recover from zero creeps.
 
 ## First Autonomous Milestone
 
-The first deliverable should have a strict success condition:
+The first milestone includes:
 
-> Place the code in a fresh owned room with no flags and no creep configuration, and have it bootstrap, maintain
-> source income, spawn replacements, construct through early RCLs, upgrade, and recover from losing every creep.
+- kernel phase ordering and process isolation
+- memory initialization and migration
+- strict shared domain and memory types
+- strategic policy
+- one per-tick room model
+- colony stages
+- source and body planning
+- desired-state population
+- robust multi-spawn queue consumption
+- bootstrap harvester, miner, transporter, worker, and upgrader
+- local energy logistics
+- deterministic early-RCL construction
+- basic tower defense and defender demand
+- zero-creep recovery
 
-The milestone should implement only the kernel, memory migration, domain types, policy, room model, colony stages,
-source planning, body building, population planning, spawning, bootstrap harvester, miner, transporter, worker, upgrader,
-local energy logistics, early-RCL construction, tower defense, and zero-creep recovery.
+The acceptance scenario is:
 
-Leave remotes, expansion, labs, market automation, minerals, and offensive combat on the existing system until the
-local-room pipeline works without flags. This provides a staged migration instead of requiring every current role to
-be rewritten at once.
+> Deploy the new loop to a fresh owned room with no flags and no preconfigured creep entries. The room must create an
+> affordable bootstrap creep, establish source income, replace aging creeps through stable demand keys, build through
+> early RCLs, upgrade its controller, defend itself with available towers/defenders, and recover after every creep is
+> removed.
 
-Once that works, remote mining and empire strategy can be added without preserving the current manual architecture.
+Verify the milestone with unit tests for pure planners and mocked integration tests for at least:
+
+1. Empty memory initialization.
+2. Zero-creep bootstrap at 300 available energy.
+3. Duplicate-demand prevention across living, spawning, and queued creeps.
+4. Replacement timing before a miner dies.
+5. Permanent spawn request quarantine.
+6. Emergency request bypass of an expensive request.
+7. Logistics lease expiration after transporter death.
+8. RCL-change construction reconciliation.
+9. Hostile threat changing stage to `underAttack`.
+10. Full population loss changing an established room to `recovering` and restoring income.
+
+Remotes, expansion, minerals, labs, market automation, and offensive combat are explicitly outside this first
+milestone.
