@@ -14,20 +14,21 @@ Game.rooms['W46N41'].memory.queue.push({
     room: "W46N41",
 })
 
-Game.rooms['W47N44'].memory.queue.push({
+Game.rooms['W46N43'].memory.queue.push({
     role: "train",
-    body: Array(0).fill([CARRY, CARRY, MOVE]).flat().concat([CARRY, MOVE]),
-    srcFlagName: "Source2",
-    destFlagName: "Storage1",
-    room: "W47N44",
+    body: Array(1).fill([CARRY, CARRY, MOVE]).flat().concat([]),
+    srcFlagName: "mineral2",
+    destFlagName: "Storage2",
+    room: "W46N43",
+    mineralType: "U"
 })
 
 /** builder*/
-Game.rooms['W46N41'].memory.queue.push({
+Game.rooms['W47N44'].memory.queue.push({
     role: "builder",
-    body: Array(2).fill([WORK, CARRY, MOVE]).flat(),
-    room: "W46N41",
-    srcFlagName: "Source20",
+    body: Array(16).fill([WORK, CARRY, MOVE]).flat(),
+    room: "W47N44",
+    srcFlagName: "Storage1",
 });
 /**repairer*/
 Game.rooms['W46N41'].memory.queue.push({
@@ -37,11 +38,11 @@ Game.rooms['W46N41'].memory.queue.push({
     IdleFlagName: "Idle13",
 })
 
-Game.rooms['W49N41'].memory.queue.push({
+Game.rooms['W46N43'].memory.queue.push({
     role: "upgrader",
     body: Array(17).fill([WORK]).flat().concat(Array(3).fill(CARRY).flat()).concat(Array(9).fill(MOVE).flat()),
-    room: "W49N41",
-    destFlagName: "Upgrade7",
+    room: "W46N43",
+    destFlagName: "Upgrade10",
 });
 
 /**reserver*/
@@ -51,11 +52,11 @@ Game.rooms['W46N41'].memory.queue.push({
     destFlagName: "reserveTarget7",
     room: "W46N41",
 });
-Game.rooms['W46N41'].memory.queue.push({
+Game.rooms['W46N43'].memory.queue.push({
     role: "miner",
-    body: Array(5).fill([WORK,  MOVE]).flat().concat(Array(0).fill(MOVE).flat()),
-    srcFlagName: "Source20",
-    room: "W46N41",
+    body: Array(9).fill([WORK, WORK, MOVE]).flat().concat(Array(0).fill(MOVE).flat()),
+    srcFlagName: "mineral2",
+    room: "W46N43",
 });
 
 Game.rooms['W47N44'].memory.queue.push({
@@ -77,12 +78,12 @@ Game.rooms['W49N44'].memory.queue.push({
 
 
 /**transferer*/
-Game.rooms['W49N44'].memory.queue.splice(0, 0, {
+Game.rooms['W46N43'].memory.queue.splice(0, 0, {
     role: "transferer",
     body: [CARRY, MOVE],
-    destFlagName: "transferrer7",
+    destFlagName: "transferrer4",
     toOrFromLink: false,
-    room: "W49N44",
+    room: "W46N43",
 })
 
 
@@ -110,12 +111,12 @@ Game.rooms['W49N44'].memory.queue.push({
     destFlagName: "dismantle",
 })
 
-Game.rooms['W49N44'].memory.queue.splice(0, 0, {
+Game.rooms['W46N43'].memory.queue.push({
     role: "melee",
     body: [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK,
         MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
-    destFlagName: "Idle10",
-    room: "W49N44",
+    destFlagName: "Idle14",
+    room: "W46N43",
 })
 
 Game.rooms['W46N43'].memory.queue.push({
@@ -160,7 +161,7 @@ for (const name in Memory.creeps) {
     }
 }
 
-Game.rooms['W46N41'].memory.LinkPairs.push([
-    "6aad5814cbcf71718b8cba83",
-    "6aa6a20de594994a6396fa99",
-])
+// Game.rooms['W46N41'].memory.LinkPairs.push([
+//     "6aad5814cbcf71718b8cba83",
+//     "6aa6a20de594994a6396fa99",
+// ])

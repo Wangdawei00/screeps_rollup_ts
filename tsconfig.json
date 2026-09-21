@@ -1,9 +1,15 @@
 {
   "compilerOptions": {
+    "types": [
+      "screeps",
+      "node",
+      "lodash"
+    ],
     "resolveJsonModule": true,
     "esModuleInterop": true,
     "strict": true,
-    "target": "es2017",
+    "target": "es2019",
+    "lib": ["ES2019", "DOM"],
     "moduleResolution": "Node",
     "outDir": "dist/",
     "baseUrl": "./",
