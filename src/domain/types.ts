@@ -7,6 +7,21 @@ type CreepRole =
     | "reserver"
     | "defender";
 
+type ColonyStage =
+    "bootstrap"
+    | "developing"
+    | "stable"
+    | "recovering"
+    | "underAttack"
+
+type RemoteStage =
+    "unknown"
+    | "scouting"
+    | "candidate"
+    | "reserving"
+    | "underAttack"
+    | "suspended"
+
 interface SpawnRequest extends CreepDemand {
     createdAt: number;
     attempts: number;
