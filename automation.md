@@ -33,9 +33,6 @@ implementation.
 
 There is currently no `kernel/scheduler.ts`. Add it when implementing scheduled processes.
 
-Rename `src/colony/logisticManager.ts` to `src/colony/logisticsManager.ts` before adding imports so the filename
-matches the manager and this guide.
-
 ## Canonical Type Placement
 
 Do not declare shared interfaces inside manager files or rely on ambient globals for domain contracts. Use the
