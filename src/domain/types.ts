@@ -8,7 +8,8 @@ type CreepRole =
     | "defender";
 
 type ColonyStage =
-    "bootstrap"
+    "unknown"
+    | "bootstrap"
     | "developing"
     | "stable"
     | "recovering"
