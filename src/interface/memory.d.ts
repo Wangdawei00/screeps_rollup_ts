@@ -1,6 +1,5 @@
 interface Memory {
     schemaVersion: number;
-    colonies: Record<string, ColonyMemory>;
     intel: Record<string, RoomIntelMemory>;
     empire: EmpireMemory;
 }
@@ -14,7 +13,7 @@ interface CreepMemory {
     jobId?: string;
 }
 
-interface ColonyMemory {
+interface RoomMemory {
     // stage: ColonyStage;
     spawns: Id<StructureSpawn>[];
     extensions: Id<StructureExtension>[];

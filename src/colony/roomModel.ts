@@ -14,16 +14,18 @@ export interface RoomModel {
     hostiles: Creep[];
     creepsByRole: Map<CreepRole, Creep[]>;
     droppedResources: Resource[];
+    ruins: Ruin[];
+    tombstones: Tombstone[];
     energyAvailable: number;
     energyCapacity: number;
     storageEnergy: number;
+
 }
 
-function determineColonyStage(roomModel: RoomModel): ColonyStage {
-    // const previousStage = Memory.colonies[room.name]?.stage;
-
+function determineColonyStage(roomModel: RoomModel) {
     // Determine the colony stage bootstrap
     let bootstrapEnergyAvailable = 0;
+    const rcl = roomModel.controller?.level ?? 0;
     const creep_miners = roomModel.creepsByRole.get("miner");
     if (creep_miners) {
         for (const miner of creep_miners) {
@@ -38,82 +40,102 @@ function determineColonyStage(roomModel: RoomModel): ColonyStage {
             }
         }
     }
+    if (roomModel.spawns.length === 0) { // This is either a new colony or a remote room. skip
+        return
+    }
 
     const creep_transporters = roomModel.creepsByRole.get("transporter");
 }
 
+function initializeRoomMemory(room: Room) {
+    room.memory.spawns ??= [];
+    room.memory.extensions ??= [];
+    room.memory.towers ??= [];
+    room.memory.links ??= [];
+    room.memory.containers ??= [];
+    room.memory.labs ??= [];
+    room.memory.sources ??= [];
+    room.memory.constructionSites ??= [];
+
+}
+
 export function createRoomModel(room: Room) {
-    const colonyMemory = Memory.colonies[room.name];
+    initializeRoomMemory(room);
+    const roomMemory = room.memory
+
     const result: RoomModel = {
         room: room,
         name: room.name,
         stage: "unknown",
         controller: room.controller,
-        spawns: colonyMemory.spawns.flatMap(
+        spawns: roomMemory.spawns.flatMap(
             id => {
                 const spawn = Game.getObjectById(id);
                 if (!spawn) {
-                    colonyMemory.spawns = colonyMemory.spawns.filter(item => item !== id);
+                    roomMemory.spawns = roomMemory.spawns.filter(item => item !== id);
                 }
                 return spawn ? spawn : [];
             }),
-        extensions: colonyMemory.extensions.flatMap(
+        extensions: roomMemory.extensions.flatMap(
             id => {
                 const extension = Game.getObjectById(id);
                 if (!extension) {
-                    colonyMemory.extensions = colonyMemory.extensions.filter(item => item !== id);
+                    roomMemory.extensions = roomMemory.extensions.filter(item => item !== id);
                 }
                 return extension ? extension : [];
             }),
-        towers: colonyMemory.towers.flatMap(
+        towers: roomMemory.towers.flatMap(
             id => {
                 const tower = Game.getObjectById(id);
                 if (!tower) {
-                    colonyMemory.towers = colonyMemory.towers.filter(item => item !== id);
+                    roomMemory.towers = roomMemory.towers.filter(item => item !== id);
                 }
                 return tower ? tower : [];
             }),
-        links: colonyMemory.links.flatMap(
+        links: roomMemory.links.flatMap(
             id => {
                 const link = Game.getObjectById(id);
                 if (!link) {
-                    colonyMemory.links = colonyMemory.links.filter(item => item !== id);
+                    roomMemory.links = roomMemory.links.filter(item => item !== id);
                 }
                 return link ? link : [];
             }),
-        containers: colonyMemory.containers.flatMap(
+        containers: roomMemory.containers.flatMap(
             id => {
                 const container = Game.getObjectById(id);
                 if (!container) {
-                    colonyMemory.containers = colonyMemory.containers.filter(item => item !== id);
+                    roomMemory.containers = roomMemory.containers.filter(item => item !== id);
                 }
                 return container ? container : [];
             }),
-        labs: colonyMemory.labs.flatMap(
+        labs: roomMemory.labs.flatMap(
             id => {
                 const lab = Game.getObjectById(id);
                 if (!lab) {
-                    colonyMemory.labs = colonyMemory.labs.filter(item => item !== id);
+                    roomMemory.labs = roomMemory.labs.filter(item => item !== id);
                 }
                 return lab ? lab : [];
             }),
-        sources: colonyMemory.sources.flatMap(
+        sources: roomMemory.sources.flatMap(
             id => {
                 const source = Game.getObjectById(id);
                 if (!source) {
-                    colonyMemory.sources = colonyMemory.sources.filter(item => item !== id);
+                    roomMemory.sources = roomMemory.sources.filter(item => item !== id);
                 }
                 return source ? source : [];
             }),
-        constructionSites: colonyMemory.constructionSites.flatMap(
+        constructionSites: roomMemory.constructionSites.flatMap(
             id => {
                 const site = Game.getObjectById(id);
                 if (!site) {
-                    colonyMemory.constructionSites = colonyMemory.constructionSites.filter(item => item !== id);
+                    roomMemory.constructionSites = roomMemory.constructionSites.filter(item => item !== id);
                 }
                 return site ? site : [];
             }),
         hostiles: room.find(FIND_HOSTILE_CREEPS),
+        tombstones: room.find(FIND_TOMBSTONES),
+        ruins: room.find(FIND_RUINS),
+        droppedResources: room.find(FIND_DROPPED_RESOURCES),
         creepsByRole: new Map<CreepRole, Creep[]>(),
         energyAvailable: room.energyAvailable,
         energyCapacity: room.energyCapacityAvailable,
