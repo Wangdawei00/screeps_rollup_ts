@@ -1,5 +1,7 @@
 interface Memory {
     schemaVersion: number;
+    lastJobID: number;
+    lastSpawnRequestID: number;
     intel: Record<string, RoomIntelMemory>;
     empire: EmpireMemory;
 }
@@ -10,7 +12,7 @@ interface CreepMemory {
     demandKey: string;
     assignment?: CreepAssignment;
     state?: "pickup" | "deliver" | "working";
-    jobId?: string;
+    jobId?: number;
 }
 
 interface RoomMemory {
@@ -27,8 +29,26 @@ interface RoomMemory {
     // anchor?: RoomPosition;
     lastRcl?: number;
     sourcePlans: Record<string, SourcePlanMemory>;
-    spawnQueue: SpawnRequest[];
-    logisticsJobs: Record<string, LogisticsJob>;
+    spawnQueue: SpawnRequestMemory[];
+    logisticsJobs: Record<string, LogisticsJobMemory>;
+    workJobs: Record<string, WorkJobMemory>;
     construction: ConstructionMemory;
     defense: DefenseMemory;
+}
+
+interface JobBaseMemory {
+    priority: number;
+
+}
+
+interface LogisticsJobMemory {
+
+}
+
+interface WorkJobMemory {
+    type: "build" | "repair"
+}
+
+interface SpawnRequestMemory {
+
 }

@@ -27,24 +27,31 @@ function determineColonyStage(roomModel: RoomModel) {
     let bootstrapEnergyAvailable = 0;
     const rcl = roomModel.controller?.level ?? 0;
     const creep_miners = roomModel.creepsByRole.get("miner");
+    const creep_transporters = roomModel.creepsByRole.get("transporter");
+    if (roomModel.spawns.length === 0) { // This is either a new colony or a remote room. skip
+        return
+    }
     if (creep_miners) {
         for (const miner of creep_miners) {
             if (miner.memory.assignment?.type === "source") {
                 if (miner.spawning) {
                     bootstrapEnergyAvailable += miner.body.filter(
-                        part => part.type === WORK).length * 3000;
+                        part =>
+                            part.type === WORK && part.hits > 0).length * 3000;
                 } else {
                     bootstrapEnergyAvailable += miner.body.filter(
-                        part => part.type === WORK).length * 2 * miner.ticksToLive!;
+                        part =>
+                            part.type === WORK && part.hits > 0).length * 2 * miner.ticksToLive!;
                 }
             }
         }
     }
-    if (roomModel.spawns.length === 0) { // This is either a new colony or a remote room. skip
-        return
+    if (creep_transporters) {
+        for (const transporter of creep_transporters) {
+
+        }
     }
 
-    const creep_transporters = roomModel.creepsByRole.get("transporter");
 }
 
 function initializeRoomMemory(room: Room) {

@@ -760,3 +760,158 @@ Verify the milestone with unit tests for pure planners and mocked integration te
 
 Remotes, expansion, minerals, labs, market automation, and offensive combat are explicitly outside this first
 milestone.
+
+## Persistent Job Boards and Spawn Demand
+
+Use a persistent job board and a separate spawn-demand queue, owned by each colony. Separate logistics jobs from
+work jobs, but share their common lifecycle rules. The existing `RoomMemory.logisticsJobs` and
+`RoomMemory.spawnQueue` are a good starting point.
+
+### Memory Organization
+
+Organize jobs and spawn requests by the colony responsible for execution:
+
+```ts
+Memory.rooms[homeRoom].logisticsJobs // Record<string, LogisticsJob>
+Memory.rooms[homeRoom].workJobs      // Record<string, WorkJob>
+Memory.rooms[homeRoom].spawnQueue    // SpawnRequest[]
+```
+
+A remote-room job should normally belong to its home colony, with its target room stored in the job. That way,
+the colony managing its creeps also manages its work.
+
+Use records for job boards because lookup, deduplication, and deletion by key are frequent operations. A small
+spawn queue is fine as an array; a persistent heap or other elaborate priority structure is not necessary.
+
+### Persist Intent, Not Copies of the Game World
+
+Store:
+
+- Object IDs and serialized positions, not `Creep`, `RoomPosition`, or structure instances.
+- Job identity, priority, and policy, such as a repair target hit count.
+- Assignments or reservations that must survive between ticks.
+- Spawn demand keys, timing constraints, and the information needed to select a body.
+
+Avoid persisting easily derived data such as distance-sorted candidate lists or copies of current store contents.
+Build those in runtime caches when needed; caches must be reconstructible after a global reset.
+
+A possible starting schema is:
+
+```ts
+interface JobBase {
+    key: string;
+    priority: number; // Higher means more urgent.
+    createdAt: number;
+    lastSeenAt: number;
+}
+
+interface LogisticsJob extends JobBase {
+    kind: "transport";
+    fromId: Id<AnyStoreStructure | Resource | Tombstone | Ruin>;
+    toId: Id<AnyStoreStructure>;
+    resourceType: ResourceConstant;
+    amount: number; // Outstanding delivery demand, including reserved demand.
+    reservations: Record<string, {
+        amount: number;
+        expiresAt: number;
+    }>; // Keyed by creep name.
+}
+
+type WorkJob = JobBase & (
+    | {
+        kind: "build";
+        targetId: Id<ConstructionSite>;
+    }
+    | {
+        kind: "repair";
+        targetId: Id<Structure>;
+        targetHits: number;
+    }
+    | {
+        kind: "dismantle";
+        targetId: Id<Structure>;
+    }
+);
+```
+
+This example models logistics as explicit source-to-destination transfers. An alternative is to post supply and
+demand separately and let the logistics manager pair them; that becomes useful when many sources can satisfy the
+same destination.
+
+### Reconcile Instead of Repeatedly Appending
+
+Each planning cycle should:
+
+1. Observe current needs and upsert jobs using stable keys.
+2. Update priorities and desired amounts without discarding active assignments.
+3. Retire completed or invalid jobs and release dead-creep or expired reservations.
+4. Assign eligible creeps to remaining work.
+
+Example keys:
+
+```text
+build:<siteId>
+repair:<structureId>
+transport:<sourceId>:<destinationId>:energy
+```
+
+Stable keys prevent ten consecutive ticks of observing the same construction site from creating ten jobs. The
+existing `CreepDemand.key` can serve the same purpose for spawning.
+
+For remote jobs, distinguish "target destroyed" from "room not visible." A failed `Game.getObjectById()` lookup
+alone does not prove a remote target disappeared. Likewise, `lastSeenAt` should reflect actual observation, not
+become a reason to delete every unseen job immediately.
+
+### Spawn Demand Is Desired Population
+
+For recurring roles, calculate demand first:
+
+```text
+missing = desired population - qualifying live creeps - creeps being spawned
+```
+
+Then reconcile pending requests to that deficit, accounting for requests already queued. Otherwise, a deficit
+observed every tick produces duplicate requests.
+
+For dedicated roles, use stable slots such as:
+
+```text
+miner:<sourceId>:0
+transporter:<homeRoom>:0
+transporter:<homeRoom>:1
+```
+
+The current `CreepMemory.demandKey` supports this approach. Replacements can reuse the same slot, with eligibility
+based on remaining lifetime, spawn duration, and travel time.
+
+Remove a request only after `spawnCreep()` returns `OK`; ensure the resulting in-progress creep counts toward
+demand. Coordinate multiple spawns so they cannot consume the same request. Also explicitly decide whether an
+unaffordable high-priority request should block cheaper requests: bootstrap emergencies often need different
+handling from normal replacement planning.
+
+### Separate Logistics and Work Jobs
+
+Separate them logically, with separate Memory collections as a sensible default. They have different allocation
+and completion rules:
+
+| Concern | Logistics | Build / repair / dismantle |
+|---|---|---|
+| Allocation | Resource quantity and carrying capacity | Worker count or `WORK` capacity |
+| Execution | Pickup, travel, delivery | Travel and perform work |
+| Reservations | Source stock and destination capacity | Worker slots or assigned work rate |
+| Completion | Delivery fulfilled or demand withdrawn | Site completed, hit target reached, or target removed |
+| Creep suitability | `CARRY`, mobility, existing cargo | `WORK`, mobility, and energy where required |
+
+Share utilities for keys, priorities, cleanup, and assignment bookkeeping, but keep the dispatchers specialized.
+For logistics, reservations must also account for shared endpoints across different jobs, or multiple transfers
+can overbook the same source or destination.
+
+Separation does not require rigid creep roles. A bootstrap worker can execute logistics and work jobs if the
+assignment policy allows it. Worker energy can either be self-fetched or supplied through logistics demand;
+building itself should remain a work job.
+
+### Consistent Assignment Identifiers
+
+At the time of this design discussion, `CreepMemory.jobId` is a `number`, while logistics assignments use a
+`string`. Choose one identifier representation: string keys fit the existing records. Keep one authoritative
+assignment reference to avoid the two fields drifting apart.

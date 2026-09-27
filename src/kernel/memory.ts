@@ -1,1 +1,4 @@
-import {MinPriorityQueue} from "@datastructures-js/priority-queue";
+export function initializeMemory() {
+    Memory.lastJobID ??= 0;
+    Memory.lastSpawnRequestID ??= 0;
+}
