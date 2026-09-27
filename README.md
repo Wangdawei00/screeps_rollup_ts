@@ -27,12 +27,40 @@ Inside the loop, the in-game API provides objects such as `Game.creeps`,
 
 ## Usage
 
-Spawn your creeps manually the first time. After they are spawned, the system
-automatically renews them a configured number of ticks before they die.
+Place your initial spawn in an owned room and deploy the bundle. No flags,
+manually spawned creeps, or preconfigured source IDs are required. The kernel
+initializes memory, creates an affordable harvester, establishes miners and
+hauling, builds infrastructure, upgrades the controller, and replaces aging
+creeps. An established colony returns to recovery mode after losing its
+population. A completely empty spawn must first regain enough game-provided
+energy to spawn a useful creep; code cannot create energy or spawn without it.
 
-Each room stores its spawn queue in `Game.rooms[roomName].memory.queue`. See
-[`src/modules/myconsole.ts`](src/modules/myconsole.ts) for examples of adding
-creeps to a room's queue.
+Strategy and safety limits live in [`src/config/policy.ts`](src/config/policy.ts).
+Emergency income and defense take precedence over normal development.
+Expansion, remote mining, production, and market activity are enabled by
+policy but require healthy colonies and the relevant reserves, intel, RCL,
+infrastructure, or GCL. Set their enable flags to `false` to opt out.
+
+The architecture follows [`automation.md`](automation.md):
+
+- `kernel`: migration, cleanup, scheduling, and per-process error isolation.
+- `colony` / `planning`: room models, stable population demands, source and
+  layout planning, construction, defense, logistics, and structure execution.
+- `roles`: typed creep assignments; creeps never queue their own replacements.
+- `empire`: intel, remote-room and expansion state machines, mineral
+  production, terminal balancing, and reserve-aware market activity.
+
+Persistent state is stored in `Memory.colonies[roomName]`, `Memory.intel`,
+and `Memory.empire`. Each colony owns its `spawnQueue`, `logisticsJobs`,
+`workJobs`, source plans, and remote records. Logistics assignments hold one
+string job ID; leases recover when a transporter dies. Positions are
+serialized coordinates, not game objects. Invalid spawn requests are
+removed into a bounded `quarantine` with a reason.
+
+Layout planning never destroys existing structures. Conflicting locations
+are recorded in `construction.blocked`. An incompatible existing base may
+need manual adjustments; changing `construction.revision` to `0` requests
+replanning without deleting structures.
 
 ## Install and build
 
@@ -48,9 +76,8 @@ Compile without uploading:
 npm run build
 ```
 
-The current `build` script runs Rollup in watch mode. It compiles
-`src\main.ts` into the CommonJS bundle `dist\main.js` and rebuilds it whenever
-a source file changes. Press `Ctrl+C` to stop it.
+The `build` script compiles `src\main.ts` once into the CommonJS bundle
+`dist\main.js`, including its source map, without uploading.
 
 Screeps accepts JavaScript modules, not TypeScript source. Always upload the
 compiled `dist\main.js`.
@@ -77,14 +104,29 @@ Create `.secret.json` in the repository root:
 ```
 
 The file is already excluded by `.gitignore`; never commit or share it. Upload
-and continue watching for source changes with:
+and upload once with:
 
 ```powershell
 npm run push
 ```
 
 This selects the `main` configuration from `.secret.json`, builds the bundle,
-and uploads it through `rollup-plugin-screeps`. Press `Ctrl+C` to stop watching.
+and uploads it through `rollup-plugin-screeps`. Use `npm run push-watch`
+to keep watching and uploading changes; press `Ctrl+C` to stop it.
+
+## Development
+
+Run the mocked Screeps scenarios and pure planner tests with:
+
+```powershell
+npm test -- --runInBand
+```
+
+The tests run locally without a Screeps server or upload credentials.
+They exercise memory migration, emergency spawning, stable-demand
+replacement, logistics leases, construction, defense, and empire safety
+gates. Real-game travel, terrain, combat, and economy timing still depend
+on the shard; watch the contextual console diagnostics after deployment.
 
 ## Upload directly through the Web API
 

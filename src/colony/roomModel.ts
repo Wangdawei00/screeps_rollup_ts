@@ -1,17 +1,29 @@
+import policy from "../config/policy";
+import { assignmentMatchesRole, CREEP_ROLES, hasRoleParts, isAssignment, isCreepRole } from "../domain/types";
+import type { ColonyStage, CreepRole } from "../domain/types";
+
 export interface RoomModel {
     room: Room;
     name: string;
     stage: ColonyStage;
-    controller: StructureController | undefined;
+    controller: StructureController;
+    structures: AnyStructure[];
     spawns: StructureSpawn[];
     extensions: StructureExtension[];
     towers: StructureTower[];
     links: StructureLink[];
     containers: StructureContainer[];
     labs: StructureLab[];
+    factories: StructureFactory[];
+    observers: StructureObserver[];
+    powerSpawns: StructurePowerSpawn[];
+    storage?: StructureStorage;
+    terminal?: StructureTerminal;
     sources: Source[];
+    minerals: Mineral[];
     constructionSites: ConstructionSite[];
     hostiles: Creep[];
+    friendlyCreeps: Creep[];
     creepsByRole: Map<CreepRole, Creep[]>;
     droppedResources: Resource[];
     ruins: Ruin[];
@@ -19,143 +31,63 @@ export interface RoomModel {
     energyAvailable: number;
     energyCapacity: number;
     storageEnergy: number;
-
 }
 
-function determineColonyStage(roomModel: RoomModel) {
-    // Determine the colony stage bootstrap
-    let bootstrapEnergyAvailable = 0;
-    const rcl = roomModel.controller?.level ?? 0;
-    const creep_miners = roomModel.creepsByRole.get("miner");
-    const creep_transporters = roomModel.creepsByRole.get("transporter");
-    if (roomModel.spawns.length === 0) { // This is either a new colony or a remote room. skip
-        return
+export function determineColonyStage(model: RoomModel): ColonyStage {
+    const memory = Memory.colonies[model.name];
+    const active = (role: CreepRole): Creep[] => (model.creepsByRole.get(role) || [])
+        .filter(creep => !creep.spawning && creep.room.name === model.name &&
+            !creep.memory.demandKey.startsWith("remote:") && !creep.memory.demandKey.startsWith("expansion:") &&
+            hasRoleParts(role, part => creep.getActiveBodyparts(part) > 0));
+    const meaningfulThreat = model.hostiles.some(creep =>
+        [ATTACK, RANGED_ATTACK, WORK, HEAL].some(part => creep.getActiveBodyparts(part) > 0));
+    if (meaningfulThreat) return "underAttack";
+    const miners = active("miner").filter(creep => creep.getActiveBodyparts(WORK) > 0);
+    const haulers = active("transporter").filter(creep => creep.getActiveBodyparts(CARRY) > 0);
+    const harvesters = active("harvester").filter(creep =>
+        creep.getActiveBodyparts(WORK) > 0 && creep.getActiveBodyparts(CARRY) > 0);
+    const pipeline = miners.length > 0 && haulers.length > 0;
+    if (memory.established && (!pipeline || (model.storageEnergy === 0 && model.energyAvailable < 200 && harvesters.length === 0))) {
+        return "recovering";
     }
-    if (creep_miners) {
-        for (const miner of creep_miners) {
-            if (miner.memory.assignment?.type === "source") {
-                if (miner.spawning) {
-                    bootstrapEnergyAvailable += miner.body.filter(
-                        part =>
-                            part.type === WORK && part.hits > 0).length * 3000;
-                } else {
-                    bootstrapEnergyAvailable += miner.body.filter(
-                        part =>
-                            part.type === WORK && part.hits > 0).length * 2 * miner.ticksToLive!;
-                }
-            }
-        }
-    }
-    if (creep_transporters) {
-        for (const transporter of creep_transporters) {
-
-        }
-    }
-
+    if (!pipeline) return "bootstrap";
+    const extensionCount = CONTROLLER_STRUCTURES[STRUCTURE_EXTENSION][model.controller.level];
+    return model.storageEnergy >= policy.storageEnergyReserve && model.extensions.length >= extensionCount ? "stable" : "developing";
 }
 
-function initializeRoomMemory(room: Room) {
-    room.memory.spawns ??= [];
-    room.memory.extensions ??= [];
-    room.memory.towers ??= [];
-    room.memory.links ??= [];
-    room.memory.containers ??= [];
-    room.memory.labs ??= [];
-    room.memory.sources ??= [];
-    room.memory.constructionSites ??= [];
-
-}
-
-export function createRoomModel(room: Room) {
-    initializeRoomMemory(room);
-    const roomMemory = room.memory
-
-    const result: RoomModel = {
-        room: room,
-        name: room.name,
-        stage: "unknown",
-        controller: room.controller,
-        spawns: roomMemory.spawns.flatMap(
-            id => {
-                const spawn = Game.getObjectById(id);
-                if (!spawn) {
-                    roomMemory.spawns = roomMemory.spawns.filter(item => item !== id);
-                }
-                return spawn ? spawn : [];
-            }),
-        extensions: roomMemory.extensions.flatMap(
-            id => {
-                const extension = Game.getObjectById(id);
-                if (!extension) {
-                    roomMemory.extensions = roomMemory.extensions.filter(item => item !== id);
-                }
-                return extension ? extension : [];
-            }),
-        towers: roomMemory.towers.flatMap(
-            id => {
-                const tower = Game.getObjectById(id);
-                if (!tower) {
-                    roomMemory.towers = roomMemory.towers.filter(item => item !== id);
-                }
-                return tower ? tower : [];
-            }),
-        links: roomMemory.links.flatMap(
-            id => {
-                const link = Game.getObjectById(id);
-                if (!link) {
-                    roomMemory.links = roomMemory.links.filter(item => item !== id);
-                }
-                return link ? link : [];
-            }),
-        containers: roomMemory.containers.flatMap(
-            id => {
-                const container = Game.getObjectById(id);
-                if (!container) {
-                    roomMemory.containers = roomMemory.containers.filter(item => item !== id);
-                }
-                return container ? container : [];
-            }),
-        labs: roomMemory.labs.flatMap(
-            id => {
-                const lab = Game.getObjectById(id);
-                if (!lab) {
-                    roomMemory.labs = roomMemory.labs.filter(item => item !== id);
-                }
-                return lab ? lab : [];
-            }),
-        sources: roomMemory.sources.flatMap(
-            id => {
-                const source = Game.getObjectById(id);
-                if (!source) {
-                    roomMemory.sources = roomMemory.sources.filter(item => item !== id);
-                }
-                return source ? source : [];
-            }),
-        constructionSites: roomMemory.constructionSites.flatMap(
-            id => {
-                const site = Game.getObjectById(id);
-                if (!site) {
-                    roomMemory.constructionSites = roomMemory.constructionSites.filter(item => item !== id);
-                }
-                return site ? site : [];
-            }),
-        hostiles: room.find(FIND_HOSTILE_CREEPS),
-        tombstones: room.find(FIND_TOMBSTONES),
-        ruins: room.find(FIND_RUINS),
-        droppedResources: room.find(FIND_DROPPED_RESOURCES),
-        creepsByRole: new Map<CreepRole, Creep[]>(),
-        energyAvailable: room.energyAvailable,
-        energyCapacity: room.energyCapacityAvailable,
-        storageEnergy: room.storage ? room.storage.store[RESOURCE_ENERGY] : 0,
-    }
-    for (const creepName in Game.creeps) {
-        const creep = Game.creeps[creepName];
-        if (creep.memory.homeRoom === room.name) {
-            if (!result.creepsByRole.has(creep.memory.role)) {
-                result.creepsByRole.set(creep.memory.role, []);
-            }
-            result.creepsByRole.get(creep.memory.role)?.push(creep);
+export function buildRoomModel(room: Room): RoomModel {
+    if (!room.controller?.my) throw new Error(`Cannot model unowned room ${room.name}`);
+    const structures = room.find(FIND_STRUCTURES);
+    const owned = <T extends AnyOwnedStructure>(type: T["structureType"]): T[] =>
+        structures.filter((structure): structure is T => structure.structureType === type && "my" in structure && structure.my);
+    const creepsByRole = new Map<CreepRole, Creep[]>(CREEP_ROLES.map(role => [role, []]));
+    for (const creep of Object.values(Game.creeps)) {
+        if (creep.memory && creep.memory.homeRoom === room.name && isCreepRole(creep.memory.role) &&
+            typeof creep.memory.demandKey === "string" && creep.memory.demandKey.length > 0 &&
+            (creep.memory.assignment === undefined || isAssignment(creep.memory.assignment)) &&
+            assignmentMatchesRole(creep.memory.role, creep.memory.assignment)) {
+            creepsByRole.get(creep.memory.role)!.push(creep);
         }
     }
-    return result;
+    const model: RoomModel = {
+        room, name: room.name, stage: "bootstrap", controller: room.controller, structures,
+        spawns: owned<StructureSpawn>(STRUCTURE_SPAWN),
+        extensions: owned<StructureExtension>(STRUCTURE_EXTENSION),
+        towers: owned<StructureTower>(STRUCTURE_TOWER),
+        links: owned<StructureLink>(STRUCTURE_LINK),
+        labs: owned<StructureLab>(STRUCTURE_LAB),
+        factories: owned<StructureFactory>(STRUCTURE_FACTORY),
+        observers: owned<StructureObserver>(STRUCTURE_OBSERVER),
+        powerSpawns: owned<StructurePowerSpawn>(STRUCTURE_POWER_SPAWN),
+        containers: structures.filter((structure): structure is StructureContainer => structure.structureType === STRUCTURE_CONTAINER),
+        storage: room.storage, terminal: room.terminal,
+        sources: room.find(FIND_SOURCES), minerals: room.find(FIND_MINERALS),
+        constructionSites: room.find(FIND_MY_CONSTRUCTION_SITES),
+        hostiles: room.find(FIND_HOSTILE_CREEPS), friendlyCreeps: room.find(FIND_MY_CREEPS), creepsByRole,
+        droppedResources: room.find(FIND_DROPPED_RESOURCES), ruins: room.find(FIND_RUINS), tombstones: room.find(FIND_TOMBSTONES),
+        energyAvailable: room.energyAvailable, energyCapacity: room.energyCapacityAvailable,
+        storageEnergy: room.storage?.store[RESOURCE_ENERGY] || 0
+    };
+    model.stage = determineColonyStage(model);
+    return model;
 }

@@ -30,6 +30,7 @@
     "@types/jest": "^30.0.0",
     "@types/lodash": "^4.14.195",
     "@types/screeps": "^3.4.0",
+    "heap-js": "^2.7.1",
     "jest": "^30.5.2",
     "lodash": "^4.18.1",
     "rollup": "^4.63.4",
@@ -38,8 +39,8 @@
     "rollup-plugin-screeps": "^1.0.1",
     "rollup-plugin-typescript2": "^0.37.0",
     "screeps-jest": "^2.0.3",
-    "typescript": "~5.9.3",
-    "heap-js": "^2.7.1"
+    "ts-jest": "^29.4.0",
+    "typescript": "~5.9.3"
   },
   "dependencies": {
     "source-map": "^0.6.1"

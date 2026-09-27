@@ -1,0 +1,8 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "types": ["screeps", "node", "lodash", "jest"],
+    "module": "CommonJS"
+  },
+  "include": ["../src/**/*.ts", "./**/*.ts"]
+}

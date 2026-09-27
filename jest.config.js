@@ -3,14 +3,14 @@ const { compilerOptions } = require('./tsconfig')
 
 module.exports = {
     preset: 'ts-jest',
-    roots: ['<rootDir>'],
+    roots: ['<rootDir>/test'],
     transform: {
-        '^.+\\.tsx?$': 'ts-jest'
+        '^.+\\.tsx?$': ['ts-jest', { tsconfig: '<rootDir>/test/tsconfig.json' }]
     },
     moduleNameMapper: pathsToModuleNameMapper(compilerOptions.paths || {}, { prefix: '<rootDir>/' }),
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
     setupFilesAfterEnv : [
         '<rootDir>/test/setup.ts'
     ],
-    testEnvironment: "screeps-jest"
+    testEnvironment: "node"
 }
