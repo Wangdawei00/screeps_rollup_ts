@@ -1,5 +1,5 @@
-import type { RoomModel } from "../colony/roomModel";
-import { position, travel } from "./common";
+import type {RoomModel} from "@/colony/roomModel";
+import {position, travel} from "@/roles/common";
 
 export function runDefender(creep: Creep, model?: RoomModel): void {
     const assignment = creep.memory.assignment;
@@ -29,7 +29,10 @@ export function runDefender(creep: Creep, model?: RoomModel): void {
         })[0];
     if (!target) {
         const anchor = Memory.colonies[creep.room.name]?.anchor;
-        if (anchor && !creep.pos.inRangeTo(position(anchor), 3)) creep.moveTo(position(anchor), { range: 3, reusePath: 20 });
+        if (anchor && !creep.pos.inRangeTo(position(anchor), 3)) creep.moveTo(position(anchor), {
+            range: 3,
+            reusePath: 20
+        });
         return;
     }
     const distance = creep.pos.getRangeTo(target);
@@ -43,6 +46,6 @@ export function runDefender(creep: Creep, model?: RoomModel): void {
         else creep.rangedAttack(target);
     }
     if (creep.getActiveBodyparts(ATTACK) > 0) {
-        if (creep.attack(target) === ERR_NOT_IN_RANGE) creep.moveTo(target, { range: 1, reusePath: 3 });
-    } else if (distance > 3) creep.moveTo(target, { range: 3, reusePath: 3 });
+        if (creep.attack(target) === ERR_NOT_IN_RANGE) creep.moveTo(target, {range: 1, reusePath: 3});
+    } else if (distance > 3) creep.moveTo(target, {range: 3, reusePath: 3});
 }

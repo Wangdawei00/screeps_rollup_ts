@@ -1,5 +1,5 @@
-import { markRoomInaccessible, observeRoom } from "../empire/intelManager";
-import { diagnostic, retreat, travel } from "./common";
+import {markRoomInaccessible, observeRoom} from "@/empire/intelManager";
+import {diagnostic, retreat, travel} from "@/roles/common";
 
 export function runClaimer(creep: Creep): void {
     const assignment = creep.memory.assignment;
@@ -14,6 +14,6 @@ export function runClaimer(creep: Creep): void {
     }
     const result = creep.claimController(controller);
     if (result === ERR_NOT_IN_RANGE) {
-        if (creep.moveTo(controller, { reusePath: 20 }) === ERR_NO_PATH) markRoomInaccessible(creep.room.name, "Claim controller inaccessible");
+        if (creep.moveTo(controller, {reusePath: 20}) === ERR_NO_PATH) markRoomInaccessible(creep.room.name, "Claim controller inaccessible");
     } else if (result !== OK) diagnostic(creep, `Claim failed ${result}`);
 }

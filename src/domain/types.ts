@@ -14,7 +14,12 @@ export interface SerializedPosition {
 
 export type CreepAssignment =
     | { type: "source"; sourceId: Id<Source>; containerId?: Id<StructureContainer>; workPosition: SerializedPosition }
-    | { type: "mineral"; mineralId: Id<Mineral>; containerId?: Id<StructureContainer>; workPosition: SerializedPosition }
+    | {
+    type: "mineral";
+    mineralId: Id<Mineral>;
+    containerId?: Id<StructureContainer>;
+    workPosition: SerializedPosition
+}
     | { type: "logistics"; jobId?: string; targetRoom?: string }
     | { type: "controller"; controllerId: Id<StructureController>; energySourceId?: Id<AnyStoreStructure> }
     | { type: "remote"; targetRoom: string }
@@ -131,6 +136,7 @@ export interface RemoteRecord {
 }
 
 export type ProcessPriority = "critical" | "normal" | "low";
+
 export interface ScheduledProcess {
     name: string;
     priority: ProcessPriority;
@@ -140,7 +146,7 @@ export interface ScheduledProcess {
 }
 
 export function serializePosition(position: SerializedPosition): SerializedPosition {
-    return { x: position.x, y: position.y, roomName: position.roomName };
+    return {x: position.x, y: position.y, roomName: position.roomName};
 }
 
 export function isCreepRole(value: unknown): value is CreepRole {
@@ -160,43 +166,62 @@ export function isAssignment(value: unknown): value is CreepAssignment {
     const assignment = value as Record<string, unknown>;
     const id = (v: unknown): boolean => typeof v === "string" && v.length > 0;
     switch (assignment.type) {
-        case "source": return id(assignment.sourceId) && isPosition(assignment.workPosition) &&
-            (assignment.containerId === undefined || id(assignment.containerId));
-        case "mineral": return id(assignment.mineralId) && isPosition(assignment.workPosition) &&
-            (assignment.containerId === undefined || id(assignment.containerId));
-        case "logistics": return (assignment.jobId === undefined || id(assignment.jobId)) &&
-            (assignment.targetRoom === undefined || id(assignment.targetRoom));
-        case "controller": return id(assignment.controllerId) &&
-            (assignment.energySourceId === undefined || id(assignment.energySourceId));
+        case "source":
+            return id(assignment.sourceId) && isPosition(assignment.workPosition) &&
+                (assignment.containerId === undefined || id(assignment.containerId));
+        case "mineral":
+            return id(assignment.mineralId) && isPosition(assignment.workPosition) &&
+                (assignment.containerId === undefined || id(assignment.containerId));
+        case "logistics":
+            return (assignment.jobId === undefined || id(assignment.jobId)) &&
+                (assignment.targetRoom === undefined || id(assignment.targetRoom));
+        case "controller":
+            return id(assignment.controllerId) &&
+                (assignment.energySourceId === undefined || id(assignment.energySourceId));
         case "remote":
-        case "defense": return id(assignment.targetRoom);
-        default: return false;
+        case "defense":
+            return id(assignment.targetRoom);
+        default:
+            return false;
     }
 }
 
 export function assignmentMatchesRole(role: CreepRole, assignment?: CreepAssignment): boolean {
     switch (role) {
-        case "miner": return assignment?.type === "source";
-        case "mineralMiner": return assignment?.type === "mineral";
-        case "transporter": return assignment?.type === "logistics";
-        case "upgrader": return assignment?.type === "controller";
+        case "miner":
+            return assignment?.type === "source";
+        case "mineralMiner":
+            return assignment?.type === "mineral";
+        case "transporter":
+            return assignment?.type === "logistics";
+        case "upgrader":
+            return assignment?.type === "controller";
         case "reserver":
         case "scout":
-        case "claimer": return assignment?.type === "remote";
-        case "defender": return assignment?.type === "defense";
-        case "harvester": return !assignment || assignment.type === "source" || assignment.type === "remote";
-        case "worker": return !assignment || assignment.type === "controller" || assignment.type === "remote";
+        case "claimer":
+            return assignment?.type === "remote";
+        case "defender":
+            return assignment?.type === "defense";
+        case "harvester":
+            return !assignment || assignment.type === "source" || assignment.type === "remote";
+        case "worker":
+            return !assignment || assignment.type === "controller" || assignment.type === "remote";
     }
 }
 
 export function hasRoleParts(role: CreepRole, hasPart: (part: BodyPartConstant) => boolean): boolean {
     if (!hasPart("move")) return false;
     switch (role) {
-        case "scout": return true;
+        case "scout":
+            return true;
         case "claimer":
-        case "reserver": return hasPart("claim");
-        case "defender": return hasPart("attack") || hasPart("ranged_attack");
-        case "transporter": return hasPart("carry");
-        default: return hasPart("work") && hasPart("carry");
+        case "reserver":
+            return hasPart("claim");
+        case "defender":
+            return hasPart("attack") || hasPart("ranged_attack");
+        case "transporter":
+            return hasPart("carry");
+        default:
+            return hasPart("work") && hasPart("carry");
     }
 }

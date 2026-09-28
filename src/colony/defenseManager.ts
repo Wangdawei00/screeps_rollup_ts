@@ -1,11 +1,11 @@
-import policy from "../config/policy";
-import type { DefensePlan, ThreatAssessment } from "../domain/types";
-import { buildDefender } from "../planning/bodyBuilder";
-import { range } from "../planning/geometry";
-import type { RoomModel } from "./roomModel";
+import policy from "@/config/policy";
+import type {DefensePlan, ThreatAssessment} from "@/domain/types";
+import {buildDefender} from "@/planning/bodyBuilder";
+import {range} from "@/planning/geometry";
+import type {RoomModel} from "./roomModel";
 
 function strength(creep: Creep): Omit<ThreatAssessment, "targetPriority"> {
-    const result = { attack: 0, ranged: 0, heal: 0, dismantle: 0, toughness: 0, total: 0 };
+    const result = {attack: 0, ranged: 0, heal: 0, dismantle: 0, toughness: 0, total: 0};
     for (const part of creep.body) {
         if (part.hits <= 0) continue;
         const boosts = BOOSTS[part.type] as Partial<Record<string, Record<string, number>>>;
@@ -21,13 +21,23 @@ function strength(creep: Creep): Omit<ThreatAssessment, "targetPriority"> {
 }
 
 export function assessThreat(hostiles: readonly Creep[], criticalPositions: readonly RoomPosition[] = []): ThreatAssessment {
-    const result: ThreatAssessment = { attack: 0, ranged: 0, heal: 0, dismantle: 0, toughness: 0, total: 0, targetPriority: [] };
+    const result: ThreatAssessment = {
+        attack: 0,
+        ranged: 0,
+        heal: 0,
+        dismantle: 0,
+        toughness: 0,
+        total: 0,
+        targetPriority: []
+    };
     const priorities = hostiles.map(creep => {
         const value = strength(creep);
         for (const key of ["attack", "ranged", "heal", "dismantle", "toughness", "total"] as const) result[key] += value[key];
         const distance = criticalPositions.reduce((minimum, position) => Math.min(minimum, range(creep.pos, position)), 50);
-        return { id: creep.id, score: value.heal * 4 + value.attack + value.ranged + value.dismantle +
-            (value.total > 0 ? Math.max(0, 10 - distance) * 30 : 0) };
+        return {
+            id: creep.id, score: value.heal * 4 + value.attack + value.ranged + value.dismantle +
+                (value.total > 0 ? Math.max(0, 10 - distance) * 30 : 0)
+        };
     });
     result.targetPriority = priorities.sort((a, b) => b.score - a.score || a.id.localeCompare(b.id)).map(entry => entry.id);
     return result;
@@ -73,7 +83,7 @@ export function planDefense(model: RoomModel): DefensePlan {
     if (threat.total > 0) {
         memory.lastThreatTick = Game.time;
         if (!memory.history.length || Game.time - memory.history[memory.history.length - 1].tick >= 10) {
-            memory.history.push({ tick: Game.time, strength: threat.total });
+            memory.history.push({tick: Game.time, strength: threat.total});
             memory.history = memory.history.slice(-20);
         }
         const target = model.hostiles.find(creep => creep.id === attackTarget);
@@ -86,8 +96,10 @@ export function planDefense(model: RoomModel): DefensePlan {
             if (body.length && damage > 0) {
                 const count = Math.min(3, Math.max(1, Math.ceil((threat.heal * 2 + threat.attack + threat.ranged - existingTowerPower) / damage)));
                 for (let index = 0; index < count; index++) {
-                    plan.defenderDemands.push({ key: `defender:${model.name}:${index}`, role: "defender", homeRoom: model.name,
-                        body: body.slice(), priority: 110, assignment: { type: "defense", targetRoom: model.name } });
+                    plan.defenderDemands.push({
+                        key: `defender:${model.name}:${index}`, role: "defender", homeRoom: model.name,
+                        body: body.slice(), priority: 110, assignment: {type: "defense", targetRoom: model.name}
+                    });
                 }
             }
         }

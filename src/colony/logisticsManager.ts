@@ -1,7 +1,7 @@
-import policy from "../config/policy";
-import { serializePosition } from "../domain/types";
-import type { LogisticsEndpoint, LogisticsJob, LogisticsStore, WorkJob } from "../domain/types";
-import type { RoomModel } from "./roomModel";
+import policy from "@/config/policy";
+import {serializePosition} from "@/domain/types";
+import type {LogisticsEndpoint, LogisticsJob, LogisticsStore, WorkJob} from "@/domain/types";
+import type {RoomModel} from "@/colony/roomModel";
 
 function jobs(): LogisticsJob[] {
     return Object.values(Memory.colonies).flatMap(colony => Object.values(colony.logisticsJobs));
@@ -42,7 +42,7 @@ function clamp(job: LogisticsJob): number {
 }
 
 function upsert(homeRoom: string, pickup: LogisticsEndpoint, delivery: LogisticsJob["delivery"],
-    resource: ResourceConstant, amount: number, priority: number, prefix: string): LogisticsJob | undefined {
+                resource: ResourceConstant, amount: number, priority: number, prefix: string): LogisticsJob | undefined {
     const board = Memory.colonies[homeRoom]?.logisticsJobs;
     if (!board || pickup.id === delivery.id || !Number.isFinite(amount) || amount <= 0) return undefined;
     const id = `${prefix}:${homeRoom}:${resource}:${pickup.id}:${delivery.id}`;
@@ -78,7 +78,7 @@ function upsert(homeRoom: string, pickup: LogisticsEndpoint, delivery: Logistics
 }
 
 export function upsertLogisticsJob(homeRoom: string, pickup: LogisticsEndpoint, delivery: LogisticsJob["delivery"],
-    resource: ResourceConstant, amount: number, priority: number): LogisticsJob | undefined {
+                                   resource: ResourceConstant, amount: number, priority: number): LogisticsJob | undefined {
     return upsert(homeRoom, pickup, delivery, resource, amount, priority, "transport");
 }
 
@@ -125,7 +125,7 @@ export function claimJob(creep: Creep): LogisticsJob | undefined {
     for (const job of candidates) {
         job.amount = clamp(job);
         if (job.amount <= 0) continue;
-        job.lease = { creepName: creep.name, leaseUntil: Game.time + policy.logisticsLeaseDuration };
+        job.lease = {creepName: creep.name, leaseUntil: Game.time + policy.logisticsLeaseDuration};
         assignment.jobId = job.id;
         creep.memory.state = creep.store[job.resource] > 0 ? "deliver" : "pickup";
         return job;
@@ -134,7 +134,7 @@ export function claimJob(creep: Creep): LogisticsJob | undefined {
 }
 
 function endpoint(store: LogisticsStore): LogisticsEndpoint {
-    return { type: "store", id: store.id, position: serializePosition(store.pos) };
+    return {type: "store", id: store.id, position: serializePosition(store.pos)};
 }
 
 function reconcileWork(model: RoomModel): void {
@@ -143,7 +143,7 @@ function reconcileWork(model: RoomModel): void {
         const priority = site.structureType === STRUCTURE_SPAWN ? 100 :
             site.structureType === STRUCTURE_CONTAINER ? 90 :
                 site.structureType === STRUCTURE_EXTENSION ? 80 : site.structureType === STRUCTURE_TOWER ? 75 : 50;
-        board[`build:${site.id}`] = { id: `build:${site.id}`, type: "build", targetId: site.id, priority };
+        board[`build:${site.id}`] = {id: `build:${site.id}`, type: "build", targetId: site.id, priority};
     }
     for (const structure of model.structures) {
         if ("my" in structure && !structure.my) continue;
@@ -153,7 +153,13 @@ function reconcileWork(model: RoomModel): void {
         if (structure.hits >= targetHits || targetHits <= 0) continue;
         const income = structure.structureType === STRUCTURE_CONTAINER || structure.structureType === STRUCTURE_ROAD;
         const priority = income && structure.hits < structure.hitsMax * 0.3 ? 95 : barrier ? 10 : income ? 40 : 30;
-        board[`repair:${structure.id}`] = { id: `repair:${structure.id}`, type: "repair", targetId: structure.id, targetHits, priority };
+        board[`repair:${structure.id}`] = {
+            id: `repair:${structure.id}`,
+            type: "repair",
+            targetId: structure.id,
+            targetHits,
+            priority
+        };
     }
     Memory.colonies[model.name].workJobs = board;
 }
@@ -175,22 +181,29 @@ export function reconcileLogistics(model: RoomModel): void {
     }
     const controllerStores = [...model.containers, ...model.links].filter(store => store.pos.inRangeTo(model.controller, 3));
     const sourceStores = model.containers.filter(store => !controllerStores.includes(store));
-    const supplies: { endpoint: LogisticsEndpoint; resource: ResourceConstant; amount: number; salvage: boolean }[] = [];
+    const supplies: {
+        endpoint: LogisticsEndpoint;
+        resource: ResourceConstant;
+        amount: number;
+        salvage: boolean
+    }[] = [];
     for (const store of [...model.tombstones, ...model.ruins, ...sourceStores,
         ...(model.storage ? [model.storage] : []), ...(model.terminal ? [model.terminal] : [])]) {
         for (const resource of Object.keys(store.store) as ResourceConstant[]) {
             const amount = store.store[resource] || 0;
-            if (amount > 0) supplies.push({ endpoint: endpoint(store), resource, amount,
-                salvage: "deathTime" in store || "destroyTime" in store });
+            if (amount > 0) supplies.push({
+                endpoint: endpoint(store), resource, amount,
+                salvage: "deathTime" in store || "destroyTime" in store
+            });
         }
     }
     for (const drop of model.droppedResources) supplies.unshift({
-        endpoint: { type: "drop", id: drop.id, position: serializePosition(drop.pos) },
+        endpoint: {type: "drop", id: drop.id, position: serializePosition(drop.pos)},
         resource: drop.resourceType, amount: drop.amount, salvage: true
     });
     const demands: { target: AnyStoreStructure; resource: ResourceConstant; amount: number; priority: number }[] = [];
     const demand = (target: AnyStoreStructure, resource: ResourceConstant, amount: number, priority: number): void => {
-        if (amount > 0) demands.push({ target, resource, amount, priority });
+        if (amount > 0) demands.push({target, resource, amount, priority});
     };
     for (const target of [...model.spawns, ...model.extensions]) demand(target, RESOURCE_ENERGY,
         target.store.getFreeCapacity(RESOURCE_ENERGY), model.stage === "bootstrap" || model.stage === "recovering" ? 100 : 80);
@@ -217,7 +230,7 @@ export function reconcileLogistics(model: RoomModel): void {
             (model.storage || !sourceStores.some(store => store.id === item.target.id) || supply.salvage))) {
             if (remaining <= 0) break;
             const job = upsert(model.name, supply.endpoint,
-                { type: "store", id: item.target.id, position: serializePosition(item.target.pos) },
+                {type: "store", id: item.target.id, position: serializePosition(item.target.pos)},
                 item.resource, Math.min(remaining, supply.amount), item.priority, "local");
             if (job) {
                 job.createdAt = previousCreation.get(job.id) ?? job.createdAt;

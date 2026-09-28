@@ -1,7 +1,7 @@
 import type {
     ColonyStage, CreepAssignment, CreepRole, DefensePlan, ExpansionStage, LogisticsJob, PlannedStructure,
     ProductionGoal, RemoteRecord, SerializedPosition, SourcePlan, SpawnRequest, TerminalGoal, ThreatAssessment, WorkJob
-} from "../domain/types";
+} from "@/domain/types";
 
 declare global {
     interface Memory {
@@ -42,7 +42,8 @@ declare global {
         remotes: Record<string, RemoteRecord>;
     }
 
-    interface SourcePlanMemory extends SourcePlan {}
+    interface SourcePlanMemory extends SourcePlan {
+    }
 
     interface ConstructionMemory {
         lastRcl: number;

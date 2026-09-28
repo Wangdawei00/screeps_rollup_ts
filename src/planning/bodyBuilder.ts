@@ -1,4 +1,4 @@
-import type { ThreatAssessment } from "../domain/types";
+import type {ThreatAssessment} from "@/domain/types";
 
 const COST: Record<BodyPartConstant, number> = {
     move: 50, work: 100, carry: 50, attack: 80, ranged_attack: 150, heal: 250, claim: 600, tough: 10
@@ -15,7 +15,7 @@ function affordable(body: BodyPartConstant[], budget: number): boolean {
 function repeat(unit: BodyPartConstant[], budget: number, limit = 50): BodyPartConstant[] {
     if (!Number.isFinite(budget) || budget < bodyCost(unit)) return [];
     const count = Math.max(0, Math.min(Math.floor(budget / bodyCost(unit)), Math.floor(limit / unit.length)));
-    return Array.from({ length: count }, () => unit).flat();
+    return Array.from({length: count}, () => unit).flat();
 }
 
 // An impossible (or non-finite) budget returns []; demand producers must skip empty bodies.

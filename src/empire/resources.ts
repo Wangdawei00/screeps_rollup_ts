@@ -1,8 +1,8 @@
-import policy from "../config/policy";
-import type { RoomModel } from "../colony/roomModel";
-import { reactionReagents, selectReactionLabs } from "../colony/structureManager";
-import { upsertLogisticsJob } from "../colony/logisticsManager";
-import { serializePosition } from "../domain/types";
+import policy from "@/config/policy";
+import type {RoomModel} from "@/colony/roomModel";
+import {reactionReagents, selectReactionLabs} from "@/colony/structureManager";
+import {upsertLogisticsJob} from "@/colony/logisticsManager";
+import {serializePosition} from "@/domain/types";
 
 export function liquidStores(model: RoomModel): (StructureStorage | StructureTerminal)[] {
     return [...(model.storage ? [model.storage] : []), ...(model.terminal ? [model.terminal] : [])];
@@ -53,7 +53,7 @@ export function available(model: RoomModel, resource: ResourceConstant, reserveP
 }
 
 export function prepare(model: RoomModel, destination: AnyStoreStructure, resource: ResourceConstant,
-    desired: number, priority = 60, protectMineralReserve = true): void {
+                        desired: number, priority = 60, protectMineralReserve = true): void {
     let remaining = Math.max(0, desired - (destination.store[resource] || 0));
     for (const source of liquidStores(model)) {
         if (!remaining || source.id === destination.id) continue;
@@ -66,8 +66,12 @@ export function prepare(model: RoomModel, destination: AnyStoreStructure, resour
         const amount = Math.min(remaining, budget, protectMineralReserve ? available(model, resource, false) : Infinity);
         if (amount <= 0) continue;
         const job = upsertLogisticsJob(model.name,
-            { type: "store", id: source.id, position: serializePosition(source.pos) },
-            { type: "store", id: destination.id, position: serializePosition(destination.pos) }, resource, amount, priority);
+            {type: "store", id: source.id, position: serializePosition(source.pos)},
+            {
+                type: "store",
+                id: destination.id,
+                position: serializePosition(destination.pos)
+            }, resource, amount, priority);
         remaining -= job?.amount || 0;
     }
 }
@@ -75,6 +79,6 @@ export function prepare(model: RoomModel, destination: AnyStoreStructure, resour
 export function drain(model: RoomModel, source: AnyStoreStructure, resource: ResourceConstant, amount: number): void {
     const destination = liquidStores(model).find(store => store.id !== source.id && store.store.getFreeCapacity(resource) > 0);
     if (!destination || amount <= 0) return;
-    upsertLogisticsJob(model.name, { type: "store", id: source.id, position: serializePosition(source.pos) },
-        { type: "store", id: destination.id, position: serializePosition(destination.pos) }, resource, amount, 60);
+    upsertLogisticsJob(model.name, {type: "store", id: source.id, position: serializePosition(source.pos)},
+        {type: "store", id: destination.id, position: serializePosition(destination.pos)}, resource, amount, 60);
 }

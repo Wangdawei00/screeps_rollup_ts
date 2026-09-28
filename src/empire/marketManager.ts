@@ -1,10 +1,10 @@
-import policy from "../config/policy";
-import type { RoomModel } from "../colony/roomModel";
-import { healthyOrigin } from "./remoteManager";
-import { available, outgoing, prepare, stock } from "./resources";
+import policy from "@/config/policy";
+import type {RoomModel} from "@/colony/roomModel";
+import {healthyOrigin} from "@/empire/remoteManager";
+import {available, outgoing, prepare, stock} from "@/empire/resources";
 
 function transferAmount(model: RoomModel, destination: string, resource: ResourceConstant, requested: number,
-    buying = false): number {
+                        buying = false): number {
     const terminal = model.terminal!;
     let low = 0;
     let high = Math.max(0, Math.floor(Math.min(requested, buying ? terminal.store.getFreeCapacity(resource) :
@@ -34,7 +34,7 @@ export function runMarket(models: ReadonlyMap<string, RoomModel>): void {
     const goal = (model: RoomModel, resource: ResourceConstant, amount: number): void => {
         const existing = memory.terminalGoals.find(item => item.roomName === model.name && item.resource === resource);
         if (existing) existing.amount = Math.max(existing.amount, amount);
-        else memory.terminalGoals.push({ roomName: model.name, resource, amount });
+        else memory.terminalGoals.push({roomName: model.name, resource, amount});
         prepare(model, model.terminal!, resource, amount, 40, false);
     };
     for (const model of rooms) goal(model, RESOURCE_ENERGY, policy.terminalEnergyReserve + policy.productionBatch);
@@ -58,7 +58,7 @@ export function runMarket(models: ReadonlyMap<string, RoomModel>): void {
                 other.terminal!.store.getFreeCapacity() - (incoming.get(other.name) || 0) > 0);
             if (!recipient) continue;
             const shortage = (resource === RESOURCE_ENERGY ?
-                policy.storageEnergyReserve + policy.terminalEnergyReserve + policy.upgradeEnergySurplus : policy.mineralRetain) -
+                    policy.storageEnergyReserve + policy.terminalEnergyReserve + policy.upgradeEnergySurplus : policy.mineralRetain) -
                 stock(recipient, resource) - (incomingResource.get(`${recipient.name}:${resource}`) || 0);
             const desired = Math.min(policy.productionBatch, available(donor, resource), shortage,
                 recipient.terminal!.store.getFreeCapacity() - (incoming.get(recipient.name) || 0));
@@ -95,15 +95,19 @@ export function runMarket(models: ReadonlyMap<string, RoomModel>): void {
             if (selling) goal(model, resource, desired);
             if (analyse && scans < 3) {
                 scans++;
-                const orders = Game.market.getAllOrders({ type: buying ? ORDER_SELL : ORDER_BUY, resourceType: resource })
+                const orders = Game.market.getAllOrders({type: buying ? ORDER_SELL : ORDER_BUY, resourceType: resource})
                     .filter(order => order.remainingAmount > 0 && !!order.roomName && !Game.market.orders[order.id]);
                 const scored = orders.map(order => {
                     const amount = Math.min(desired, order.remainingAmount);
-                    return { order, price: netPrice(model, order, amount, buying) };
+                    return {order, price: netPrice(model, order, amount, buying)};
                 }).filter(item => Number.isFinite(item.price) && (buying ?
                     item.price <= policy.marketMaximumBuyPrice : item.price >= policy.marketMinimumSellPrice));
                 scored.sort((a, b) => (buying ? a.price - b.price : b.price - a.price) || a.order.id.localeCompare(b.order.id));
-                if (scored[0]) memory.orders[key] = { id: scored[0].order.id, price: scored[0].price, expiresAt: Game.time + 100 };
+                if (scored[0]) memory.orders[key] = {
+                    id: scored[0].order.id,
+                    price: scored[0].price,
+                    expiresAt: Game.time + 100
+                };
                 else delete memory.orders[key];
             }
             const cached = memory.orders[key];

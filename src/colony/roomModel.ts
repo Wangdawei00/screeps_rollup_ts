@@ -1,6 +1,6 @@
-import policy from "../config/policy";
-import { assignmentMatchesRole, CREEP_ROLES, hasRoleParts, isAssignment, isCreepRole } from "../domain/types";
-import type { ColonyStage, CreepRole } from "../domain/types";
+import policy from "@/config/policy";
+import {assignmentMatchesRole, CREEP_ROLES, hasRoleParts, isAssignment, isCreepRole} from "@/domain/types";
+import type {ColonyStage, CreepRole} from "@/domain/types";
 
 export interface RoomModel {
     room: Room;
@@ -70,7 +70,11 @@ export function buildRoomModel(room: Room): RoomModel {
         }
     }
     const model: RoomModel = {
-        room, name: room.name, stage: "bootstrap", controller: room.controller, structures,
+        room,
+        name: room.name,
+        stage: "bootstrap",
+        controller: room.controller,
+        structures,
         spawns: owned<StructureSpawn>(STRUCTURE_SPAWN),
         extensions: owned<StructureExtension>(STRUCTURE_EXTENSION),
         towers: owned<StructureTower>(STRUCTURE_TOWER),
@@ -80,12 +84,19 @@ export function buildRoomModel(room: Room): RoomModel {
         observers: owned<StructureObserver>(STRUCTURE_OBSERVER),
         powerSpawns: owned<StructurePowerSpawn>(STRUCTURE_POWER_SPAWN),
         containers: structures.filter((structure): structure is StructureContainer => structure.structureType === STRUCTURE_CONTAINER),
-        storage: room.storage, terminal: room.terminal,
-        sources: room.find(FIND_SOURCES), minerals: room.find(FIND_MINERALS),
+        storage: room.storage,
+        terminal: room.terminal,
+        sources: room.find(FIND_SOURCES),
+        minerals: room.find(FIND_MINERALS),
         constructionSites: room.find(FIND_MY_CONSTRUCTION_SITES),
-        hostiles: room.find(FIND_HOSTILE_CREEPS), friendlyCreeps: room.find(FIND_MY_CREEPS), creepsByRole,
-        droppedResources: room.find(FIND_DROPPED_RESOURCES), ruins: room.find(FIND_RUINS), tombstones: room.find(FIND_TOMBSTONES),
-        energyAvailable: room.energyAvailable, energyCapacity: room.energyCapacityAvailable,
+        hostiles: room.find(FIND_HOSTILE_CREEPS),
+        friendlyCreeps: room.find(FIND_MY_CREEPS),
+        creepsByRole,
+        droppedResources: room.find(FIND_DROPPED_RESOURCES),
+        ruins: room.find(FIND_RUINS),
+        tombstones: room.find(FIND_TOMBSTONES),
+        energyAvailable: room.energyAvailable,
+        energyCapacity: room.energyCapacityAvailable,
         storageEnergy: room.storage?.store[RESOURCE_ENERGY] || 0
     };
     model.stage = determineColonyStage(model);

@@ -1,7 +1,7 @@
-import policy from "../config/policy";
-import type { RoomModel } from "../colony/roomModel";
-import type { SerializedPosition } from "../domain/types";
-import { markRoomInaccessible } from "../empire/intelManager";
+import policy from "@/config/policy";
+import type { RoomModel } from "@/colony/roomModel";
+import type { SerializedPosition } from "@/domain/types";
+import { markRoomInaccessible } from "@/empire/intelManager";
 
 export function diagnostic(creep: Creep, message: string): void {
     if (policy.debug && Game.time % 25 === 0) console.log(`[creep:${creep.name}:${creep.memory.role}] ${message}`);

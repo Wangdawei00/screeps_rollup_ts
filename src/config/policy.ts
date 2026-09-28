@@ -38,7 +38,7 @@ const policy: EmpirePolicy = {
     expansionEnabled: true,
     marketEnabled: true,
     debug: false,
-    wallTargetHitsByRcl: { 2: 5_000, 3: 10_000, 4: 25_000, 5: 50_000, 6: 100_000, 7: 250_000, 8: 1_000_000 },
+    wallTargetHitsByRcl: {2: 5_000, 3: 10_000, 4: 25_000, 5: 50_000, 6: 100_000, 7: 250_000, 8: 1_000_000},
     constructionSitesPerTick: 5,
     constructionSiteSafetyMargin: 5,
     logisticsLeaseDuration: 25,

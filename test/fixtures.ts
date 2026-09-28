@@ -1,5 +1,5 @@
 import { jest } from "@jest/globals";
-import type { CreepRole } from "../src/domain/types";
+import type { CreepRole } from "@/domain/types";
 
 export function mock<T>(value: Partial<T>): T {
     return value as T;

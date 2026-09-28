@@ -1,5 +1,5 @@
-import { observeRoom } from "../empire/intelManager";
-import { retreat, travel } from "./common";
+import {observeRoom} from "@/empire/intelManager";
+import {retreat, travel} from "@/roles/common";
 
 export function runScout(creep: Creep): void {
     const assignment = creep.memory.assignment;

@@ -1,4 +1,4 @@
-import { SourceMapConsumer } from "source-map";
+import {SourceMapConsumer} from "source-map";
 
 let consumer: SourceMapConsumer | undefined;
 
@@ -14,7 +14,7 @@ export function formatError(error: unknown): string {
         }
     }
     return stack.replace(/main:(\d+):(\d+)/g, (frame, line: string, column: string) => {
-        const position = consumer!.originalPositionFor({ line: Number(line), column: Number(column) - 1 });
+        const position = consumer!.originalPositionFor({line: Number(line), column: Number(column) - 1});
         return position.source ? `${position.source}:${position.line}:${position.column}` : frame;
     });
 }

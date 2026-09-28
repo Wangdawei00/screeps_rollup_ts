@@ -1,7 +1,7 @@
 import { expect, it, jest } from "@jest/globals";
 import policy, { validatePolicy } from "../src/config/policy";
-import { assignmentMatchesRole, hasRoleParts, isAssignment, isPosition, serializePosition } from "../src/domain/types";
-import { initializeMemory, spawnRequestError } from "../src/kernel/memory";
+import { assignmentMatchesRole, hasRoleParts, isAssignment, isPosition, serializePosition } from "@/domain/types";
+import { initializeMemory, spawnRequestError } from "@/kernel/memory";
 
 it("persists positions as plain coordinate records and rejects malformed assignments", () => {
     const position = new RoomPosition(10, 11, "W1N1");

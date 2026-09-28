@@ -1,4 +1,4 @@
-import type { SerializedPosition } from "../domain/types";
+import type {SerializedPosition} from "@/domain/types";
 
 export function range(a: SerializedPosition, b: SerializedPosition): number {
     return a.roomName === b.roomName ? Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y)) : Infinity;

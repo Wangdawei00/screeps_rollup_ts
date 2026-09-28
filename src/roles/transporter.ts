@@ -1,6 +1,6 @@
-import { claimJob, releaseJob, renewJob } from "../colony/logisticsManager";
-import type { RoomModel } from "../colony/roomModel";
-import { diagnostic, position, retreat, travel, unload, unsafe } from "./common";
+import {claimJob, releaseJob, renewJob} from "@/colony/logisticsManager";
+import type {RoomModel} from "@/colony/roomModel";
+import {diagnostic, position, retreat, travel, unload, unsafe} from "@/roles/common";
 
 const progress = new Map<string, { tick: number; position: string }>();
 
@@ -10,7 +10,8 @@ export function runTransporter(creep: Creep, model?: RoomModel): void {
     if (!job) {
         const resource = (Object.keys(creep.store) as ResourceConstant[]).find(type => creep.store[type] > 0);
         if (resource) {
-            if (!travel(creep, creep.memory.homeRoom)) return;
+            if (!travel(creep, creep.memory.homeRoom))
+                return;
             unload(creep, resource, model);
         }
         return;
@@ -18,7 +19,7 @@ export function runTransporter(creep: Creep, model?: RoomModel): void {
     const location = `${creep.pos.roomName}:${creep.pos.x}:${creep.pos.y}`;
     const previous = progress.get(creep.name);
     if (previous && previous.tick === Game.time - 1 && previous.position !== location) renewJob(creep, job);
-    progress.set(creep.name, { tick: Game.time, position: location });
+    progress.set(creep.name, {tick: Game.time, position: location});
     if (Game.time % 100 === 0) for (const name of progress.keys()) if (!Game.creeps[name]) progress.delete(name);
     const incompatible = (Object.keys(creep.store) as ResourceConstant[]).find(type => type !== job.resource && creep.store[type] > 0);
     if (incompatible) {
@@ -45,8 +46,10 @@ export function runTransporter(creep: Creep, model?: RoomModel): void {
     if (delivering) {
         const target = Game.getObjectById(job.delivery.id);
         if (!target) {
-            if (Game.rooms[job.delivery.position.roomName]) releaseJob(creep);
-            else creep.moveTo(position(job.delivery.position), { range: 1 });
+            if (Game.rooms[job.delivery.position.roomName])
+                releaseJob(creep);
+            else
+                creep.moveTo(position(job.delivery.position), {range: 1});
             return;
         }
         const amount = Math.min(job.amount, creep.store[job.resource], target.store.getFreeCapacity(job.resource) || 0);
@@ -55,7 +58,7 @@ export function runTransporter(creep: Creep, model?: RoomModel): void {
             return;
         }
         const result = creep.transfer(target, job.resource, amount);
-        if (result === ERR_NOT_IN_RANGE) creep.moveTo(target, { reusePath: 10 });
+        if (result === ERR_NOT_IN_RANGE) creep.moveTo(target, {reusePath: 10});
         else if (result === OK) {
             // Screeps stores remain unchanged until tick end. Account the explicit intent,
             // then acknowledge completion on the following tick rather than rereading store.
@@ -67,7 +70,7 @@ export function runTransporter(creep: Creep, model?: RoomModel): void {
         const target = Game.getObjectById(job.pickup.id);
         if (!target) {
             if (Game.rooms[job.pickup.position.roomName]) releaseJob(creep);
-            else creep.moveTo(position(job.pickup.position), { range: 1 });
+            else creep.moveTo(position(job.pickup.position), {range: 1});
             return;
         }
         let result: ScreepsReturnCode;
@@ -81,11 +84,13 @@ export function runTransporter(creep: Creep, model?: RoomModel): void {
             }
             result = creep.withdraw(target, job.resource, amount);
         }
-        if (result === ERR_NOT_IN_RANGE) creep.moveTo(target, { reusePath: 10 });
+        if (result === ERR_NOT_IN_RANGE) creep.moveTo(target, {reusePath: 10});
         else if (result === OK) {
             creep.memory.state = "deliver";
             renewJob(creep, job);
-        } else if (result === ERR_NOT_ENOUGH_RESOURCES || result === ERR_INVALID_TARGET || result === ERR_NOT_OWNER) releaseJob(creep);
-        else diagnostic(creep, `Pickup ${job.id} failed ${result}`);
+        } else if (result === ERR_NOT_ENOUGH_RESOURCES || result === ERR_INVALID_TARGET || result === ERR_NOT_OWNER)
+            releaseJob(creep);
+        else
+            diagnostic(creep, `Pickup ${job.id} failed ${result}`);
     }
 }

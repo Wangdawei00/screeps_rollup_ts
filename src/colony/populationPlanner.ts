@@ -1,9 +1,9 @@
-import policy from "../config/policy";
-import type { CreepDemand, CreepRole, DefensePlan, SpawnRequest } from "../domain/types";
-import { assignmentMatchesRole, hasRoleParts, isAssignment } from "../domain/types";
-import { buildHarvester, buildMiner, buildTransporter, buildUpgrader, buildWorker } from "../planning/bodyBuilder";
-import { quarantineRequest, spawnRequestError } from "../kernel/memory";
-import type { RoomModel } from "./roomModel";
+import policy from "@/config/policy";
+import type {CreepDemand, CreepRole, DefensePlan, SpawnRequest} from "@/domain/types";
+import {assignmentMatchesRole, hasRoleParts, isAssignment} from "@/domain/types";
+import {buildHarvester, buildMiner, buildTransporter, buildUpgrader, buildWorker} from "@/planning/bodyBuilder";
+import {quarantineRequest, spawnRequestError} from "@/kernel/memory";
+import type {RoomModel} from "@/colony/roomModel";
 
 function localCreeps(model: RoomModel, role: CreepRole): Creep[] {
     return (model.creepsByRole.get(role) || []).filter(creep =>
@@ -14,7 +14,7 @@ export function planPopulation(model: RoomModel, defense: DefensePlan): CreepDem
     const memory = Memory.colonies[model.name];
     const demands: CreepDemand[] = [];
     const add = (demand: Omit<CreepDemand, "homeRoom">): void => {
-        if (demand.body.length) demands.push({ ...demand, homeRoom: model.name });
+        if (demand.body.length) demands.push({...demand, homeRoom: model.name});
     };
     const active = (role: CreepRole): Creep[] => localCreeps(model, role).filter(creep =>
         !creep.spawning && creep.room.name === model.name && (creep.ticksToLive || 0) > policy.replacementTravelBuffer &&
@@ -54,7 +54,7 @@ export function planPopulation(model: RoomModel, defense: DefensePlan): CreepDem
         for (let index = 0; index < slots; index++) {
             add({
                 key: `local:transporter:${model.name}:${index}`, role: "transporter", priority: 800 - index,
-                body: haulerBody, assignment: { type: "logistics" }, travelEstimate: 10
+                body: haulerBody, assignment: {type: "logistics"}, travelEstimate: 10
             });
         }
     }
@@ -77,7 +77,7 @@ export function planPopulation(model: RoomModel, defense: DefensePlan): CreepDem
         add({
             key: `local:upgrader:${model.name}:0`, role: "upgrader", priority: downgradeRisk ? 900 : 400,
             body: buildUpgrader(Math.min(model.energyCapacity, surplus ? 2400 : 600), workParts),
-            assignment: { type: "controller", controllerId: model.controller.id, energySourceId: controllerSource?.id },
+            assignment: {type: "controller", controllerId: model.controller.id, energySourceId: controllerSource?.id},
             travelEstimate: 15
         });
     }
@@ -116,7 +116,7 @@ export function reconcilePopulation(model: RoomModel, demands: readonly CreepDem
         keys.add(demand.key);
         if (demand.assignment && demand.assignment.type !== "logistics") {
             for (const creep of Object.values(Game.creeps)) {
-                if (matchesDemand(creep.memory, demand)) creep.memory.assignment = { ...demand.assignment };
+                if (matchesDemand(creep.memory, demand)) creep.memory.assignment = {...demand.assignment};
             }
         }
         if (demandSatisfied(demand)) continue;

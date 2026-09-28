@@ -1,7 +1,7 @@
-import policy from "../config/policy";
-import type { DefensePlan, StructurePlan } from "../domain/types";
-import { range } from "../planning/geometry";
-import type { RoomModel } from "./roomModel";
+import policy from "@/config/policy";
+import type {DefensePlan, StructurePlan} from "@/domain/types";
+import {range} from "@/planning/geometry";
+import type {RoomModel} from "@/colony/roomModel";
 
 export interface ReactionLabs {
     inputA: StructureLab;
@@ -42,20 +42,28 @@ export function selectReactionLabs(labs: readonly StructureLab[], compound: Mine
             outputs.filter(lab => !lab.mineralType || lab.mineralType === compound).length;
         if (score > bestScore) {
             bestScore = score;
-            chosen = { inputA, inputB, reagentA: reagents[0], reagentB: reagents[1], outputs };
+            chosen = {inputA, inputB, reagentA: reagents[0], reagentB: reagents[1], outputs};
         }
     }
     return chosen;
 }
 
 export function planStructures(model: RoomModel, defense: DefensePlan): StructurePlan {
-    const plan: StructurePlan = { links: [], towers: [], reactions: [], factories: [], observations: [] };
+    const plan: StructurePlan = {links: [], towers: [], reactions: [], factories: [], observations: []};
     for (const tower of model.towers) {
         if (!tower.isActive() || tower.store[RESOURCE_ENERGY] < TOWER_ENERGY_COST) continue;
-        if (defense.attackTarget) plan.towers.push({ towerId: tower.id, action: "attack", targetId: defense.attackTarget });
-        else if (defense.healTarget) plan.towers.push({ towerId: tower.id, action: "heal", targetId: defense.healTarget });
+        if (defense.attackTarget) plan.towers.push({
+            towerId: tower.id,
+            action: "attack",
+            targetId: defense.attackTarget
+        });
+        else if (defense.healTarget) plan.towers.push({
+            towerId: tower.id,
+            action: "heal",
+            targetId: defense.healTarget
+        });
         else if (defense.threat.total === 0 && defense.repairTarget && tower.store[RESOURCE_ENERGY] > policy.minimumTowerEnergy) {
-            plan.towers.push({ towerId: tower.id, action: "repair", targetId: defense.repairTarget });
+            plan.towers.push({towerId: tower.id, action: "repair", targetId: defense.repairTarget});
         }
     }
     const sourcePlans = Object.values(Memory.colonies[model.name].sourcePlans).filter(source => source.accessible);
@@ -74,7 +82,7 @@ export function planStructures(model: RoomModel, defense: DefensePlan): Structur
         if (!to) continue;
         const amount = Math.min(from.store[RESOURCE_ENERGY], remaining.get(to.id) || 0);
         if (amount <= 0) continue;
-        plan.links.push({ from: from.id, to: to.id, amount });
+        plan.links.push({from: from.id, to: to.id, amount});
         remaining.set(to.id, (remaining.get(to.id) || 0) - (amount - Math.ceil(amount * LINK_LOSS_RATIO)));
     }
     const goal = Memory.empire.production[model.name];
@@ -82,13 +90,16 @@ export function planStructures(model: RoomModel, defense: DefensePlan): Structur
         const cluster = selectReactionLabs(model.labs, goal.compound);
         if (cluster) for (const output of cluster.outputs) {
             if (!output.cooldown && (!output.mineralType || output.mineralType === goal.compound)) {
-                plan.reactions.push({ output: output.id, inputA: cluster.inputA.id, inputB: cluster.inputB.id });
+                plan.reactions.push({output: output.id, inputA: cluster.inputA.id, inputB: cluster.inputB.id});
             }
         }
     }
     if (policy.productionEnabled && goal?.factoryResource) {
         for (const factory of model.factories) {
-            if (factory.isActive() && !factory.cooldown) plan.factories.push({ factoryId: factory.id, resource: goal.factoryResource });
+            if (factory.isActive() && !factory.cooldown) plan.factories.push({
+                factoryId: factory.id,
+                resource: goal.factoryResource
+            });
         }
     }
     const observed = new Set<string>();
@@ -99,7 +110,7 @@ export function planStructures(model: RoomModel, defense: DefensePlan): Structur
             .sort((a, b) => Memory.intel[a].lastSeen - Memory.intel[b].lastSeen || a.localeCompare(b))[0];
         if (target) {
             observed.add(target);
-            plan.observations.push({ observerId: observer.id, roomName: target });
+            plan.observations.push({observerId: observer.id, roomName: target});
         }
     }
     return plan;
@@ -120,7 +131,8 @@ export function runStructures(model: RoomModel, plan: StructurePlan): void {
         const tower = Game.getObjectById(action.towerId);
         const target = Game.getObjectById(action.targetId);
         if (!tower || tower.structureType !== STRUCTURE_TOWER || !tower.my || !target) {
-            stale("tower action", action.towerId); continue;
+            stale("tower action", action.towerId);
+            continue;
         }
         if (tower.room.name !== model.name || !tower.isActive() || tower.store[RESOURCE_ENERGY] < TOWER_ENERGY_COST) continue;
         if (action.action === "attack" && "body" in target && !target.my) tower.attack(target);
@@ -134,7 +146,10 @@ export function runStructures(model: RoomModel, plan: StructurePlan): void {
         const from = Game.getObjectById(action.from);
         const to = Game.getObjectById(action.to);
         if (!from || !to || from.structureType !== STRUCTURE_LINK || to.structureType !== STRUCTURE_LINK ||
-            !from.my || !to.my) { stale("link action", action.from); continue; }
+            !from.my || !to.my) {
+            stale("link action", action.from);
+            continue;
+        }
         if (from.room.name !== model.name || to.room.name !== model.name || from.id === to.id ||
             from.cooldown || usedLinks.has(from.id) || !from.isActive() || !to.isActive()) continue;
         const free = linkCapacity.get(to.id) ?? to.store.getFreeCapacity(RESOURCE_ENERGY);
@@ -152,7 +167,10 @@ export function runStructures(model: RoomModel, plan: StructurePlan): void {
         const a = Game.getObjectById(action.inputA);
         const b = Game.getObjectById(action.inputB);
         if (!output || !a || !b || output.structureType !== STRUCTURE_LAB ||
-            a.structureType !== STRUCTURE_LAB || b.structureType !== STRUCTURE_LAB) { stale("reaction", action.output); continue; }
+            a.structureType !== STRUCTURE_LAB || b.structureType !== STRUCTURE_LAB) {
+            stale("reaction", action.output);
+            continue;
+        }
         if (!policy.productionEnabled || !goal?.compound || output.cooldown || reacted.has(output.id) || !output.my || !a.my || !b.my ||
             !output.isActive() || !a.isActive() || !b.isActive() || output.room.name !== model.name ||
             output.id === a.id || output.id === b.id || a.id === b.id ||
@@ -173,7 +191,10 @@ export function runStructures(model: RoomModel, plan: StructurePlan): void {
     const produced = new Set<string>();
     for (const action of plan.factories) {
         const factory = Game.getObjectById(action.factoryId);
-        if (!factory || factory.structureType !== STRUCTURE_FACTORY || !factory.my) { stale("factory", action.factoryId); continue; }
+        if (!factory || factory.structureType !== STRUCTURE_FACTORY || !factory.my) {
+            stale("factory", action.factoryId);
+            continue;
+        }
         const recipe = COMMODITIES[action.resource];
         if (!policy.productionEnabled || goal?.factoryResource !== action.resource || factory.room.name !== model.name ||
             factory.cooldown || !factory.isActive() || produced.has(factory.id) || !recipe) continue;
@@ -190,7 +211,10 @@ export function runStructures(model: RoomModel, plan: StructurePlan): void {
     const observers = new Set<string>();
     for (const action of plan.observations) {
         const observer = Game.getObjectById(action.observerId);
-        if (!observer || observer.structureType !== STRUCTURE_OBSERVER || !observer.my) { stale("observer", action.observerId); continue; }
+        if (!observer || observer.structureType !== STRUCTURE_OBSERVER || !observer.my) {
+            stale("observer", action.observerId);
+            continue;
+        }
         if (observer.room.name === model.name && observer.isActive() && !observers.has(observer.id) &&
             Game.map.getRoomLinearDistance(model.name, action.roomName) <= OBSERVER_RANGE) {
             observer.observeRoom(action.roomName);

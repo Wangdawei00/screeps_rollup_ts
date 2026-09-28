@@ -1,11 +1,11 @@
-import policy from "../config/policy";
-import type { RoomModel } from "../colony/roomModel";
-import { reactionReagents, selectReactionLabs } from "../colony/structureManager";
-import { healthyOrigin } from "./remoteManager";
-import { available, drain, prepare, stock } from "./resources";
-import { buildMiner } from "../planning/bodyBuilder";
-import { serializePosition } from "../domain/types";
-import type { CreepDemand } from "../domain/types";
+import policy from "@/config/policy";
+import type {RoomModel} from "@/colony/roomModel";
+import {reactionReagents, selectReactionLabs} from "@/colony/structureManager";
+import {healthyOrigin} from "@/empire/remoteManager";
+import {available, drain, prepare, stock} from "@/empire/resources";
+import {buildMiner} from "@/planning/bodyBuilder";
+import {serializePosition} from "@/domain/types";
+import type {CreepDemand} from "@/domain/types";
 
 const evaluated = new Map<string, number>();
 
@@ -48,9 +48,16 @@ export function runProduction(models: ReadonlyMap<string, RoomModel>): CreepDema
             if (extractor && container && mineral.mineralAmount > 0 && stock(model, mineral.mineralType) < policy.mineralSurplus &&
                 model.storage!.store.getFreeCapacity() >= policy.productionBatch && body.length) {
                 demands.push({
-                    key: `expansion:mineral:${mineral.id}`, role: "mineralMiner", homeRoom: model.name, priority: 15, body,
-                    assignment: { type: "mineral", mineralId: mineral.id, containerId: container.id,
-                        workPosition: serializePosition(container.pos) }, travelEstimate: 30
+                    key: `expansion:mineral:${mineral.id}`,
+                    role: "mineralMiner",
+                    homeRoom: model.name,
+                    priority: 15,
+                    body,
+                    assignment: {
+                        type: "mineral", mineralId: mineral.id, containerId: container.id,
+                        workPosition: serializePosition(container.pos)
+                    },
+                    travelEstimate: 30
                 });
             }
         }

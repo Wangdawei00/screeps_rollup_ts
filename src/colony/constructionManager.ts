@@ -1,10 +1,10 @@
-import policy from "../config/policy";
-import { serializePosition } from "../domain/types";
-import type { PlannedStructure, SerializedPosition } from "../domain/types";
-import type { RoomModel } from "./roomModel";
-import { LAYOUT_REVISION, planLayout } from "../planning/layoutPlanner";
-import { planSources } from "../planning/sourcePlanner";
-import { compatible, planningMatrix, positionKey, range, walkableStructure } from "../planning/geometry";
+import policy from "@/config/policy";
+import {serializePosition} from "@/domain/types";
+import type {PlannedStructure, SerializedPosition} from "@/domain/types";
+import type {RoomModel} from "@/colony/roomModel";
+import {LAYOUT_REVISION, planLayout} from "@/planning/layoutPlanner";
+import {planSources} from "@/planning/sourcePlanner";
+import {compatible, planningMatrix, positionKey, range, walkableStructure} from "@/planning/geometry";
 
 export interface ConstructionDiagnostics {
     created: number;
@@ -49,7 +49,7 @@ export function reconcilePlanning(model: RoomModel): void {
             existing.minimumRcl = Math.min(existing.minimumRcl, rcl);
             existing.priority = Math.max(existing.priority, priority);
         } else {
-            planned.push({ position: serializePosition(position), structureType: type, minimumRcl: rcl, priority });
+            planned.push({position: serializePosition(position), structureType: type, minimumRcl: rcl, priority});
         }
     };
     for (const plan of Object.values(plans)) {
@@ -72,18 +72,18 @@ export function reconcilePlanning(model: RoomModel): void {
         const candidates: SerializedPosition[] = [];
         for (let dx = -distance; dx <= distance; dx++) for (let dy = -distance; dy <= distance; dy++) {
             if (!dx && !dy) continue;
-            const pos = { x: target.x + dx, y: target.y + dy, roomName: model.name };
+            const pos = {x: target.x + dx, y: target.y + dy, roomName: model.name};
             if (free(pos, type)) candidates.push(pos);
         }
         candidates.sort((a, b) => range(a, layout.anchor) - range(b, layout.anchor) || a.x - b.x || a.y - b.y);
         return candidates.find(pos => !PathFinder.search(new RoomPosition(pos.x, pos.y, model.name),
-            { pos: new RoomPosition(layout.anchor.x, layout.anchor.y, model.name), range: 1 },
-            { maxRooms: 1, maxOps: 3000, roomCallback: () => matrix }).incomplete);
+            {pos: new RoomPosition(layout.anchor.x, layout.anchor.y, model.name), range: 1},
+            {maxRooms: 1, maxOps: 3000, roomCallback: () => matrix}).incomplete);
     };
     const connect = (position: SerializedPosition, rcl = 2): void => {
         const result = PathFinder.search(new RoomPosition(position.x, position.y, model.name),
-            { pos: new RoomPosition(layout.anchor.x, layout.anchor.y, model.name), range: 1 },
-            { maxRooms: 1, maxOps: 5000, plainCost: 2, swampCost: 5, roomCallback: () => matrix });
+            {pos: new RoomPosition(layout.anchor.x, layout.anchor.y, model.name), range: 1},
+            {maxRooms: 1, maxOps: 5000, plainCost: 2, swampCost: 5, roomCallback: () => matrix});
         if (!result.incomplete) for (const pos of result.path) add(pos, STRUCTURE_ROAD, rcl, 55);
     };
     const controllerContainer = model.containers.find(c => range(c.pos, model.controller.pos) <= 3)?.pos ||
@@ -128,7 +128,7 @@ export function reconcilePlanning(model: RoomModel): void {
 
 export function runConstruction(model: RoomModel): ConstructionDiagnostics {
     const memory = Memory.colonies[model.name].construction;
-    const diagnostics: ConstructionDiagnostics = { created: 0, satisfied: 0, blocked: 0, deferred: 0 };
+    const diagnostics: ConstructionDiagnostics = {created: 0, satisfied: 0, blocked: 0, deferred: 0};
     const counts = new Map<StructureConstant, number>();
     for (const structure of [...model.structures, ...model.constructionSites]) {
         counts.set(structure.structureType, (counts.get(structure.structureType) || 0) + 1);
@@ -143,8 +143,11 @@ export function runConstruction(model: RoomModel): ConstructionDiagnostics {
         (a.structureType === STRUCTURE_SPAWN && model.spawns.length === 0 ? 1000 : a.priority) ||
         a.minimumRcl - b.minimumRcl || a.position.x - b.position.x || a.position.y - b.position.y);
     for (const intention of intentions) {
-        const { position, structureType } = intention;
-        if (intention.minimumRcl > model.controller.level) { diagnostics.deferred++; continue; }
+        const {position, structureType} = intention;
+        if (intention.minimumRcl > model.controller.level) {
+            diagnostics.deferred++;
+            continue;
+        }
         const key = `${positionKey(position)}:${structureType}`;
         const occupants = model.structures.filter(s => range(s.pos, position) === 0);
         const sites = model.constructionSites.filter(s => range(s.pos, position) === 0);
@@ -155,18 +158,35 @@ export function runConstruction(model: RoomModel): ConstructionDiagnostics {
             continue;
         }
         const prior = memory.blocked[key];
-        if (prior && (prior.permanent || prior.retryAt > Game.time)) { diagnostics.blocked++; continue; }
+        if (prior && (prior.permanent || prior.retryAt > Game.time)) {
+            diagnostics.blocked++;
+            continue;
+        }
         const block = (reason: string, permanent: boolean): void => {
-            memory.blocked[key] = { reason, permanent, attempts: (prior?.attempts || 0) + 1,
-                retryAt: Game.time + (permanent ? 100000 : 25) };
+            memory.blocked[key] = {
+                reason, permanent, attempts: (prior?.attempts || 0) + 1,
+                retryAt: Game.time + (permanent ? 100000 : 25)
+            };
             diagnostics.blocked++;
         };
         if (position.roomName !== model.name || position.x <= 0 || position.x >= 49 || position.y <= 0 || position.y >= 49 ||
-            terrain.get(position.x, position.y) === TERRAIN_MASK_WALL) { block("Invalid terrain or coordinate", true); continue; }
-        if (occupants.some(s => !compatible(structureType, s.structureType))) { block("Conflicting structure", true); continue; }
-        if (sites.length || created.some(s => range(s.position, position) === 0)) { diagnostics.deferred++; continue; }
+            terrain.get(position.x, position.y) === TERRAIN_MASK_WALL) {
+            block("Invalid terrain or coordinate", true);
+            continue;
+        }
+        if (occupants.some(s => !compatible(structureType, s.structureType))) {
+            block("Conflicting structure", true);
+            continue;
+        }
+        if (sites.length || created.some(s => range(s.position, position) === 0)) {
+            diagnostics.deferred++;
+            continue;
+        }
         const allowed = CONTROLLER_STRUCTURES[structureType][model.controller.level] || 0;
-        if ((counts.get(structureType) || 0) >= allowed || diagnostics.created >= limit) { diagnostics.deferred++; continue; }
+        if ((counts.get(structureType) || 0) >= allowed || diagnostics.created >= limit) {
+            diagnostics.deferred++;
+            continue;
+        }
         const result = model.room.createConstructionSite(position.x, position.y, structureType);
         if (result === OK) {
             diagnostics.created++;

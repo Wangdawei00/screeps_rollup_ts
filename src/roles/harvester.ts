@@ -1,5 +1,5 @@
-import type { RoomModel } from "../colony/roomModel";
-import { localStores, readyToWork, retreat, travel } from "./common";
+import type {RoomModel} from "@/colony/roomModel";
+import {localStores, readyToWork, retreat, travel} from "@/roles/common";
 
 export function runHarvester(creep: Creep, model?: RoomModel): void {
     if (retreat(creep)) return;
@@ -15,8 +15,8 @@ export function runHarvester(creep: Creep, model?: RoomModel): void {
         store.store.getFreeCapacity(RESOURCE_ENERGY) > 0);
     const target = creep.pos.findClosestByRange(primary.length ? primary : secondary);
     if (target) {
-        if (creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) creep.moveTo(target, { reusePath: 5 });
+        if (creep.transfer(target, RESOURCE_ENERGY) === ERR_NOT_IN_RANGE) creep.moveTo(target, {reusePath: 5});
     } else if (creep.room.controller?.my) {
-        if (creep.upgradeController(creep.room.controller) === ERR_NOT_IN_RANGE) creep.moveTo(creep.room.controller, { range: 3 });
+        if (creep.upgradeController(creep.room.controller) === ERR_NOT_IN_RANGE) creep.moveTo(creep.room.controller, {range: 3});
     }
 }

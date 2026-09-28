@@ -1,6 +1,6 @@
-import type { RoomModel } from "../colony/roomModel";
-import type { WorkJob } from "../domain/types";
-import { readyToWork, retreat, travel } from "./common";
+import type {RoomModel} from "@/colony/roomModel";
+import type {WorkJob} from "@/domain/types";
+import {readyToWork, retreat, travel} from "@/roles/common";
 
 export function runWorker(creep: Creep, model?: RoomModel): void {
     if (retreat(creep)) return;
@@ -18,15 +18,16 @@ export function runWorker(creep: Creep, model?: RoomModel): void {
         const target = Game.getObjectById(job.targetId);
         if (!target) continue;
         if (job.type === "build" && "progress" in target) {
-            if (creep.build(target) === ERR_NOT_IN_RANGE) creep.moveTo(target, { range: 3, reusePath: 10 });
+            if (creep.build(target) === ERR_NOT_IN_RANGE)
+                creep.moveTo(target, {range: 3, reusePath: 10});
             return;
         }
         if (job.type === "repair" && "hits" in target && target.hits < job.targetHits) {
-            if (creep.repair(target) === ERR_NOT_IN_RANGE) creep.moveTo(target, { range: 3, reusePath: 10 });
+            if (creep.repair(target) === ERR_NOT_IN_RANGE) creep.moveTo(target, {range: 3, reusePath: 10});
             return;
         }
     }
     if (creep.room.controller?.my && creep.upgradeController(creep.room.controller) === ERR_NOT_IN_RANGE) {
-        creep.moveTo(creep.room.controller, { range: 3, reusePath: 10 });
+        creep.moveTo(creep.room.controller, {range: 3, reusePath: 10});
     }
 }

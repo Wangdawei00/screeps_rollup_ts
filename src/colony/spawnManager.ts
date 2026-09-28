@@ -1,8 +1,8 @@
-import type { SpawnRequest } from "../domain/types";
-import { bodyCost } from "../planning/bodyBuilder";
-import { quarantineRequest, spawnRequestError } from "../kernel/memory";
-import { runIsolated } from "../kernel/scheduler";
-import type { RoomModel } from "./roomModel";
+import type {SpawnRequest} from "@/domain/types";
+import {bodyCost} from "@/planning/bodyBuilder";
+import {quarantineRequest, spawnRequestError} from "@/kernel/memory";
+import {runIsolated} from "@/kernel/scheduler";
+import type {RoomModel} from "@/colony/roomModel";
 
 function isTransient(result: ScreepsReturnCode): boolean {
     return result === ERR_BUSY || result === ERR_NOT_ENOUGH_ENERGY || result === ERR_RCL_NOT_ENOUGH;
@@ -32,7 +32,7 @@ export function runSpawns(model: RoomModel): void {
                     role: request.role, homeRoom: request.homeRoom, demandKey: request.key,
                     assignment: request.assignment, state: "pickup", working: false
                 };
-                const result = spawn.spawnCreep(request.body, name, { memory });
+                const result = spawn.spawnCreep(request.body, name, {memory});
                 request.attempts++;
                 if (result === OK) {
                     budget -= bodyCost(request.body);
@@ -50,6 +50,7 @@ export function runSpawns(model: RoomModel): void {
             }
         });
     }
+
     function remove(request: SpawnRequest): void {
         const index = colony.spawnQueue.indexOf(request);
         if (index !== -1) colony.spawnQueue.splice(index, 1);

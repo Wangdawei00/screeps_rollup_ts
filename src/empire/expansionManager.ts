@@ -1,11 +1,11 @@
-import policy from "../config/policy";
-import type { RoomModel } from "../colony/roomModel";
-import type { CreepDemand, ExpansionStage } from "../domain/types";
-import { ensureColony } from "../kernel/memory";
-import { planLayout } from "../planning/layoutPlanner";
-import { buildWorker } from "../planning/bodyBuilder";
-import { healthyOrigin } from "./remoteManager";
-import { isIntelStale, markRoomInaccessible, nearbyRooms, safeRoute, username } from "./intelManager";
+import policy from "@/config/policy";
+import type {RoomModel} from "@/colony/roomModel";
+import type {CreepDemand, ExpansionStage} from "@/domain/types";
+import {ensureColony} from "@/kernel/memory";
+import {planLayout} from "@/planning/layoutPlanner";
+import {buildWorker} from "@/planning/bodyBuilder";
+import {healthyOrigin} from "@/empire/remoteManager";
+import {isIntelStale, markRoomInaccessible, nearbyRooms, safeRoute, username} from "@/empire/intelManager";
 
 let lastEvaluation = -Infinity;
 
@@ -69,12 +69,15 @@ export function runExpansion(models: ReadonlyMap<string, RoomModel>): CreepDeman
     const push = (role: CreepDemand["role"], target: string, suffix: string, body: BodyPartConstant[], priority: number): void => {
         if (body.length) demands.push({
             key: `expansion:${target}:${suffix}`, role, homeRoom: origin.name, body, priority,
-            assignment: { type: "remote", targetRoom: target },
+            assignment: {type: "remote", targetRoom: target},
             travelEstimate: (Memory.intel[target]?.routes[origin.name]?.distance || policy.maxRemoteDistance) * 50
         });
     };
     if (campaign.stage === "scouting") {
-        if (models.size >= Game.gcl.level) { fail(campaign, "No free GCL"); return demands; }
+        if (models.size >= Game.gcl.level) {
+            fail(campaign, "No free GCL");
+            return demands;
+        }
         if (origin.storageEnergy < policy.expansionEnergyThreshold) return demands;
         const candidates = campaign.candidates.filter(name => {
             const intel = Memory.intel[name];
@@ -94,9 +97,15 @@ export function runExpansion(models: ReadonlyMap<string, RoomModel>): CreepDeman
             const route = safeRoute(origin.name, target, false);
             if (!route || route.length > policy.maxRemoteDistance) continue;
             const stale = route.find(step => isIntelStale(Memory.intel[step.room]));
-            if (stale) { push("scout", stale.room, "scout", [MOVE], 15); return demands; }
+            if (stale) {
+                push("scout", stale.room, "scout", [MOVE], 15);
+                return demands;
+            }
             if (!intel?.controller || intel.sources.length < 2) continue;
-            if (!Game.rooms[target]) { push("scout", target, "scout", [MOVE], 15); return demands; }
+            if (!Game.rooms[target]) {
+                push("scout", target, "scout", [MOVE], 15);
+                return demands;
+            }
             if (!evaluate && Game.time !== campaign.changedAt) return demands;
             lastEvaluation = Game.time;
             const layout = planLayout(Game.rooms[target]);
@@ -115,7 +124,10 @@ export function runExpansion(models: ReadonlyMap<string, RoomModel>): CreepDeman
         }
     }
     const target = campaign.selectedRoom;
-    if (!target || !campaign.anchor) { fail(campaign, "Invalid campaign"); return demands; }
+    if (!target || !campaign.anchor) {
+        fail(campaign, "Invalid campaign");
+        return demands;
+    }
     const targetModel = models.get(target);
     const room = Game.rooms[target];
     const intel = Memory.intel[target];
@@ -124,7 +136,10 @@ export function runExpansion(models: ReadonlyMap<string, RoomModel>): CreepDeman
         fail(campaign, "Target unsafe");
         return demands;
     }
-    if (!room?.controller?.my && models.size >= Game.gcl.level) { fail(campaign, "No free GCL"); return demands; }
+    if (!room?.controller?.my && models.size >= Game.gcl.level) {
+        fail(campaign, "No free GCL");
+        return demands;
+    }
     const route = safeRoute(origin.name, target);
     if (!route || route.length > policy.maxRemoteDistance) {
         const exploration = safeRoute(origin.name, target, false);
@@ -135,7 +150,7 @@ export function runExpansion(models: ReadonlyMap<string, RoomModel>): CreepDeman
     }
     if (room?.controller?.my) {
         const colony = ensureColony(target);
-        colony.anchor = { ...campaign.anchor };
+        colony.anchor = {...campaign.anchor};
         if (campaign.stage === "selected" || campaign.stage === "claiming") transition(campaign, "spawnSite");
         const hasSpawn = targetModel ? targetModel.spawns.length > 0 : room.find(FIND_MY_SPAWNS).length > 0;
         if (campaign.stage === "spawnSite" && hasSpawn) transition(campaign, "bootstrapping");

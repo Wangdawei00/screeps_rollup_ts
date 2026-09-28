@@ -1,18 +1,18 @@
-import policy, { validatePolicy } from "../config/policy";
-import type { CreepDemand } from "../domain/types";
-import { buildRoomModel } from "../colony/roomModel";
-import type { RoomModel } from "../colony/roomModel";
-import { runColony } from "../colony/colonyManager";
-import { reconcilePopulation } from "../colony/populationPlanner";
-import { runSpawns } from "../colony/spawnManager";
-import { updateIntel } from "../empire/intelManager";
-import { runRemotes } from "../empire/remoteManager";
-import { runExpansion } from "../empire/expansionManager";
-import { runMarket } from "../empire/marketManager";
-import { runProduction } from "../empire/productionManager";
-import { runCreeps } from "../roles";
-import { cleanupMemory, initializeMemory } from "./memory";
-import { runIsolated, Scheduler } from "./scheduler";
+import policy, {validatePolicy} from "@/config/policy";
+import type {CreepDemand} from "@/domain/types";
+import {buildRoomModel} from "@/colony/roomModel";
+import type {RoomModel} from "@/colony/roomModel";
+import {runColony} from "@/colony/colonyManager";
+import {reconcilePopulation} from "@/colony/populationPlanner";
+import {runSpawns} from "@/colony/spawnManager";
+import {updateIntel} from "@/empire/intelManager";
+import {runRemotes} from "@/empire/remoteManager";
+import {runExpansion} from "@/empire/expansionManager";
+import {runMarket} from "@/empire/marketManager";
+import {runProduction} from "@/empire/productionManager";
+import {runCreeps} from "@/roles";
+import {cleanupMemory, initializeMemory} from "@/kernel/memory";
+import {runIsolated, Scheduler} from "@/kernel/scheduler";
 
 let policyValidated = false;
 
@@ -42,9 +42,24 @@ export function runKernel(): void {
         runIsolated(`colony:${model.name}`, () => demands.push(...runColony(model)));
     }
     const empire = new Scheduler();
-    empire.register({ name: "empire:remotes", priority: "normal", interval: 1, run: () => demands.push(...runRemotes(models)) });
-    empire.register({ name: "empire:expansion", priority: "normal", interval: 1, run: () => demands.push(...runExpansion(models)) });
-    empire.register({ name: "empire:production", priority: "normal", interval: 1, run: () => demands.push(...runProduction(models)) });
+    empire.register({
+        name: "empire:remotes",
+        priority: "normal",
+        interval: 1,
+        run: () => demands.push(...runRemotes(models))
+    });
+    empire.register({
+        name: "empire:expansion",
+        priority: "normal",
+        interval: 1,
+        run: () => demands.push(...runExpansion(models))
+    });
+    empire.register({
+        name: "empire:production",
+        priority: "normal",
+        interval: 1,
+        run: () => demands.push(...runProduction(models))
+    });
     empire.register({
         name: "empire:market", priority: "low", interval: 1,
         condition: () => Game.cpu.bucket >= policy.minimumCpuBucket, run: () => runMarket(models)

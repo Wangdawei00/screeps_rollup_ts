@@ -1,5 +1,5 @@
-import type { ScheduledProcess } from "../domain/types";
-import { reportError } from "./errors";
+import type {ScheduledProcess} from "@/domain/types";
+import {reportError} from "@/kernel/errors";
 
 export function runIsolated(name: string, run: () => void): void {
     try {
@@ -21,7 +21,7 @@ export class Scheduler {
     }
 
     run(): void {
-        const order = { critical: 0, normal: 1, low: 2 };
+        const order = {critical: 0, normal: 1, low: 2};
         const processes = Array.from(this.processes.values()).sort((a, b) => order[a.priority] - order[b.priority]);
         for (const process of processes) {
             if (Game.time % process.interval !== 0) continue;

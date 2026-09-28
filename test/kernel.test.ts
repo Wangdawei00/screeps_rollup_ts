@@ -1,6 +1,6 @@
 import { expect, it, jest } from "@jest/globals";
-import { runKernel } from "../src/kernel/kernel";
-import { initializeMemory } from "../src/kernel/memory";
+import { runKernel } from "@/kernel/kernel";
+import { initializeMemory } from "@/kernel/memory";
 import { addCreep, ownedRoom } from "./fixtures";
 
 it("boots a flag-free room through the real kernel and retains its spawning demand across ticks", () => {

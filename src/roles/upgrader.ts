@@ -1,5 +1,5 @@
-import type { RoomModel } from "../colony/roomModel";
-import { diagnostic, localStores, readyToWork, travel } from "./common";
+import type {RoomModel} from "@/colony/roomModel";
+import {diagnostic, localStores, readyToWork, travel} from "@/roles/common";
 
 export function runUpgrader(creep: Creep, model?: RoomModel): void {
     const assignment = creep.memory.assignment;
@@ -17,6 +17,10 @@ export function runUpgrader(creep: Creep, model?: RoomModel): void {
     if (!readyToWork(creep, model, preferred)) return;
     const result = creep.upgradeController(controller);
     if (result === ERR_NOT_IN_RANGE) {
-        if (creep.moveTo(controller, { range: 3, reusePath: 20 }) === ERR_NO_PATH) diagnostic(creep, "Controller inaccessible");
+        if (creep.moveTo(controller, {
+            range: 3,
+            reusePath: 20
+        }) === ERR_NO_PATH)
+            diagnostic(creep, "Controller inaccessible");
     } else if (result !== OK && result !== ERR_NOT_ENOUGH_RESOURCES) diagnostic(creep, `Upgrade failed ${result}`);
 }

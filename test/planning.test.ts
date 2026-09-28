@@ -1,6 +1,6 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import { bodyCost, buildDefender, buildHarvester, buildMiner, buildReserver, buildTransporter, buildUpgrader, buildWorker } from "../src/planning/bodyBuilder";
-import { planLayout, LAYOUT_REVISION } from "../src/planning/layoutPlanner";
+import { planLayout, LAYOUT_REVISION } from "@/planning/layoutPlanner";
 import { planSources } from "../src/planning/sourcePlanner";
 import { compatible, range } from "../src/planning/geometry";
 import { reconcilePlanning, runConstruction } from "../src/colony/constructionManager";

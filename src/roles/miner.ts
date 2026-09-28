@@ -1,5 +1,5 @@
-import type { RoomModel } from "../colony/roomModel";
-import { diagnostic, localStores, position, retreat, travel, unload } from "./common";
+import type {RoomModel} from "@/colony/roomModel";
+import {diagnostic, localStores, position, retreat, travel, unload} from "@/roles/common";
 
 export function runMiner(creep: Creep, model?: RoomModel): void {
     const assignment = creep.memory.assignment;
@@ -12,7 +12,10 @@ export function runMiner(creep: Creep, model?: RoomModel): void {
     }
     const workPosition = position(assignment.workPosition);
     if (!creep.pos.isEqualTo(workPosition)) {
-        if (creep.moveTo(workPosition, { range: 0, reusePath: 20 }) === ERR_NO_PATH) diagnostic(creep, "Work tile inaccessible");
+        if (creep.moveTo(workPosition, {
+            range: 0,
+            reusePath: 20
+        }) === ERR_NO_PATH) diagnostic(creep, "Work tile inaccessible");
         return;
     }
     const resource = assignment.type === "source" ? RESOURCE_ENERGY : (source as Mineral).mineralType;

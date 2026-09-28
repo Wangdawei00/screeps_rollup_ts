@@ -1,6 +1,6 @@
-import { assignmentMatchesRole, isAssignment, isCreepRole, isPosition } from "../domain/types";
-import type { SpawnRequest } from "../domain/types";
-import { runIsolated } from "./scheduler";
+import {assignmentMatchesRole, isAssignment, isCreepRole, isPosition} from "@/domain/types";
+import type {SpawnRequest} from "@/domain/types";
+import {runIsolated} from "@/kernel/scheduler";
 
 export const CURRENT_MEMORY_VERSION = 2;
 const QUARANTINE_LIMIT = 30;
@@ -18,7 +18,7 @@ export function createColonyMemory(): ColonyMemory {
             lastRcl: 0, revision: 0, anchorKey: "", structureSignature: "",
             plannedSites: [], blocked: {}, lastPlannedAt: 0
         },
-        defense: { lastThreatTick: 0, history: [], lastSafeModeAttempt: 0 }
+        defense: {lastThreatTick: 0, history: [], lastSafeModeAttempt: 0}
     };
 }
 
@@ -72,14 +72,19 @@ function initializeRoots(): void {
         creeps: {}, rooms: {}, colonies: {}, intel: {},
         empire: {
             createdAt: Game.time,
-            expansion: { stage: "idle", candidates: [], changedAt: Game.time },
-            market: { lastAnalysis: 0, terminalGoals: [], orders: {} }, production: {}
+            expansion: {stage: "idle", candidates: [], changedAt: Game.time},
+            market: {lastAnalysis: 0, terminalGoals: [], orders: {}}, production: {}
         }
     };
     repairFields(Memory, defaults, "root");
     if (!["idle", "scouting", "selected", "claiming", "spawnSite", "bootstrapping", "complete"].includes(Memory.empire.expansion.stage)) {
         console.log(`[memory:empire] invalid expansion stage ${Memory.empire.expansion.stage}; cancelling campaign`);
-        Memory.empire.expansion = { stage: "idle", candidates: [], changedAt: Game.time, failureReason: "Invalid persisted stage" };
+        Memory.empire.expansion = {
+            stage: "idle",
+            candidates: [],
+            changedAt: Game.time,
+            failureReason: "Invalid persisted stage"
+        };
     }
 }
 
@@ -163,7 +168,7 @@ export function spawnRequestError(value: unknown, homeRoom?: string): string | u
 
 export function quarantineRequest(colony: ColonyMemory, value: unknown, reason: string): void {
     const key = isRecord(value) && typeof value.key === "string" ? value.key : "<invalid>";
-    colony.quarantine.push({ key, reason, tick: Game.time });
+    colony.quarantine.push({key, reason, tick: Game.time});
     colony.quarantine = colony.quarantine.slice(-QUARANTINE_LIMIT);
     console.log(`[spawn:quarantine:${key}] ${reason}`);
 }

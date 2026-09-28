@@ -1,13 +1,13 @@
 import { beforeEach, expect, it, jest } from "@jest/globals";
 import policy from "../src/config/policy";
-import { buildRoomModel, RoomModel } from "../src/colony/roomModel";
-import { initializeMemory } from "../src/kernel/memory";
-import { isIntelStale, markRoomInaccessible, safeRoute, updateIntel } from "../src/empire/intelManager";
-import { runRemotes } from "../src/empire/remoteManager";
-import { runExpansion } from "../src/empire/expansionManager";
-import { runProduction } from "../src/empire/productionManager";
-import { runMarket } from "../src/empire/marketManager";
-import { available } from "../src/empire/resources";
+import { buildRoomModel, RoomModel } from "@/colony/roomModel";
+import { initializeMemory } from "@/kernel/memory";
+import { isIntelStale, markRoomInaccessible, safeRoute, updateIntel } from "@/empire/intelManager";
+import { runRemotes } from "@/empire/remoteManager";
+import { runExpansion } from "@/empire/expansionManager";
+import { runProduction } from "@/empire/productionManager";
+import { runMarket } from "@/empire/marketManager";
+import { available } from "@/empire/resources";
 import { mock, ownedRoom } from "./fixtures";
 
 let tick = 1000;

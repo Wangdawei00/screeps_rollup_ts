@@ -1,8 +1,8 @@
-import { serializePosition } from "../domain/types";
-import type { PlannedStructure, SerializedPosition } from "../domain/types";
-import { compatible, planningMatrix, positionKey, range } from "./geometry";
+import {serializePosition} from "@/domain/types";
+import type {PlannedStructure, SerializedPosition} from "@/domain/types";
+import {compatible, planningMatrix, positionKey, range} from "@/planning/geometry";
 
-export type { PlannedStructure } from "../domain/types";
+export type {PlannedStructure} from "@/domain/types";
 export const LAYOUT_REVISION = 1;
 
 export function planLayout(room: Room, requestedAnchor?: SerializedPosition):
@@ -26,11 +26,11 @@ export function planLayout(room: Room, requestedAnchor?: SerializedPosition):
     if (requestedAnchor && valid(requestedAnchor, STRUCTURE_SPAWN)) candidates.push(requestedAnchor);
     if (!candidates.length) {
         candidates.push(...spawns.map(spawn => serializePosition(spawn.pos)));
-        for (let x = 5; x <= 44; x += 3) for (let y = 5; y <= 44; y += 3) candidates.push({ x, y, roomName: room.name });
+        for (let x = 5; x <= 44; x += 3) for (let y = 5; y <= 44; y += 3) candidates.push({x, y, roomName: room.name});
         const score = (position: SerializedPosition): number => {
             let space = 0;
             for (let dx = -5; dx <= 5; dx++) for (let dy = -5; dy <= 5; dy++) {
-                if (valid({ x: position.x + dx, y: position.y + dy, roomName: room.name }, STRUCTURE_EXTENSION)) space++;
+                if (valid({x: position.x + dx, y: position.y + dy, roomName: room.name}, STRUCTURE_EXTENSION)) space++;
             }
             return space * 2 - sources.reduce((sum, source) => sum + range(source.pos, position), 0) -
                 (room.controller ? range(room.controller.pos, position) : 0) +
@@ -41,7 +41,7 @@ export function planLayout(room: Room, requestedAnchor?: SerializedPosition):
     }
     if (!candidates.some(position => valid(position, STRUCTURE_SPAWN))) {
         for (let x = 2; x < 48; x++) for (let y = 2; y < 48; y++) {
-            const position = { x, y, roomName: room.name };
+            const position = {x, y, roomName: room.name};
             if (valid(position, STRUCTURE_SPAWN)) candidates.push(position);
         }
     }
@@ -51,8 +51,8 @@ export function planLayout(room: Room, requestedAnchor?: SerializedPosition):
         if (spawns.some(spawn => range(spawn.pos, position) === 0)) return true;
         const origin = new RoomPosition(position.x, position.y, room.name);
         const reachable = (target: RoomPosition, distance: number): boolean =>
-            !PathFinder.search(origin, { pos: target, range: distance },
-                { maxRooms: 1, maxOps: 5000, roomCallback: () => matrix }).incomplete;
+            !PathFinder.search(origin, {pos: target, range: distance},
+                {maxRooms: 1, maxOps: 5000, roomCallback: () => matrix}).incomplete;
         return (!room.controller || reachable(room.controller.pos, 3)) &&
             (!sources.length || sources.some(source => reachable(source.pos, 1)));
     });
@@ -62,8 +62,8 @@ export function planLayout(room: Room, requestedAnchor?: SerializedPosition):
     const roads = new Set<string>();
     // Reserve access before placing buildings, including corridors to all economic objects.
     for (const target of [...sources, ...(room.controller ? [room.controller] : [])]) {
-        const result = PathFinder.search(new RoomPosition(anchor.x, anchor.y, room.name), { pos: target.pos, range: 1 },
-            { maxRooms: 1, maxOps: 5000, plainCost: 2, swampCost: 5, roomCallback: () => matrix });
+        const result = PathFinder.search(new RoomPosition(anchor.x, anchor.y, room.name), {pos: target.pos, range: 1},
+            {maxRooms: 1, maxOps: 5000, plainCost: 2, swampCost: 5, roomCallback: () => matrix});
         for (const position of result.path) if (valid(position, STRUCTURE_ROAD)) roads.add(positionKey(position));
     }
     const corridors = new Set(roads);
@@ -71,7 +71,7 @@ export function planLayout(room: Room, requestedAnchor?: SerializedPosition):
         const key = positionKey(position);
         if (!valid(position, type) || used.has(key) || (type !== STRUCTURE_ROAD && roads.has(key))) return false;
         used.set(key, type);
-        structures.push({ position: serializePosition(position), structureType: type, minimumRcl: rcl, priority });
+        structures.push({position: serializePosition(position), structureType: type, minimumRcl: rcl, priority});
         return true;
     };
     roads.delete(positionKey(anchor));
@@ -80,7 +80,7 @@ export function planLayout(room: Room, requestedAnchor?: SerializedPosition):
     for (let radius = 1; radius <= 12; radius++) for (let dx = -radius; dx <= radius; dx++) {
         for (let dy = -radius; dy <= radius; dy++) {
             if (Math.max(Math.abs(dx), Math.abs(dy)) !== radius) continue;
-            const position = { x: anchor.x + dx, y: anchor.y + dy, roomName: room.name };
+            const position = {x: anchor.x + dx, y: anchor.y + dy, roomName: room.name};
             if ((dx + dy) % 2 === 0) slots.push(position);
             else if (radius <= 9 && valid(position, STRUCTURE_ROAD)) roads.add(positionKey(position));
         }
@@ -97,7 +97,7 @@ export function planLayout(room: Room, requestedAnchor?: SerializedPosition):
     // A compact ten-lab cluster: both central inputs reach every peripheral output.
     const labOffsets = [[0, 0], [0, 2], [-1, 0], [1, 0], [-1, 1], [1, 1], [-1, 2], [1, 2], [-2, 1], [2, 1]];
     for (const center of slots) {
-        const cluster = labOffsets.map(([dx, dy]) => ({ x: center.x + dx, y: center.y + dy, roomName: room.name }));
+        const cluster = labOffsets.map(([dx, dy]) => ({x: center.x + dx, y: center.y + dy, roomName: room.name}));
         if (!cluster.every(pos => valid(pos, STRUCTURE_LAB) && !used.has(positionKey(pos)))) continue;
         // Preserve the actual source/controller corridors (checkerboard filler roads may be replaced).
         if (cluster.some(pos => corridors.has(positionKey(pos)))) continue;
@@ -119,15 +119,20 @@ export function planLayout(room: Room, requestedAnchor?: SerializedPosition):
     place(STRUCTURE_NUKER, 8, 10);
     for (const key of roads) {
         const [, x, y] = key.split(":");
-        const position = { x: Number(x), y: Number(y), roomName: room.name };
+        const position = {x: Number(x), y: Number(y), roomName: room.name};
         const adjacentRcl = structures.filter(s => s.structureType !== STRUCTURE_ROAD && range(s.position, position) <= 1)
             .reduce((minimum, s) => Math.min(minimum, s.minimumRcl), 8);
         add(position, STRUCTURE_ROAD, corridors.has(key) ? 2 : Math.max(2, adjacentRcl), 40);
     }
     for (const structure of structures.slice()) {
         if ([STRUCTURE_SPAWN, STRUCTURE_STORAGE, STRUCTURE_TOWER, STRUCTURE_TERMINAL].some(type => type === structure.structureType)) {
-            structures.push({ ...structure, structureType: STRUCTURE_RAMPART, minimumRcl: Math.max(2, structure.minimumRcl), priority: 25 });
+            structures.push({
+                ...structure,
+                structureType: STRUCTURE_RAMPART,
+                minimumRcl: Math.max(2, structure.minimumRcl),
+                priority: 25
+            });
         }
     }
-    return { anchor: serializePosition(anchor), structures };
+    return {anchor: serializePosition(anchor), structures};
 }
