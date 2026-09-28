@@ -1,14 +1,14 @@
-import { beforeEach, expect, it, jest } from "@jest/globals";
+import {beforeEach, expect, it, jest} from "@jest/globals";
 import policy from "../src/config/policy";
-import { buildRoomModel, RoomModel } from "@/colony/roomModel";
-import { initializeMemory } from "@/kernel/memory";
-import { isIntelStale, markRoomInaccessible, safeRoute, updateIntel } from "@/empire/intelManager";
-import { runRemotes } from "@/empire/remoteManager";
-import { runExpansion } from "@/empire/expansionManager";
-import { runProduction } from "@/empire/productionManager";
-import { runMarket } from "@/empire/marketManager";
-import { available } from "@/empire/resources";
-import { mock, ownedRoom } from "./fixtures";
+import {buildRoomModel, RoomModel} from "@/colony/roomModel";
+import {initializeMemory} from "@/kernel/memory";
+import {isIntelStale, markRoomInaccessible, safeRoute, updateIntel} from "@/empire/intelManager";
+import {runRemotes} from "@/empire/remoteManager";
+import {runExpansion} from "@/empire/expansionManager";
+import {runProduction} from "@/empire/productionManager";
+import {runMarket} from "@/empire/marketManager";
+import {available} from "@/empire/resources";
+import {mock, ownedRoom} from "./fixtures";
 
 let tick = 1000;
 beforeEach(() => {
@@ -16,13 +16,13 @@ beforeEach(() => {
 });
 
 function store(energy: number, capacity: number, cargo: Partial<Record<ResourceConstant, number>> = {}): StoreDefinition {
-    const resources = { energy, ...cargo };
+    const resources = {energy, ...cargo};
     const used = (resource?: ResourceConstant): number => resource ? resources[resource] || 0 :
         Object.values(resources).reduce((sum, amount) => sum + (amount || 0), 0);
     return Object.defineProperties(resources, {
-        getUsedCapacity: { value: used },
-        getCapacity: { value: () => capacity },
-        getFreeCapacity: { value: () => capacity - used() }
+        getUsedCapacity: {value: used},
+        getCapacity: {value: () => capacity},
+        getFreeCapacity: {value: () => capacity - used()}
     }) as StoreDefinition;
 }
 
@@ -38,7 +38,7 @@ function healthy(name = "W1N1", energy = 300000) {
     initializeMemory();
     const model = buildRoomModel(fixture.room);
     model.stage = "stable";
-    return { ...fixture, storage, model };
+    return {...fixture, storage, model};
 }
 
 function terminal(home: ReturnType<typeof healthy>, energy = 50000, cargo: Partial<Record<ResourceConstant, number>> = {}) {
@@ -59,9 +59,9 @@ function neutral(home: ReturnType<typeof healthy>, name = "W2N1") {
     Reflect.deleteProperty(target.controller, "owner");
     target.structures.splice(0);
     delete Game.spawns[target.spawn.name];
-    Game.map.describeExits = (() => ({ [RIGHT]: name })) as GameMap["describeExits"];
+    Game.map.describeExits = (() => ({[RIGHT]: name})) as GameMap["describeExits"];
     Game.map.findRoute = ((origin: string, destination: string) => origin === destination ? [] :
-        [{ exit: RIGHT, room: destination }]) as GameMap["findRoute"];
+        [{exit: RIGHT, room: destination}]) as GameMap["findRoute"];
     updateIntel(target.room, new Map([[home.model.name, home.model]]));
     return target;
 }
@@ -87,16 +87,16 @@ it("records observed intel, classifies rooms, and reuses cached route distances"
 it("rejects danger and stale intermediate rooms rather than trusting route distance alone", () => {
     const home = healthy();
     neutral(home);
-    Game.map.findRoute = (() => [{ exit: RIGHT, room: "W3N1" }, { exit: RIGHT, room: "W2N1" }]) as GameMap["findRoute"];
+    Game.map.findRoute = (() => [{exit: RIGHT, room: "W3N1"}, {exit: RIGHT, room: "W2N1"}]) as GameMap["findRoute"];
     expect(safeRoute(home.room.name, "W2N1")).toBeUndefined();
-    Memory.intel.W3N1 = { ...Memory.intel.W2N1, sources: [], threat: { ...Memory.intel.W2N1.threat, total: 50 } };
+    Memory.intel.W3N1 = {...Memory.intel.W2N1, sources: [], threat: {...Memory.intel.W2N1.threat, total: 50}};
     expect(safeRoute(home.room.name, "W2N1")).toBeUndefined();
 });
 
 it("requests scouts for unknown remotes and retires all economic demands on recovery", () => {
     const home = healthy();
-    Game.map.describeExits = (() => ({ [RIGHT]: "W2N1" })) as GameMap["describeExits"];
-    Game.map.findRoute = (() => [{ exit: RIGHT, room: "W2N1" }]) as GameMap["findRoute"];
+    Game.map.describeExits = (() => ({[RIGHT]: "W2N1"})) as GameMap["describeExits"];
+    Game.map.findRoute = (() => [{exit: RIGHT, room: "W2N1"}]) as GameMap["findRoute"];
     const models = new Map([[home.model.name, home.model]]);
     expect(runRemotes(models).some(demand => demand.role === "scout" && demand.key.startsWith("remote:"))).toBe(true);
     home.model.stage = "recovering";
@@ -113,8 +113,8 @@ it("sizes remote hauling from the complete route and emits home-owned collection
     });
     target.structures.push(container);
     target.objects.set(container.id, container);
-    const path = Array.from({ length: 80 }, (_, index) => new RoomPosition(20, 20, index < 40 ? target.room.name : home.room.name));
-    const search = jest.spyOn(PathFinder, "search").mockReturnValue({ path, cost: 80, ops: 80, incomplete: false });
+    const path = Array.from({length: 80}, (_, index) => new RoomPosition(20, 20, index < 40 ? target.room.name : home.room.name));
+    const search = jest.spyOn(PathFinder, "search").mockReturnValue({path, cost: 80, ops: 80, incomplete: false});
     const demands = runRemotes(new Map([[home.model.name, home.model]]));
     const plan = Memory.colonies[home.room.name].remotes[target.room.name].sourcePlans[target.source.id];
     expect(plan.pathLength).toBe(80);
@@ -143,7 +143,7 @@ it("resumes claiming, delegates first spawn placement, and bounds a stalled spaw
     const home = healthy();
     const target = neutral(home);
     Game.gcl.level = 2;
-    const anchor = { x: 22, y: 22, roomName: target.room.name };
+    const anchor = {x: 22, y: 22, roomName: target.room.name};
     Memory.empire.expansion = {
         stage: "claiming", candidates: [target.room.name], selectedRoom: target.room.name,
         originRoom: home.room.name, anchor, changedAt: Game.time
@@ -151,7 +151,7 @@ it("resumes claiming, delegates first spawn placement, and bounds a stalled spaw
     const models = new Map([[home.model.name, home.model]]);
     expect(runExpansion(models).some(demand => demand.role === "claimer")).toBe(true);
     target.controller.my = true;
-    target.controller.owner = { username: "player" };
+    target.controller.owner = {username: "player"};
     Game.time++;
     updateIntel(target.room, models);
     const demands = runExpansion(models);
@@ -200,7 +200,7 @@ it("prepares terminal energy through logistics without withdrawing the storage r
 it("balances mineral surplus before market sales and retains colony inventory", () => {
     const home = healthy();
     const other = healthy("W2N1");
-    const sender = terminal(home, 50000, { H: 12000 });
+    const sender = terminal(home, 50000, {H: 12000});
     terminal(other);
     marketMock();
     runMarket(new Map([[home.model.name, home.model], [other.model.name, other.model]]));
@@ -211,10 +211,12 @@ it("balances mineral surplus before market sales and retains colony inventory", 
 
 it("compares net sale prices including transaction energy and uses a short-lived order cache", () => {
     const home = healthy();
-    terminal(home, 50000, { H: 12000 });
+    terminal(home, 50000, {H: 12000});
     marketMock();
-    const low = mock<Order>({ id: "low", type: ORDER_BUY, resourceType: RESOURCE_HYDROGEN,
-        remainingAmount: 10000, amount: 10000, price: 0.011, roomName: "W9N9" });
+    const low = mock<Order>({
+        id: "low", type: ORDER_BUY, resourceType: RESOURCE_HYDROGEN,
+        remainingAmount: 10000, amount: 10000, price: 0.011, roomName: "W9N9"
+    });
     jest.mocked(Game.market.getAllOrders).mockImplementation(filter =>
         typeof filter !== "function" && filter?.resourceType === RESOURCE_HYDROGEN ? [low] : []);
     jest.mocked(Game.market.getOrderById).mockReturnValue(low);

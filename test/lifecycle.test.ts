@@ -1,10 +1,10 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { CURRENT_MEMORY_VERSION, cleanupMemory, initializeMemory } from "../src/kernel/memory";
-import { Scheduler } from "../src/kernel/scheduler";
-import { buildRoomModel } from "../src/colony/roomModel";
-import { demandSatisfied, planPopulation, reconcilePopulation } from "../src/colony/populationPlanner";
-import { runSpawns } from "../src/colony/spawnManager";
-import type { CreepDemand, DefensePlan, LogisticsJob, SpawnRequest } from "../src/domain/types";
+import { CURRENT_MEMORY_VERSION, cleanupMemory, initializeMemory } from "@/kernel/memory";
+import { Scheduler } from "@/kernel/scheduler";
+import { buildRoomModel } from "@/colony/roomModel";
+import { demandSatisfied, planPopulation, reconcilePopulation } from "@/colony/populationPlanner";
+import { runSpawns } from "@/colony/spawnManager";
+import type { CreepDemand, DefensePlan, LogisticsJob, SpawnRequest } from "@/domain/types";
 import { addCreep, mock, ownedRoom } from "./fixtures";
 
 const peace: DefensePlan = {

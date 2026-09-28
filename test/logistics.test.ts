@@ -1,11 +1,11 @@
 import { describe, expect, it, jest } from "@jest/globals";
-import { initializeMemory } from "../src/kernel/memory";
-import { buildRoomModel } from "../src/colony/roomModel";
-import { claimJob, reconcileLogistics, releaseJob, upsertLogisticsJob } from "../src/colony/logisticsManager";
-import { runTransporter } from "../src/roles/transporter";
-import { runHarvester } from "../src/roles/harvester";
-import { runWorker } from "../src/roles/worker";
-import type { LogisticsEndpoint, LogisticsJob } from "../src/domain/types";
+import { initializeMemory } from "@/kernel/memory";
+import { buildRoomModel } from "@/colony/roomModel";
+import { claimJob, reconcileLogistics, releaseJob, upsertLogisticsJob } from "@/colony/logisticsManager";
+import { runTransporter } from "@/roles/transporter";
+import { runHarvester } from "@/roles/harvester";
+import { runWorker } from "@/roles/worker";
+import type { LogisticsEndpoint, LogisticsJob } from "@/domain/types";
 import { addCreep, mock, ownedRoom } from "./fixtures";
 
 function store(energy = 0, capacity = 300, cargo: Partial<Record<ResourceConstant, number>> = {}): StoreDefinition {

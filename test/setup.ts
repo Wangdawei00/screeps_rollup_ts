@@ -1,10 +1,11 @@
-import { beforeEach } from "@jest/globals";
+import {beforeEach} from "@jest/globals";
 
 Object.assign(globalThis, require("@screeps/common/lib/constants"));
-Object.assign(globalThis, { _: require("lodash") });
+Object.assign(globalThis, {_: require("lodash")});
 
 class TestRoomPosition {
-    constructor(public x: number, public y: number, public roomName: string) {}
+    constructor(public x: number, public y: number, public roomName: string) {
+    }
 
     getRangeTo(target: RoomPosition | { pos: RoomPosition } | number, y?: number): number {
         if (typeof target === "number") return Math.max(Math.abs(this.x - target), Math.abs(this.y - y!));
@@ -40,26 +41,41 @@ class TestRoomPosition {
 
 class TestCostMatrix {
     private readonly costs = new Map<string, number>();
-    set(x: number, y: number, cost: number): void { this.costs.set(`${x}:${y}`, cost); }
-    get(x: number, y: number): number { return this.costs.get(`${x}:${y}`) || 0; }
+
+    set(x: number, y: number, cost: number): void {
+        this.costs.set(`${x}:${y}`, cost);
+    }
+
+    get(x: number, y: number): number {
+        return this.costs.get(`${x}:${y}`) || 0;
+    }
 }
 
 Object.assign(globalThis, {
     RoomPosition: TestRoomPosition,
-    Room: { Terrain: class { get(): number { return 0; } } },
+    Room: {
+        Terrain: class {
+            get(): number {
+                return 0;
+            }
+        }
+    },
     PathFinder: {
         CostMatrix: TestCostMatrix,
-        search: (origin: RoomPosition, goal: { pos: RoomPosition; range: number } | { pos: RoomPosition; range: number }[]) => {
+        search: (origin: RoomPosition, goal: { pos: RoomPosition; range: number } | {
+            pos: RoomPosition;
+            range: number
+        }[]) => {
             const target = Array.isArray(goal) ? goal[0] : goal;
             const path: RoomPosition[] = [];
-            let { x, y } = origin;
+            let {x, y} = origin;
             for (let step = 0; step < 100 &&
-                Math.max(Math.abs(x - target.pos.x), Math.abs(y - target.pos.y)) > target.range; step++) {
+            Math.max(Math.abs(x - target.pos.x), Math.abs(y - target.pos.y)) > target.range; step++) {
                 x += Math.sign(target.pos.x - x);
                 y += Math.sign(target.pos.y - y);
                 path.push(new RoomPosition(x, y, target.pos.roomName));
             }
-            return { path, incomplete: false, ops: path.length, cost: path.length };
+            return {path, incomplete: false, ops: path.length, cost: path.length};
         }
     }
 });
@@ -70,16 +86,16 @@ beforeEach(() => {
         Game: {
             time: 1, creeps: {}, rooms: {}, spawns: {}, constructionSites: {}, flags: {},
             getObjectById: () => null,
-            cpu: { bucket: 10_000, getUsed: () => 0, limit: 20 },
-            gcl: { level: 1 },
+            cpu: {bucket: 10_000, getUsed: () => 0, limit: 20},
+            gcl: {level: 1},
             map: {
-                getRoomTerrain: () => ({ get: () => 0 }),
+                getRoomTerrain: () => ({get: () => 0}),
                 describeExits: () => ({}),
                 findRoute: () => [],
                 getRoomLinearDistance: () => 1,
-                getRoomStatus: () => ({ status: "normal", timestamp: null })
+                getRoomStatus: () => ({status: "normal", timestamp: null})
             },
-            market: { credits: 0 }
+            market: {credits: 0}
         }
     });
 });

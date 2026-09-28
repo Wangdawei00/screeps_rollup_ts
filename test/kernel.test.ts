@@ -7,10 +7,13 @@ it("boots a flag-free room through the real kernel and retains its spawning dema
     const { room, spawn } = ownedRoom();
     jest.mocked(spawn.spawnCreep).mockImplementation((body, name, options) => {
         Memory.creeps[name] = options!.memory!;
+        // @ts-ignore
         spawn.spawning = {
-            name, needTime: body.length * CREEP_SPAWN_TIME, remainingTime: body.length * CREEP_SPAWN_TIME,
-            spawn, cancel: () => OK, setDirections: () => OK
-        };
+            name, needTime: body.length * CREEP_SPAWN_TIME,
+            remainingTime: body.length * CREEP_SPAWN_TIME,
+            spawn, cancel: () => OK,
+            setDirections: () => OK,
+        } ;
         return OK;
     });
     const log = jest.spyOn(console, "log").mockImplementation(() => undefined);

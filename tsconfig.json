@@ -9,7 +9,10 @@
     "esModuleInterop": true,
     "strict": true,
     "target": "es2019",
-    "lib": ["ES2019", "DOM"],
+    "lib": [
+      "ES2019",
+      "DOM"
+    ],
     "moduleResolution": "Node",
     "outDir": "dist/",
     "baseUrl": "./",

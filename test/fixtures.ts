@@ -1,12 +1,12 @@
-import { jest } from "@jest/globals";
-import type { CreepRole } from "@/domain/types";
+import {jest} from "@jest/globals";
+import type {CreepRole} from "@/domain/types";
 
 export function mock<T>(value: Partial<T>): T {
     return value as T;
 }
 
 export function store(energy = 0, capacity = 300, cargo: Partial<Record<ResourceConstant, number>> = {}): StoreDefinition {
-    const resources = { energy, ...cargo };
+    const resources = {energy, ...cargo};
     const used = (resource?: ResourceConstant): number => resource ? resources[resource] || 0 :
         Object.values(resources).reduce((sum, amount) => sum + (amount || 0), 0);
     return Object.assign(resources, {
@@ -20,7 +20,7 @@ export function ownedRoom(name = "W1N1", energy = 300, level = 1) {
     const objects = new Map<string, { id: string }>();
     const controller = mock<StructureController>({
         id: `controller-${name}` as Id<StructureController>, my: true, level,
-        owner: { username: "player" }, pos: new RoomPosition(25, 25, name),
+        owner: {username: "player"}, pos: new RoomPosition(25, 25, name),
         ticksToDowngrade: 20_000, safeModeAvailable: 1,
         activateSafeMode: jest.fn<StructureController["activateSafeMode"]>().mockReturnValue(OK)
     });
@@ -31,7 +31,7 @@ export function ownedRoom(name = "W1N1", energy = 300, level = 1) {
     const spawn = mock<StructureSpawn>({
         id: `spawn-${name}` as Id<StructureSpawn>, name: `Spawn-${name}`, my: true,
         structureType: STRUCTURE_SPAWN, pos: new RoomPosition(22, 22, name),
-        store: store(energy), hits: 5000, hitsMax: 5000,
+        store: store(energy) as Store<RESOURCE_ENERGY, false>, hits: 5000, hitsMax: 5000,
         spawnCreep: jest.fn<StructureSpawn["spawnCreep"]>().mockReturnValue(OK),
         isActive: () => true
     });
@@ -53,14 +53,17 @@ export function ownedRoom(name = "W1N1", energy = 300, level = 1) {
     const room = mock<Room>({
         name, controller, energyAvailable: energy, energyCapacityAvailable: energy,
         find: jest.fn((type: FindConstant) => finds[type] || []) as Room["find"],
-        getTerrain: () => mock<RoomTerrain>({ get: () => 0 }),
+        getTerrain: () => mock<RoomTerrain>({get: () => 0}),
         lookForAt: ((type: LookConstant, x: number, y: number) => {
-            if (type === LOOK_STRUCTURES) return structures.filter(s => s.pos.x === x && s.pos.y === y);
-            if (type === LOOK_CONSTRUCTION_SITES) return sites.filter(s => s.pos.x === x && s.pos.y === y);
-            if (type === LOOK_SOURCES) return source.pos.x === x && source.pos.y === y ? [source] : [];
+            if (type === LOOK_STRUCTURES)
+                return structures.filter(s => s.pos.x === x && s.pos.y === y);
+            if (type === LOOK_CONSTRUCTION_SITES)
+                return sites.filter(s => s.pos.x === x && s.pos.y === y);
+            if (type === LOOK_SOURCES)
+                return source.pos.x === x && source.pos.y === y ? [source] : [];
             return [];
         }) as Room["lookForAt"],
-        createConstructionSite: jest.fn<Room["createConstructionSite"]>().mockReturnValue(OK)
+        createConstructionSite: jest.fn().mockReturnValue(OK) as Room["createConstructionSite"]
     });
     spawn.room = room;
     source.room = room;
@@ -72,22 +75,36 @@ export function ownedRoom(name = "W1N1", energy = 300, level = 1) {
     Game.spawns[spawn.name] = spawn;
     const previousGet = Game.getObjectById;
     Game.getObjectById = ((id: string) => objects.get(id) || previousGet(id)) as Game["getObjectById"];
-    return { room, controller, source, spawn, structures, sites, hostiles, drops, tombstones, ruins, minerals, objects, finds };
+    return {
+        room,
+        controller,
+        source,
+        spawn,
+        structures,
+        sites,
+        hostiles,
+        drops,
+        tombstones,
+        ruins,
+        minerals,
+        objects,
+        finds
+    };
 }
 
 export function addCreep(room: Room, role: CreepRole, demandKey: string, ticksToLive = 1500, name = demandKey): Creep {
-    const body: BodyPartDefinition[] = [WORK, CARRY, MOVE].map(type => ({ type, hits: 100 }));
+    const body: BodyPartDefinition[] = [WORK, CARRY, MOVE].map(type => ({type, hits: 100}));
     const creep = mock<Creep>({
         id: name as Id<Creep>, name, room, pos: new RoomPosition(20, 20, room.name),
-        memory: { role, demandKey, homeRoom: room.name }, ticksToLive, spawning: false,
+        memory: {role, demandKey, homeRoom: room.name}, ticksToLive, spawning: false,
         body, store: store(0, 50), hits: 300, hitsMax: 300, my: true,
         getActiveBodyparts: type => body.filter(part => part.type === type && part.hits > 0).length,
-        moveTo: jest.fn<Creep["moveTo"]>().mockReturnValue(OK),
-        harvest: jest.fn<Creep["harvest"]>().mockReturnValue(OK),
-        transfer: jest.fn<Creep["transfer"]>().mockReturnValue(OK),
-        withdraw: jest.fn<Creep["withdraw"]>().mockReturnValue(OK),
-        pickup: jest.fn<Creep["pickup"]>().mockReturnValue(OK),
-        build: jest.fn<Creep["build"]>().mockReturnValue(OK),
+        moveTo: jest.fn().mockReturnValue(OK) as Creep["moveTo"],
+        harvest: jest.fn().mockReturnValue(OK) as Creep["harvest"],
+        transfer: jest.fn().mockReturnValue(OK) as Creep["transfer"],
+        withdraw: jest.fn().mockReturnValue(OK) as Creep["withdraw"],
+        pickup: jest.fn().mockReturnValue(OK) as Creep["pickup"],
+        build: jest.fn().mockReturnValue(OK) as Creep["build"],
         repair: jest.fn<Creep["repair"]>().mockReturnValue(OK),
         upgradeController: jest.fn<Creep["upgradeController"]>().mockReturnValue(OK)
     });
