@@ -144,7 +144,7 @@ Creep.prototype.findSrcContainer = function () {
         return;
     }
     const srcFlag = Game.flags[this.memory.srcFlagName];
-    if (!srcFlag){
+    if (!srcFlag || !srcFlag.room) {
         console.log("Check " + this.name + "'s memory, the srcFlagName is not found in Game.flags")
         return;
     }
@@ -166,6 +166,10 @@ Creep.prototype.findDestContainer = function (resourceConstant = RESOURCE_ENERGY
         return;
     }
     const destFlag = Game.flags[this.memory.destFlagName];
+    if (!destFlag || !destFlag.room) {
+        console.log("Check " + this.name + "'s memory, the destFlagName is not found in Game.flags")
+        return;
+    }
     const dest_containers = destFlag.pos.findInRange(FIND_STRUCTURES, 0, {
         filter: object => object.structureType === STRUCTURE_CONTAINER ||
             object.structureType === STRUCTURE_STORAGE
