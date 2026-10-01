@@ -45,6 +45,8 @@ interface CombatOperationMemory {
 
     targetFlag?: string;
     focusTargetId?: Id<Creep | Structure>;
+    assaultTarget?: AssaultTarget;
+    breachTargetId?: Id<Structure>;
 
     retreatHitsRatio: number;
     required: {
@@ -69,6 +71,7 @@ interface CreepMemory {
     combatClass?: CombatClass;
     partnerName?: string;
     targetId?: Id<Creep | Structure>;
+    slotId?: string;
 }
 ```
 
@@ -461,3 +464,24 @@ cannot create duplicates.
 The best first usable result is a **melee or ranger plus assigned healer pair**
 that rallies, travels together, focus-fires, and retreats together. That will
 outperform three sophisticated but independent role scripts.
+
+## Using the Combat Operations
+
+Create an entry in `Memory.combatOperations` with `state: "forming"`, a visible
+home room, and a rally flag in that room. The coordinator creates the required
+`combatant` spawn slots and bodies from the home room's energy capacity; do
+not queue individual combat creeps. It waits for the required units to reach
+the rally and for healers to join their partners before traveling.
+
+For an `attack` operation, set `assaultTarget` to `"hostileCreep"`, `"tower"`,
+`"spawn"`, `"rampart"`, `"wall"`, or `"controller"`. A wall or rampart needs a
+`targetFlag` on its tile or an explicit `breachTargetId`. For a protected
+tower, spawn, or controller, `breachTargetId` can designate the wall or
+rampart to remove first. Controller assaults generate CLAIM/MOVE melee units;
+include a ranger to escort them when hostiles are present.
+
+Attack operations with a structure objective finish when that objective is
+gone. Creep-only attacks and harass operations finish after the visible target
+room has been clear for ten ticks. Defense and Source Keeper operations remain
+active until you set their state to `"complete"`. Completed operations discard
+queued replacements and return surviving units to the rally point.

@@ -234,20 +234,14 @@ Game.rooms['W46N41'].memory.queue.push({
     destFlagName: "dismantle2",
 })
 
-Game.rooms['W44N42'].memory.queue.push({
+Game.rooms['W46N43'].memory.queue.push({
     role: "melee",
     body: [TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, TOUGH, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK, ATTACK,
         MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],
-    destFlagName: "Idle23",
-    room: "W44N42",
-});
-
-Game.rooms['W49N44'].memory.queue.push({
-    role: "melee",
-    body: Array(13).fill(TOUGH).concat(Array(25).fill(MOVE)).concat(Array(12).fill(ATTACK)),
-    destFlagName: "Idle21",
-    room: "W49N44",
+    destFlagName: "Idle14",
+    room: "W46N43",
 })
+
 Game.rooms['W46N43'].memory.queue.push({
     role: "healer",
     body: [HEAL, HEAL, HEAL, HEAL, HEAL, HEAL, MOVE, MOVE, MOVE, MOVE, MOVE, MOVE],

@@ -4,7 +4,7 @@ import "./modules/prototype/prototype.room"
 import "./modules/prototype/prototype.spawn"
 import "./modules/prototype/prototype.tower"
 import "./modules/prototype/prototype.link"
-import {runCombatOperation} from "@/modules/combat/combat.operation";
+import {isCombatCreepMemory, runCombatOperations} from "@/modules/combat/combat.operation";
 
 export const loop = errorMapper(function () {
     let name;
@@ -13,7 +13,8 @@ export const loop = errorMapper(function () {
     }
     for (name in Memory.creeps) {
         if (!Game.creeps[name]) {
-            if (!Memory.creeps[name].respawnInformed) {
+            if (!isCombatCreepMemory(Memory.creeps[name]) &&
+                !Memory.creeps[name].respawnInformed) {
                 console.log("I am " + name);
                 Game.rooms[Memory.creeps[name].room].memory.queue.push(Memory.creeps[name]);
                 console.log("Abnormal death")
@@ -22,7 +23,7 @@ export const loop = errorMapper(function () {
             console.log('Clearing non-existing creep memory:', name);
         }
     }
-    runCombatOperation()
+    runCombatOperations()
     for (name in Game.creeps) {
         const creep = Game.creeps[name];
         creep.runRole();

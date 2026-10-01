@@ -10,6 +10,10 @@ import roleUpgrader from "@/modules/role/role.upgrader";
 import roleReserver from "@/modules/role/role.reserver";
 import roleGarbageCollector from "@/modules/role/role.garbageCollector";
 import roleCombatant from "@/modules/role/role.combatant";
+import roleMelee from "@/modules/role/role.melee";
+import roleRanger from "@/modules/role/role.ranger";
+import roleHealer from "@/modules/role/role.healer";
+import {isCombatCreepMemory} from "@/modules/combat/combat.operation";
 import roleTransferer from "@/modules/role/role.transferer";
 import roleClaimer from "@/modules/role/role.claimer";
 import roleWallRepairer from "@/modules/role/role.wallRepairer";
@@ -31,6 +35,10 @@ const roles: Record<string, { run: (c: Creep) => void }> = {
     'reserver': roleReserver,
     "garbageCollector": roleGarbageCollector,
     "combatant": roleCombatant,
+    "melee": roleMelee,
+    "ranger": roleRanger,
+    "archer": roleRanger,
+    "healer": roleHealer,
     "transferer": roleTransferer,
     "claimer": roleClaimer,
     "wallRepairer": roleWallRepairer,
@@ -47,6 +55,9 @@ Creep.prototype.runRole = function () {
     const tickToRespawn = this.memory.body.length * 3 + 50;
     roles[this.memory.role].run(this);
 
+    if (isCombatCreepMemory(this.memory)) {
+        return;
+    }
     if (this.ticksToLive && this.ticksToLive < tickToRespawn && !this.memory.respawnInformed) {
         const room = Game.rooms[this.memory.room];
         if (this.memory.role === 'truck') {

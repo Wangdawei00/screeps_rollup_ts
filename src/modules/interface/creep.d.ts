@@ -1,9 +1,8 @@
-type CombatClass = "melee" | "ranger" | "healer" | "dismantler";
-
 /** Combat related Creep Memory */
 interface CreepMemory {
     operationId?: string;
     combatClass?: CombatClass;
+    slotId?: string;
     partnerName?: string;
     targetId?: Id<Creep | Structure>;
 }
@@ -103,5 +102,4 @@ interface Creep {
     /**Must have a destFlagName*/
     findDestContainer(resourceConstant: ResourceConstant): Id<StructureContainer> | Id<StructureStorage> | Id<StructureLink> | undefined;
 
-    runCombatRole(): void;
 }

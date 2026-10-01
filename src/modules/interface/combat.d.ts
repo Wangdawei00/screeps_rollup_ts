@@ -11,6 +11,16 @@ type CombatOperationState =
     | "retreating"
     | "complete";
 
+type CombatClass = "melee" | "ranger" | "healer";
+
+type AssaultTarget =
+    | "hostileCreep"
+    | "tower"
+    | "spawn"
+    | "rampart"
+    | "wall"
+    | "controller";
+
 interface CombatOperationMemory {
     type: CombatOperationType;
     state: CombatOperationState;
@@ -21,6 +31,10 @@ interface CombatOperationMemory {
 
     targetFlag?: string;
     focusTargetId?: Id<Creep | Structure>;
+    focusUntil?: number;
+    assaultTarget?: AssaultTarget;
+    breachTargetId?: Id<Structure>;
+    noTargetSince?: number;
 
     retreatHitsRatio: number;
     required: {
