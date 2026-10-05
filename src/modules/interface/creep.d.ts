@@ -39,7 +39,7 @@ interface CreepMemory {
     // /**Advanced Upgrader target flag*/
     // upgradePosFlagName?: string;
     // /**Reserver and longDistanceHarvester and Army target room name*/
-    // target?: string;//room name
+    targetRoom?: string;//room name
     // /**LongDistanceHarvester home room name*/
     // home?: string;//room name
     // /**Mineral Type*/

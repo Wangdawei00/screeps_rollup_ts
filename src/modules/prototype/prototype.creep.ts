@@ -88,20 +88,21 @@ Creep.prototype.gotoIdleFlag = function () {
         const flag = Game.flags[this.memory.IdleFlagName];
         this.moveTo(flag);
     } else {
+        let room
         if (this.memory.srcFlagName) {
-            const room = Game.flags[this.memory.srcFlagName].room;
-            if (room) {
-                const flags = room.find(FIND_FLAGS, {
-                    filter: f => f.name.startsWith("Idle")
-                })
-                if (flags.length !== 1) {
-                    console.log("There is no flag")
-                } else {
-                    this.moveTo(flags[0]);
-                }
-            }
+            room = Game.flags[this.memory.srcFlagName].room;
         } else {
-            console.log("No Idle Flags found, Check the code or the memory of creep " + this.name)
+            room = this.room
+        }
+        if (room) {
+            const flags = room.find(FIND_FLAGS, {
+                filter: f => f.name.startsWith("Idle")
+            })
+            if (flags.length !== 1) {
+                console.log("There is no flag")
+            } else {
+                this.moveTo(flags[0]);
+            }
         }
     }
 
